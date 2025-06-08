@@ -4,7 +4,28 @@ import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
+  const [apiTest, setApiTestMsg] = useState('test');
+
+  const callSpringBootApi = () => {
+      setApiTestMsg('API 호출 중...'); 
+
+      fetch('/test') 
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.text();
+        })
+        .then(data => {
+          setApiTestMsg("API 호출 성공! (서버 콘솔에 'test' 출력 확인)"); 
+          console.log("Spring Boot에서 받은 응답 (빈 응답 예상):", data);
+        })
+        .catch(error => {
+          setApiTestMsg(`API 호출 실패: ${error.message}`); 
+          console.error("API 호출 중 오류 발생:", error);
+        });
+    };
 
   return (
     <>
@@ -21,6 +42,9 @@ function App() {
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
         </button>
+		<button onClick={() => callSpringBootApi()}>
+		          API 호출
+		</button>
         <p>
           Edit <code>src/App.jsx</code> and save to test HMR
         </p>
