@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: kr.co.cms
+
+
+  devtools:
+    restart:
+      enabled: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 100MB
+	  servlet.enco
+	  
+	  
+	  servlet:
+	    encoding:
+	      charset: UTF-8
+	      force: true
+	      force-response: true
+	      enabled: true
+
+# Database 설정 (MySQL 사용 시 주석 해제 후 사용)
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/DB명?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+#    username: DB계정명
+#    password: DB비밀번호
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+#    properties:
+#      hibernate:
+#        format_sql: true
+#        dialect: org.hibernate.dialect.MySQL8Dialect
+
+logging:
+  level:
+    org.springframework.boot.autoconfigure: WARN
+
+server:
+  port: 8082
