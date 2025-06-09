@@ -37,8 +37,11 @@
     cursor: pointer;
     animation: pulse 1s infinite ease-in-out;
     user-select: none;
+    transition: color 0.3s ease;
 }
-
+.slider:hover {
+    color: #93bcff;
+}
 .L {
     left: -50px;
 }
