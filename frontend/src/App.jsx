@@ -1,60 +1,34 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+
+// src/App.jsx
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './hooks/useAuth.jsx';
+import CounselingListPage from './pages/CounselingListPage';
+import CounselingDetailPage from './pages/CounselingDetailPage';
+import CounselingRecordPage from './pages/CounselingRecordPage';
+import MonthlyCalendarPage from './pages/MonthlyCalendarPage';
+import WeeklyCalendarPage from './pages/WeeklyCalendarPage';
+
+// CSS 파일들은 index.html에서 링크로 불러옵니다
 
 function App() {
-  const [count, setCount] = useState(0);
-  const [apiTest, setApiTestMsg] = useState('test');
-
-  const callSpringBootApi = () => {
-      setApiTestMsg('API 호출 중...'); 
-
-      fetch('/api/test') 
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.text();
-        })
-        .then(data => {
-          setApiTestMsg("API 호출 성공!"); 
-          console.log("Spring Boot에서 받은 응답:", data);
-
-        })
-        .catch(error => {
-          setApiTestMsg(`API 호출 실패: ${error.message}`); 
-          console.error("API 호출 중 오류 발생:", error);
-        });
-    };
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-		<button onClick={() => callSpringBootApi()}>
-		          API 호출
-		</button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <AuthProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<Navigate to="/counseling/applications" replace />} />
+            <Route path="/counseling/applications" element={<CounselingListPage />} />
+            <Route path="/counseling/applications/:id" element={<CounselingDetailPage />} />
+            <Route path="/counseling/records/write/:id" element={<CounselingRecordPage />} />
+            <Route path="/counseling/monthly" element={<MonthlyCalendarPage />} />
+            <Route path="/counseling/weekly" element={<WeeklyCalendarPage />} />
+            {/* 추가 라우트들 */}
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;
