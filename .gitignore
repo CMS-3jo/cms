@@ -1,0 +1,33 @@
+# === Backend (Spring Boot) ===
+kr.co.cms/target/
+kr.co.cms/.classpath
+kr.co.cms/.project
+kr.co.cms/.settings/
+
+# === Frontend (React + Vite) ===
+frontend/node_modules/
+frontend/dist/
+
+# === Workspace metadata (STS / Eclipse) ===
+.metadata/
+
+# === IDE / Editor folders ===
+.idea/
+.vscode/
+
+# === System files ===
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# === Logs ===
+*.log
+logs/
+
+# === Environment files ===
+.env
+.env.local
+.env.*.local
+/.project
