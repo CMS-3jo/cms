@@ -29,9 +29,5 @@ logs/
 # === Environment files ===
 .env
 .env.local
-<<<<<<< HEAD
 .env.*.local
 /.project
-=======
-.env.*.local
->>>>>>> branch 'dev_koo' of https://github.com/CMS-3jo/cms.git
