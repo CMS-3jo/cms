@@ -8,6 +8,7 @@ import CounselingDetailPage from './pages/CounselingDetailPage';
 import CounselingRecordPage from './pages/CounselingRecordPage';
 import MonthlyCalendarPage from './pages/MonthlyCalendarPage';
 import WeeklyCalendarPage from './pages/WeeklyCalendarPage';
+import NoncurricularListPage from './pages/NoncurricularListPage.jsx';
 
 // CSS 파일들은 index.html에서 링크로 불러옵니다
 
@@ -23,6 +24,7 @@ function App() {
             <Route path="/counseling/records/write/:id" element={<CounselingRecordPage />} />
             <Route path="/counseling/monthly" element={<MonthlyCalendarPage />} />
             <Route path="/counseling/weekly" element={<WeeklyCalendarPage />} />
+            <Route path="/noncur/list" element={<NoncurricularListPage/>} />
             {/* 추가 라우트들 */}
           </Routes>
         </div>
