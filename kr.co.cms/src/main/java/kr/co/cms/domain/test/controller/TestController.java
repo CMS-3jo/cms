@@ -22,7 +22,7 @@ public class TestController {
 	@GetMapping
 	public ResponseEntity<List<Test>> getAllTests() {
 		List<Test> tests = testService.getAllTests();
-		System.out.println("test");
+		System.out.println("testtest");
 		return new ResponseEntity<>(tests, HttpStatus.OK);
 	}
 
