@@ -31,9 +31,9 @@ dependencies {
 	// 개발 편의성
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-	// Database - MySQL + JPA(쓸거면 해제해서 쓰세요)
-	//implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	//runtimeOnly 'com.mysql:mysql-connector-j'
+	// Database - MySQL + JPA
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	runtimeOnly 'com.mysql:mysql-connector-j'
 
 	// 암호화 (비밀번호 암호화 등 필요 시)
 	implementation 'org.springframework.security:spring-security-crypto:6.1.5'
