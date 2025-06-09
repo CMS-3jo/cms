@@ -10,7 +10,7 @@ function App() {
   const callSpringBootApi = () => {
       setApiTestMsg('API 호출 중...'); 
 
-      fetch('/test') 
+      fetch('/api/test') 
         .then(response => {
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -18,8 +18,9 @@ function App() {
           return response.text();
         })
         .then(data => {
-          setApiTestMsg("API 호출 성공! (서버 콘솔에 'test' 출력 확인)"); 
-          console.log("Spring Boot에서 받은 응답 (빈 응답 예상):", data);
+          setApiTestMsg("API 호출 성공!"); 
+          console.log("Spring Boot에서 받은 응답:", data);
+
         })
         .catch(error => {
           setApiTestMsg(`API 호출 실패: ${error.message}`); 
