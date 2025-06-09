@@ -20,6 +20,7 @@ function App() {
         .then(data => {
           setApiTestMsg("API 호출 성공!"); 
           console.log("Spring Boot에서 받은 응답:", data);
+
         })
         .catch(error => {
           setApiTestMsg(`API 호출 실패: ${error.message}`); 
