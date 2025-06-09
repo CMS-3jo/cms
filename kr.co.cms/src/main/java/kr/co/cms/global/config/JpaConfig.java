@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
     basePackages = "kr.co.cms.domain.*.entity"
 )
 @EnableJpaAuditing				// JPA Auditing 기능 활성화
-@EnableTransactionManagement	// 어노테이션 기반 트랜잭션 관리 활성화
+@EnableTransactionManagement	// @Transaction 어노테이션 기반 트랜잭션 관리 활성화
 public class JpaConfig {
     
 }
