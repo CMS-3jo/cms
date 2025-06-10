@@ -1,6 +1,8 @@
 // src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './hooks/useAuth.jsx';
+
 
 // 기존 관리자 페이지들
 import CounselingListPage from './pages/CounselingListPage';
@@ -17,6 +19,8 @@ import DiagnosisResultPage from './pages/DiagnosisResultPage';
 import DiagnosisDataPage from './pages/DiagnosisDataPage';
 import MyPage from './pages/MyPage';
 import CenterIntroPage from './pages/CenterIntroPage';
+import NoncurricularListPage from './pages/NoncurricularListPage.jsx';
+
 
 // 새로 추가된 상담 페이지들
 import PsychologicalCounselingPage from './pages/PsychologicalCounselingPage';
@@ -30,6 +34,7 @@ import PeerCounselingPage from './pages/PeerCounselingPage';
 
 function App() {
   return (
+    <AuthProvider>
     <Router>
       <div className="App">
         <Routes>
@@ -45,6 +50,7 @@ function App() {
           <Route path="/center-intro/business" element={<CenterIntroPage activeTab="business" />} />
           <Route path="/center-intro/organization" element={<CenterIntroPage activeTab="organization" />} />
           <Route path="/center-intro/location" element={<CenterIntroPage activeTab="location" />} />
+          <Route path="/noncur/list" element={<NoncurricularListPage/>} />
 
           {/* 심리상담 관련 페이지들 */}
           <Route path="/psychological" element={<PsychologicalCounselingPage />} />
@@ -69,7 +75,9 @@ function App() {
         </Routes>
       </div>
     </Router>
+    </AuthProvider>
   );
 }
 
 export default App;
+
