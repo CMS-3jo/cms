@@ -47,7 +47,8 @@ header .side_area .dropdown-item:hover {background-color : transparent;}
 article.container_layout:not(:has(.side_navbar)) {padding : 20px 0;}
 .container_layout:has(.side_navbar) {display : flex; position : relative;}
 .container_layout .side_navbar + div,.container_layout .side_navbar + section {width : calc(100% - 235px); padding : 20px; margin-left : 235px; padding-left : 0;}
-
+.flxc{display: flex; flex-direction: column;}
+.flxr{display: flex; flex-direction: row;}
 .side_navbar {
 	width: 220px;
 	background-color: #ddd;

@@ -22,6 +22,7 @@ import CenterIntroPage from './pages/CenterIntroPage';
 import NoncurricularListPage from './pages/NoncurricularListPage.jsx';
 
 
+
 // 새로 추가된 상담 페이지들
 import PsychologicalCounselingPage from './pages/PsychologicalCounselingPage';
 import AnonymousCounselingPage from './pages/AnonymousCounselingPage';
@@ -31,6 +32,8 @@ import EmploymentCounselingPage from './pages/EmploymentCounselingPage';
 import ProfessorCounselingPage from './pages/ProfessorCounselingPage';
 import AcademicConsultingPage from './pages/AcademicConsultingPage';
 import PeerCounselingPage from './pages/PeerCounselingPage';
+import NoncurricularViewPage from './pages/NoncurricularViewPage.jsx';
+import NoncurricularRegisterPage from './pages/NoncurricularRegisterPage.jsx';
 
 function App() {
   return (
@@ -51,6 +54,8 @@ function App() {
           <Route path="/center-intro/organization" element={<CenterIntroPage activeTab="organization" />} />
           <Route path="/center-intro/location" element={<CenterIntroPage activeTab="location" />} />
           <Route path="/noncur/list" element={<NoncurricularListPage/>} />
+          <Route path="/noncur/view" element={<NoncurricularViewPage/>} />
+          <Route path="/noncur/reg" element={<NoncurricularRegisterPage/>} />
 
           {/* 심리상담 관련 페이지들 */}
           <Route path="/psychological" element={<PsychologicalCounselingPage />} />
