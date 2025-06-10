@@ -1,48 +1,51 @@
 <!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>상담 관리 시스템</title>
-    
-    <!-- 기본 CSS 리셋 -->
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-        line-height: 1.6;
-      }
-      
-      .container_layout {
-        width: 100%;
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 0 20px;
-      }
-      
-      /* 임시 디버깅용 */
-      .debug {
-        border: 1px solid red !important;
-        background-color: rgba(255, 0, 0, 0.1) !important;
-      }
-    </style>
-    
-    <!-- CSS 파일들 -->
-    <link href="/css/bootstrap/bootstrap.css" rel="stylesheet" crossorigin="anonymous">
-    <link href="/css/home.css" rel="stylesheet">
-    <link href="/css/board.css" rel="stylesheet">
-    <link href="/css/monthlyCalendar.css" rel="stylesheet">
-    <link href="/css/weeklyCalendar.css" rel="stylesheet">
-
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="/vite.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>상담 관리 시스템</title>
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<!-- 기본 CSS 리셋 -->
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+ }
+body {
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+line-height: 1.6;
+ }
+.container_layout {
+width: 100%;
+max-width: 1400px;
+margin: 0 auto;
+padding: 0 20px;
+ }
+/* 임시 디버깅용 */
+.debug {
+border: 1px solid red !important;
+background-color: rgba(255, 0, 0, 0.1) !important;
+ }
+</style>
+<!-- CSS 파일들 -->
+<link href="/css/bootstrap/bootstrap.css" rel="stylesheet" crossorigin="anonymous">
+<link href="/css/home.css" rel="stylesheet">
+<link href="/css/board.css" rel="stylesheet">
+<link href="/css/monthlyCalendar.css" rel="stylesheet">
+<link href="/css/weeklyCalendar.css" rel="stylesheet">
+<link href="/css/container.css" rel="stylesheet">
+<link href="/css/banner.css" rel="stylesheet">
+<link href="/css/herosection.css" rel="stylesheet">
+<link rel="stylesheet" href="/css/container.css">
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="module" src="/src/main.jsx"></script>
+</body>
 </html>
