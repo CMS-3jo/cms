@@ -31,3 +31,7 @@ logs/
 .env.local
 .env.*.local
 /.project
+
+# === Spring Boot 설정 파일 ===
+src/main/resources/application.yml
+src/main/resources/application-*.yml
