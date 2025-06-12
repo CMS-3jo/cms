@@ -1,18 +1,39 @@
 // src/components/layout/PublicHeader.jsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth.jsx';
 
 const PublicHeader = () => {
   const [showMobileNav, setShowMobileNav] = useState(false);
+  const { isLoggedIn, logout } = useAuth();
+  const navigate = useNavigate();
 
   const toggleMobileNav = () => {
     setShowMobileNav(!showMobileNav);
+  };
+
+  const handleLoginClick = (e) => {
+    e.preventDefault();
+    console.log('🚨 PublicHeader 로그인 클릭!');
+    navigate('/login');
+  };
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+    console.log('🚨 PublicHeader 로그아웃 클릭!');
+    logout();
+    navigate('/');
   };
 
   return (
     <header>
       <div className="container_layout">
         <nav className="nav">
-          <a className="nav-link logo" href="/">
+          <a 
+            className="nav-link logo" 
+            onClick={() => navigate('/')}
+            style={{ cursor: 'pointer' }}
+          >
             <img alt="" src="./images/logo-header.png" />
           </a>
           <ul className="nav nav-underline" id="major_menu">
@@ -35,16 +56,32 @@ const PublicHeader = () => {
         </nav>
 
         <div className="side_area">
-          <p id="login_icon">
-            <a href="">
-              <img alt="로그인" src="./images/counselor/basic-login.svg" />
-            </a>
-          </p>
-          <p id="logout_icon" style={{ display: 'none' }}>
-            <a href="">
-              <img alt="로그아웃" src="./images/counselor/basic-logout.svg" />
-            </a>
-          </p>
+          {/* 로그인 아이콘 - 로그아웃 상태일 때 */}
+          {!isLoggedIn && (
+            <p id="login_icon">
+              <a 
+                href="#" 
+                onClick={handleLoginClick}
+                style={{ cursor: 'pointer' }}
+              >
+                <img alt="로그인" src="./images/counselor/basic-login.svg" />
+              </a>
+            </p>
+          )}
+          
+          {/* 로그아웃 아이콘 - 로그인 상태일 때 */}
+          {isLoggedIn && (
+            <p id="logout_icon">
+              <a 
+                href="#" 
+                onClick={handleLogout}
+                style={{ cursor: 'pointer' }}
+              >
+                <img alt="로그아웃" src="./images/counselor/basic-logout.svg" />
+              </a>
+            </p>
+          )}
+          
           <div className="menu" onClick={toggleMobileNav}>
             <img alt="" src="./images/counselor/header-menu.svg" />
           </div>

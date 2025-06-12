@@ -26,7 +26,20 @@ const Sidebar = () => {
       items: [
         { label: '공지사항', path: '/notices' }
       ]
+    },
+    {
+      title: '핵심역량',
+      items: [
+        //학생용
+        {label: '핵심역량 리스트', path: '/cca/list'},
+        {label: '핵심역량 설문', path: '/cca/survey'},
+        {label: '내 핵심역량', path: '/cca/result'},
+        // 상담사용
+        {label: '핵심역량 등록', path: '/cca/register'},
+        {label: '핵심역량 분석', path: '/cca/analysis'},
+      ]
     }
+    
   ];
 
   // 현재 경로에 따른 활성 메뉴 설정
