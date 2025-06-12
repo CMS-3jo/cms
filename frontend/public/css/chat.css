@@ -53,3 +53,74 @@ border-top : var(--bs-modal-footer-border-width) solid var(--bs-modal-footer-bor
 .modal.chatroom #endContainer.show {display : block;}
 .modal.chatroom #endContainer input[type="button"].close {width :100%; display :none;}
 .modal.chatroom #endContainer.show input[type="button"].close {display :block;}
+
+.chat-bubble {
+  padding: 10px 14px !important;
+  border-radius: 18px;
+  margin: 0 10px;
+  display: inline-block;
+  word-break: break-word;
+  max-width: 80%;
+  font-size: 16px;
+  line-height: 1.4;
+  width: fit-content;
+}
+
+.mine {
+  background-color: #cce5ff;
+  margin-left: auto;
+  text-align: left;
+  border-bottom-right-radius: 0;
+}
+
+.theirs {
+  background-color: #f1f1f1;
+  margin-right: auto;
+  text-align: left;
+  border-bottom-left-radius: 0;
+}
+
+.sender-name {
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.chat-content {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  height: 400px;
+  overflow-y: auto;
+  background-color: #fff;
+}
+
+.chat-bubble.system {
+  text-align: center;
+  font-style: italic;
+  margin: 10px auto;
+  padding: 10px 14px;
+  border-radius: 18px;
+  max-width: 80%;
+  width: fit-content;
+  font-size: 14px;
+}
+
+/* 🔴 연결 끊김용 */
+.chat-bubble.system.error {
+  background-color: #ffe6e6;
+  color: #a94442;
+}
+
+/* ✅ 연결 성공용 */
+.chat-bubble.system.success {
+  background-color: #e6fff1;
+  color: #1e824c;
+}
+
+.timestamp {
+  font-size: 11px;
+  color: #999;
+  text-align: right;
+  margin-top: 4px;
+}

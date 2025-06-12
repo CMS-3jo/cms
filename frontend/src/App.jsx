@@ -34,7 +34,7 @@ import AcademicConsultingPage from './pages/AcademicConsultingPage';
 import PeerCounselingPage from './pages/PeerCounselingPage';
 import NoncurricularViewPage from './pages/NoncurricularViewPage.jsx';
 import NoncurricularRegisterPage from './pages/NoncurricularRegisterPage.jsx';
-import ChatModal from './pages/ChatModal.jsx';
+import ChatModalRoute from './pages/ChatModalRoute.jsx';
 
 function App() {
   return (
@@ -73,7 +73,7 @@ function App() {
           <Route path="/peer" element={<PeerCounselingPage />} />
           
 		  {/* 채팅 */}
-          <Route path="/user/chatbot" element={<ChatModal />} />
+          <Route path="/user/chatbot" element={<ChatModalRoute />} />
 
           {/* 관리자 페이지들 */}
           <Route path="/admin/counseling" element={<CounselingListPage />} />

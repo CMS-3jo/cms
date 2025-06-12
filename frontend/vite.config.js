@@ -14,4 +14,7 @@ export default defineConfig({
 			},
 		},
 	},
+	define: {
+	    global: 'window', // global is not defined 오류 대응 (sockjs-client 브라우저 호환)
+	},
 })
