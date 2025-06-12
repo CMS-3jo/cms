@@ -45,6 +45,11 @@ dependencies {
 	
 	// MongoDB
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+	
+	// WebSocket
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework:spring-messaging'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
 }
 
 tasks.named('test') {

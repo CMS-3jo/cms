@@ -34,12 +34,12 @@ import AcademicConsultingPage from './pages/AcademicConsultingPage';
 import PeerCounselingPage from './pages/PeerCounselingPage';
 import NoncurricularViewPage from './pages/NoncurricularViewPage.jsx';
 import NoncurricularRegisterPage from './pages/NoncurricularRegisterPage.jsx';
-import ChatModal from './pages/ChatModal.jsx';
 import CCARegPage from './pages/CCA_RegPage.jsx';
 import CCAViewPage from './pages/CCA_ListPage.jsx';
 import CCASurveyPage from './pages/CCA_SurveyPage.jsx';
 import CCAAnalysisPage from './pages/CCA_AnalysisPage.jsx';
 import CCAResultPage from './pages/CCA_ResultPage.jsx';
+import ChatModalRoute from './pages/ChatModalRoute.jsx';
 
 function App() {
   return (
@@ -83,12 +83,15 @@ function App() {
             <Route path="/cca/register" element={<CCARegPage />} />
             <Route path="/cca/analysis" element={<CCAAnalysisPage />} />
            
+          {/* 기타상담 */}
+          <Route path="/peer" element={<PeerCounselingPage />} />
+          
+		  {/* 채팅 */}
+          <Route path="/user/chatbot" element={<ChatModalRoute />} />
 
             {/* 기타상담 */}
             <Route path="/peer" element={<PeerCounselingPage />} />
 
-            {/* 채팅 */}
-            <Route path="/user/chatbot" element={<ChatModal />} />
 
             {/* 관리자 페이지들 */}
             <Route path="/admin/counseling" element={<CounselingListPage />} />
