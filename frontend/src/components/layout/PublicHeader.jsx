@@ -14,15 +14,13 @@ const PublicHeader = () => {
 
   const handleLoginClick = (e) => {
     e.preventDefault();
-    console.log('🚨 PublicHeader 로그인 클릭!');
     navigate('/login');
   };
 
   const handleLogout = (e) => {
     e.preventDefault();
-    console.log('🚨 PublicHeader 로그아웃 클릭!');
     logout();
-    navigate('/');
+    navigate('/login');
   };
 
   return (

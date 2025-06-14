@@ -14,15 +14,27 @@ public class JwtUtil {
     
     private final JwtProperties jwtProperties;
     
-    // Access Token 생성
-    public String generateAccessToken(String userId, String role) {
+    // Access Token 생성 (아이디, 이름, 권한 포함)
+    public String generateAccessToken(String userId, String role, String name, String identifierNo) {
         return Jwts.builder()
-                .setSubject(userId)
-                .claim("role", role)
+                .setSubject(userId)           // USER_ID (로그인 ID)
+                .claim("role", role)          // 권한 (STUDENT, PROFESSOR 등)
+                .claim("name", name)          // 이름 (실명)
+                .claim("idNo", identifierNo)  // 학번/사번 (실제 업무 식별자)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getAccessExpiration()))
                 .signWith(SignatureAlgorithm.HS512, jwtProperties.getSecret())
                 .compact();
+    }
+    
+    // Access Token 생성 (이름 포함) - 오버로딩
+    public String generateAccessToken(String userId, String role, String name) {
+        return generateAccessToken(userId, role, name, null);
+    }
+    
+    // Access Token 생성 (기본) - 오버로딩
+    public String generateAccessToken(String userId, String role) {
+        return generateAccessToken(userId, role, null, null);
     }
     
     // Refresh Token 생성
@@ -51,6 +63,24 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody()
                 .get("role", String.class);
+    }
+    
+    // 토큰에서 이름 추출
+    public String getName(String token) {
+        return Jwts.parser()
+                .setSigningKey(jwtProperties.getSecret())
+                .parseClaimsJws(token)
+                .getBody()
+                .get("name", String.class);
+    }
+    
+    // 토큰에서 아이디(학번/사번) 추출
+    public String getIdentifierNo(String token) {
+        return Jwts.parser()
+                .setSigningKey(jwtProperties.getSecret())
+                .parseClaimsJws(token)
+                .getBody()
+                .get("idNo", String.class);
     }
     
     // 토큰 유효성 검증
