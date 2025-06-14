@@ -37,8 +37,9 @@ dependencies {
 
 	// 암호화 (비밀번호 암호화 등 필요 시)
 	implementation 'org.springframework.security:spring-security-crypto:6.1.5'
-	// 스프링 시큐리티(쓸거면 해제해서 쓰세요)
-	//implementation 'org.springframework.boot:spring-boot-starter-security'
+	
+	// 스프링 시큐리티
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	
 	// Test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -50,6 +51,11 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework:spring-messaging'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
+    
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 }
 
 tasks.named('test') {

@@ -15,6 +15,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,19 +33,49 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletResponse response) {
         try {
-            LoginResponse response = authService.login(request);
-            return ResponseEntity.ok(response);
+            LoginResponse loginResponse = authService.login(request);
+            
+            // Refresh Token을 HttpOnly Cookie로 설정
+            Cookie refreshCookie = new Cookie("refreshToken", loginResponse.getRefreshToken());
+            refreshCookie.setHttpOnly(true);        // JavaScript 접근 차단
+            refreshCookie.setSecure(false);         // 개발환경에서는 false (운영에서는 true)
+            refreshCookie.setPath("/");
+            refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
+            response.addCookie(refreshCookie);
+            
+            // 응답에서는 refreshToken 제거 (accessToken만 반환)
+            loginResponse.setRefreshToken(null);
+            
+            return ResponseEntity.ok(loginResponse);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("로그인 실패: " + e.getMessage());
         }
     }
-    
-    @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestBody RefreshRequest request) {
+
+    @PostMapping("/refresh")  
+    public ResponseEntity<?> refresh(HttpServletRequest request) {
         try {
-            LoginResponse response = authService.refreshToken(request);
+            // HttpOnly Cookie에서 refreshToken 추출
+            String refreshToken = null;
+            if (request.getCookies() != null) {
+                for (Cookie cookie : request.getCookies()) {
+                    if ("refreshToken".equals(cookie.getName())) {
+                        refreshToken = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+            
+            if (refreshToken == null) {
+                return ResponseEntity.badRequest().body("Refresh token not found");
+            }
+            
+            RefreshRequest refreshRequest = new RefreshRequest();
+            refreshRequest.setRefreshToken(refreshToken);
+            
+            LoginResponse response = authService.refreshToken(refreshRequest);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("토큰 갱신 실패: " + e.getMessage());
