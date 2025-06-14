@@ -58,7 +58,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             
             {/* 퍼블릭 페이지들 */}
-            <Route path="/apply/:parentCd" element={<CounselingApplyPage />} />
+            <Route path="/cnsl/apply/:parentCd" element={<CounselingApplyPage />} />
             <Route path="/self-diagnosis" element={<SelfDiagnosisPage />} />
             <Route path="/diagnosis-result" element={<DiagnosisResultPage />} />
             <Route path="/diagnosis-data" element={<DiagnosisDataPage />} />
@@ -85,17 +85,17 @@ function App() {
 
             {/* 심리상담 관련 페이지들 */}
             <Route
-              path="/psychological"
+              path="/cnsl/psychological"
               element={<PsychologicalCounselingPage />}
             />
-            <Route path="/anonymous" element={<AnonymousCounselingPage />} />
-            <Route path="/crisis" element={<CrisisCounselingPage />} />
+            <Route path="/cnsl/anonymous" element={<AnonymousCounselingPage />} />
+            <Route path="/cnsl/crisis" element={<CrisisCounselingPage />} />
 
             {/* 학업상담 관련 페이지들 */}
-            <Route path="/career" element={<CareerCounselingPage />} />
-            <Route path="/employment" element={<EmploymentCounselingPage />} />
-            <Route path="/professor" element={<ProfessorCounselingPage />} />
-            <Route path="/academic" element={<AcademicConsultingPage />} />
+            <Route path="/cnsl/career" element={<CareerCounselingPage />} />
+            <Route path="/cnsl/employment" element={<EmploymentCounselingPage />} />
+            <Route path="/cnsl/professor" element={<ProfessorCounselingPage />} />
+            <Route path="/cnsl/academic" element={<AcademicConsultingPage />} />
 
             {/* 핵심역량 */}
             {/* 학생용 페이지 */}

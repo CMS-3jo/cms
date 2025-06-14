@@ -67,8 +67,8 @@ public class SecurityConfig {
                 .requestMatchers("/", "/login","/api/common/**").permitAll()
                 
                 // 권한별 접근 제어
-                .requestMatchers("/api/student/**").hasRole("STUDENT")
-                .requestMatchers("/api/counselor/**").hasRole("COUNSELOR")
+                .requestMatchers("/api/student/**","/cnsl/**").hasRole("STUDENT")
+                .requestMatchers("/api/counselor/**","/cnsl/**").hasRole("COUNSELOR")
                 .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 
