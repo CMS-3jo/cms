@@ -10,7 +10,7 @@ const PsychologicalCounselingPage = () => {
   const location = useLocation();
 
   const handleApplyClick = () => {
-    navigate('/apply');
+    navigate('/apply/06');
   };
 
   return (
