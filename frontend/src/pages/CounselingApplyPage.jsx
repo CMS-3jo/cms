@@ -1,22 +1,35 @@
 // src/pages/CounselingApplyPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PublicHeader from '../components/layout/PublicHeader';
 import Footer from '../components/layout/Footer';
 import { useParams } from 'react-router-dom';
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 const CounselingApplyPage = () => {
   const { parentCd } = useParams();
+  const [subTypes, setSubTypes] = useState([]);
   const [formData, setFormData] = useState({
-    typeCd: '',               // 상담 소분류 코드 (applyCategory → typeCd)
-    statCd: 'REQUESTED',      // 기본 상태코드
-    applyMethod: '대면',      // 상담 방식
-    applyDate: '',            // 희망 일자
-    applyTime: '',            // 희망 시간
-    applyFile: null,          // 첨부파일
-    applyEmail: '',           // 이메일
-    applyContent: 'ckeditor사용' // 신청 내용
+    parentCategory: parentCd,  // 대분류 (URL에서 받아옴, hidden 처리)
+    typeCd: '',                // 소분류 CD (ex: 'EMPLOY')
+    statCd: 'REQUESTED',       // 상태코드 기본값
+    applyMethod: '대면',       // 상담 방식
+    applyDate: '',             // 희망 일자
+    applyTime: '',             // 희망 시간
+    applyFile: null,           // 파일 (FormData로 전송)
+    applyEmail: '',            // 이메일
+    applyContent: ''           // 내용
   });
-
+  
+  useEffect(() => {
+    fetch('/api/common/codes?group=CNSL_TYPE_CD')
+      .then(res => res.json())
+      .then(data => {
+        const filtered = data.filter(c => c.desc === parentCd);
+        setSubTypes(filtered);
+      });
+  }, [parentCd]);
+  
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
     setFormData(prev => ({
@@ -67,18 +80,21 @@ const CounselingApplyPage = () => {
                     <tr>
                       <td><label htmlFor="applyCategory">상담 분류</label></td>
                       <td>
-                        <select 
-                          id="applyCategory" 
-                          name="applyCategory"
-                          value={formData.applyCategory}
-                          onChange={handleInputChange}
-                          style={{ maxWidth: 'unset' }}
-                        >
-                          <option value="심리상담">심리상담</option>
-                          <option value="학업상담">학업상담</option>
-                          <option value="진로상담">진로상담</option>
-                          <option value="기타">기타</option>
-                        </select>
+					  <select 
+					    id="typeCd" 
+					    name="typeCd"
+					    value={formData.typeCd}
+					    onChange={handleInputChange}
+					    required
+					  >
+					    <option value="">상담 유형 선택</option>
+					    {subTypes.map((s) => (
+					      <option key={s.code} value={s.code}>
+					        {s.name}
+					      </option>
+					    ))}
+					  </select>
+					  <input type="hidden" name="parentCategory" value={formData.parentCategory} />
                       </td>
                       <td><label htmlFor="applyMethod">상담 방식</label></td>
                       <td>
@@ -162,43 +178,20 @@ const CounselingApplyPage = () => {
                           onChange={handleInputChange}
                         />
                       </td>
-                    </tr>
-                    <tr>
-                      <td><label htmlFor="applyGender">성별</label></td>
-                      <td>
-                        <label>
-                          <input 
-                            type="radio" 
-                            name="applyGender" 
-                            value="male"
-                            checked={formData.applyGender === 'male'}
-                            onChange={handleInputChange}
-                          /> 남성
-                        </label>
-                        <label>
-                          <input 
-                            type="radio" 
-                            name="applyGender" 
-                            value="female"
-                            checked={formData.applyGender === 'female'}
-                            onChange={handleInputChange}
-                          /> 여성
-                        </label>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><label htmlFor="applyContent">내용</label></td>
-                      <td colSpan="3">
-                        <textarea 
-                          id="applyContent" 
-                          name="applyContent" 
-                          rows="10" 
-                          value={formData.applyContent}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </td>
-                    </tr>
+                    </tr>					
+					<tr>
+					  <td><label htmlFor="applyContent">내용</label></td>
+					  <td colSpan="3">
+					    <CKEditor
+					      editor={ClassicEditor}
+					      data={formData.applyContent}
+					      onChange={(event, editor) => {
+					        const data = editor.getData();
+					        setFormData(prev => ({ ...prev, applyContent: data }));
+					      }}
+					    />
+					  </td>
+					</tr>
                     <tr>
                       <td colSpan="4" className="form-buttons">
                         <button type="submit" id="btnApply" className="btn btn-success">
@@ -217,6 +210,7 @@ const CounselingApplyPage = () => {
       <Footer />
 
       <style jsx>{`
+		
         /* 전체 페이지 스타일 */
         body {
           margin: 0;
@@ -277,6 +271,10 @@ const CounselingApplyPage = () => {
         .form_write .col-half {
           flex: 0 0 50%;
         }
+		
+		.ck-editor__editable_inline {
+		      min-height: 400px;
+		    }
       `}</style>
     </div>
   );
