@@ -10,31 +10,61 @@ export const useAuth = () => {
   return context;
 };
 
+// JWT 토큰 디코딩 함수
+const decodeToken = (token) => {
+  try {
+    const payload = token.split('.')[1];
+    const decoded = JSON.parse(atob(payload));
+    return decoded;
+  } catch (error) {
+    return null;
+  }
+};
+
+// 토큰 만료 확인 함수
+const isTokenExpired = (token) => {
+  const decoded = decodeToken(token);
+  if (!decoded) return true;
+  
+  const currentTime = Date.now() / 1000;
+  return decoded.exp < currentTime;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 토큰에서 사용자 정보 추출하여 상태 업데이트
+  const updateUserFromToken = (token) => {
+    const decoded = decodeToken(token);
+    if (decoded) {
+      setUser({
+        userId: decoded.sub,            // USER_ID (로그인 ID)
+        role: decoded.role,             // 권한
+        name: decoded.name || 'Unknown', // 이름
+        identifierNo: decoded.idNo || '' // 학번/사번
+      });
+    } else {
+      setUser(null);
+    }
+  };
+
   // 페이지 로드 시 토큰 확인
   useEffect(() => {
     const initAuth = async () => {
-      // 기존 sessionStorage의 토큰들 정리 (한 번만 실행)
-      if (sessionStorage.getItem('accessToken') || sessionStorage.getItem('userId')) {
-        console.log('기존 sessionStorage 토큰들을 정리합니다...');
-        sessionStorage.removeItem('accessToken');
-        sessionStorage.removeItem('userId');
-        sessionStorage.removeItem('role');
-      }
-
       const accessToken = localStorage.getItem('accessToken');
       
-      if (accessToken) {
-        // Access Token이 있으면 사용자 정보 복원
-        const userId = localStorage.getItem('userId');
-        const role = localStorage.getItem('role');
-        setUser({ userId, role });
+      if (accessToken && !isTokenExpired(accessToken)) {
+        // 토큰이 유효하면 토큰에서 사용자 정보 추출
+        updateUserFromToken(accessToken);
       } else {
-        // Access Token이 없으면 Refresh Token으로 새로 발급 시도
-        await tryRefreshToken();
+        // 토큰이 없거나 만료되었으면 refresh 시도
+        const refreshed = await tryRefreshToken();
+        if (!refreshed) {
+          // refresh도 실패하면 로그아웃 처리
+          localStorage.removeItem('accessToken');
+          setUser(null);
+        }
       }
       
       setLoading(false);
@@ -57,12 +87,12 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const data = await response.json();
         
-        // Access Token과 사용자 정보는 localStorage에 저장
+        // Access Token만 localStorage에 저장
         localStorage.setItem('accessToken', data.accessToken);
-        localStorage.setItem('userId', data.userId);
-        localStorage.setItem('role', data.role);
         
-        setUser({ userId: data.userId, role: data.role });
+        // 토큰에서 사용자 정보 추출하여 상태 업데이트
+        updateUserFromToken(data.accessToken);
+        
         return true;
       }
     } catch (error) {
@@ -90,17 +120,13 @@ export const AuthProvider = ({ children }) => {
 
       const data = await response.json();
       
-      // Access Token과 사용자 정보는 localStorage에 저장
+      // Access Token만 localStorage에 저장
       localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('userId', data.userId);
-      localStorage.setItem('role', data.role);
+      
+      // 토큰에서 사용자 정보 추출하여 상태 업데이트
+      updateUserFromToken(data.accessToken);
       
       // Refresh Token은 서버에서 HttpOnly Cookie로 자동 설정됨
-      
-      setUser({
-        userId: data.userId,
-        role: data.role
-      });
       
       return data;
     } catch (error) {
@@ -125,14 +151,22 @@ export const AuthProvider = ({ children }) => {
     
     // 클라이언트 저장소 정리
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('role');
     setUser(null);
   };
 
   // API 호출용 헬퍼 함수 (토큰 자동 갱신)
   const apiCall = async (url, options = {}) => {
     let accessToken = localStorage.getItem('accessToken');
+    
+    // 토큰이 만료되었으면 refresh 시도
+    if (!accessToken || isTokenExpired(accessToken)) {
+      const refreshed = await tryRefreshToken();
+      if (!refreshed) {
+        logout();
+        throw new Error('Authentication required');
+      }
+      accessToken = localStorage.getItem('accessToken');
+    }
     
     // 첫 번째 시도
     let response = await fetch(url, {
@@ -143,7 +177,7 @@ export const AuthProvider = ({ children }) => {
       },
     });
 
-    // 401 에러면 토큰 갱신 후 재시도
+    // 401 에러면 토큰 갱신 후 재시도 (서버에서 토큰이 무효하다고 판단)
     if (response.status === 401) {
       const refreshed = await tryRefreshToken();
       if (refreshed) {
