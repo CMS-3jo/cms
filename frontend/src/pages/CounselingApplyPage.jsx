@@ -2,17 +2,19 @@
 import React, { useState } from 'react';
 import PublicHeader from '../components/layout/PublicHeader';
 import Footer from '../components/layout/Footer';
+import { useParams } from 'react-router-dom';
 
 const CounselingApplyPage = () => {
+  const { parentCd } = useParams();
   const [formData, setFormData] = useState({
-    applyCategory: '심리상담',
-    applyMethod: '대면',
-    applyDate: '',
-    applyTime: '',
-    applyFile: null,
-    applyEmail: '',
-    applyGender: '',
-    applyContent: 'ckeditor사용'
+    typeCd: '',               // 상담 소분류 코드 (applyCategory → typeCd)
+    statCd: 'REQUESTED',      // 기본 상태코드
+    applyMethod: '대면',      // 상담 방식
+    applyDate: '',            // 희망 일자
+    applyTime: '',            // 희망 시간
+    applyFile: null,          // 첨부파일
+    applyEmail: '',           // 이메일
+    applyContent: 'ckeditor사용' // 신청 내용
   });
 
   const handleInputChange = (e) => {
