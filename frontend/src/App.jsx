@@ -58,7 +58,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             
             {/* 퍼블릭 페이지들 */}
-            <Route path="/apply" element={<CounselingApplyPage />} />
+            <Route path="/apply/:parentCd" element={<CounselingApplyPage />} />
             <Route path="/self-diagnosis" element={<SelfDiagnosisPage />} />
             <Route path="/diagnosis-result" element={<DiagnosisResultPage />} />
             <Route path="/diagnosis-data" element={<DiagnosisDataPage />} />

@@ -64,7 +64,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // 인증 없이 접근 가능
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/", "/login").permitAll()
+                .requestMatchers("/", "/login","/api/common/**").permitAll()
                 
                 // 권한별 접근 제어
                 .requestMatchers("/api/student/**").hasRole("STUDENT")
