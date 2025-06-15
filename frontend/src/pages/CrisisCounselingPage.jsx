@@ -10,7 +10,7 @@ const CrisisCounselingPage = () => {
   const location = useLocation();
 
   const handleApplyClick = () => {
-    navigate('/apply');
+    navigate('/cnsl/apply/06');
   };
 
   return (

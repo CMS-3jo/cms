@@ -1,4 +1,3 @@
-// src/components/auth/LoginForm.jsx
 import React, { useState } from 'react'
 import { FaGoogle, FaUser, FaLock } from 'react-icons/fa'
 import { SiKakaotalk, SiNaver } from 'react-icons/si'
@@ -16,30 +15,28 @@ const LoginForm = () => {
   const { login } = useAuth()
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setIsLoading(true)
+  e.preventDefault()
+  setError('')
+  setIsLoading(true)
 
-    try {
-      // TODO: 실제 로그인 API 연동 필요
-      const loginData = {
-        id,
-        password,
-        userType
-      }
-      
-      // 임시로 성공 처리
-      await login(loginData)
-      navigate('/')
-    } catch (err) {
-      setError('로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.')
-    } finally {
-      setIsLoading(false)
+  try {
+    const loginData = {
+      id,
+      password,
+      userType
     }
+    
+    await login(loginData)
+    navigate('/') // 로그인 성공시 메인으로 이동
+  } catch (err) {
+    setError(err.message || '로그인에 실패했습니다.')
+  } finally {
+    setIsLoading(false)
   }
+}
 
   const handleSocialLogin = (provider) => {
-    // TODO: 소셜 로그인 API 연동 필요
+    // TODO: 소셜 로그인은 나중에 구현
     console.log(`${provider} 로그인`)
   }
 
