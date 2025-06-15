@@ -65,6 +65,8 @@ public class SecurityConfig {
                 // 인증 없이 접근 가능
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/", "/login","/api/common/**").permitAll()
+                .requestMatchers("/api/noncur/**").permitAll() // 이 줄 추가!
+
                 
                 // 권한별 접근 제어
                 .requestMatchers("/api/student/**","/cnsl/**").hasRole("STUDENT")

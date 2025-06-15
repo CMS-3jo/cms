@@ -1,4 +1,4 @@
-package kr.co.cms.noncur;
+package kr.co.cms.domain.noncur.entity;
 
 import java.time.LocalDateTime;
 
@@ -8,8 +8,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "NCS_PRG_INFO")
@@ -35,9 +37,7 @@ public class NoncurProgram {
     
     @Column(name = "PRG_DEPT_CD", length = 20, nullable = false)
     private String prgDeptCd;
-    
-    @Column(name = "CCI_ID", length = 20, nullable = false)
-    private String cciId;
+   
     
     @Column(name = "MAX_CNT")
     private Integer maxCnt;
@@ -54,11 +54,13 @@ public class NoncurProgram {
     @Column(name = "UPD_DT")
     private LocalDateTime updDt;
     
-    @Column(name = "PRG_STTS_NM")
-    private NoncurEnum.Status status;
-
+    @Column(name = "PRG_STAT_CD", length = 2)
+    private String prgStatCd;
     
-    // JPA에서 자동으로 생성/수정 시간 관리
+    @Transient
+    @Setter
+    private String deptName; // 부서명
+    
     @PrePersist
     protected void onCreate() {
         regDt = LocalDateTime.now();
