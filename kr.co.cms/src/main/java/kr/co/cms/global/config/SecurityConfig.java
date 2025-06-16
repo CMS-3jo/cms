@@ -62,6 +62,9 @@ public class SecurityConfig {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authorizeHttpRequests(authz -> authz
+            	// OPTIONS 요청은 모두 허용 (Preflight)
+                .requestMatchers("OPTIONS", "/**").permitAll()
+            		
                 // 인증 없이 접근 가능
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/", "/login","/api/common/**").permitAll()
