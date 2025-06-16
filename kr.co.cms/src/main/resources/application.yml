@@ -29,10 +29,6 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
 
-#  data:
-#    mongodb:
-#      uri: mongodb+srv://cms:OG1vWxXDq0XFdEM1@cms-3jo.zxpmb5d.mongodb.net/?retryWrites=true&w=majority&appName=cms-3jo
-
 logging:
   level:
     org.springframework.boot.autoconfigure: WARN
