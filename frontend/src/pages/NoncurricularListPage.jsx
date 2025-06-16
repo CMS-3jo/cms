@@ -1,136 +1,412 @@
 //비교과 리스트 페이지
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
-import '../../public/css/NoncurricularList.css';
+import '/public/css/NoncurricularList.css';
+
 const NoncurricularListPage = () => {
+    const [programs, setPrograms] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [debouncedSearchParams, setDebouncedSearchParams] = useState(null); // 디바운싱용 상태 추가
+    
+    // 페이지네이션 상태 추가
+    const [pagination, setPagination] = useState({
+        totalElements: 0,
+        totalPages: 0,
+        currentPage: 0,
+        size: 0,
+        hasNext: false,
+        hasPrevious: false,
+        isFirst: true,
+        isLast: false
+    });
+    
+    const [searchParams, setSearchParams] = useState({
+        keyword: '',
+        searchDeptCode: '',
+        searchStatusCode: '',
+        page: 0,
+        size: 8,
+        sortBy: 'regDt',
+        sortDir: 'desc'
+    });
+
+    // 디바운싱: 검색어 변경 후 500ms 대기
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchParams(searchParams);
+        }, searchParams.keyword ? 500 : 0); // 키워드가 있을 때만 딜레이
+
+        return () => clearTimeout(timer);
+    }, [searchParams]);
+
+    const fetchPrograms = useCallback(async () => {
+        if (!debouncedSearchParams) return; // 디바운싱된 파라미터가 없으면 실행 안함
+        
+        try {
+            setLoading(true);
+            const queryParams = new URLSearchParams();
+
+            Object.entries(debouncedSearchParams).forEach(([key, value]) => {
+                if (value !== '' && value !== null && value !== undefined) {
+                    queryParams.append(key, value);
+                }
+            });
+            
+            const response = await fetch(`/api/noncur?${queryParams}`);
+
+            if (!response.ok) {
+                throw new Error('데이터를 불러오는데 실패했습니다.');
+            }
+            
+            const data = await response.json();
+            
+            // 디버깅: 백엔드 응답 확인
+            console.log('백엔드 응답:', data);
+            
+            // 백엔드 응답 구조에 맞게 수정
+            if (data.content && data.pagination) {
+                setPrograms(data.content);
+                console.log('페이지네이션 정보:', data.pagination);
+                setPagination({
+                    totalElements: data.pagination.totalElements,
+                    totalPages: data.pagination.totalPages,
+                    currentPage: data.pagination.page,
+                    size: data.pagination.size,
+                    hasNext: data.pagination.hasNext,
+                    hasPrevious: data.pagination.hasPrevious,
+                    isFirst: data.pagination.isFirst,
+                    isLast: data.pagination.isLast
+                });
+            } else if (Array.isArray(data)) {
+                // 이전 형태: 배열만 오는 경우 (페이지네이션 없음)
+                console.log('배열 형태 응답 감지 - 페이지네이션 정보 없음');
+                setPrograms(data);
+            } else {
+                // 혹시 다른 구조인 경우
+                console.log('알 수 없는 응답 구조:', data);
+                setPrograms(data || []);
+            }
+
+        } catch (err) {
+            setError(err.message);
+            console.error('프로그램 목록 조회 실패: ', err);
+        } finally {
+            setLoading(false);
+        }
+    }, [debouncedSearchParams]);
+
+    useEffect(() => {
+        fetchPrograms();
+    }, [fetchPrograms]);
+
+    // 초기 로딩
+    useEffect(() => {
+        setDebouncedSearchParams(searchParams);
+    }, []); // 컴포넌트 마운트 시 한 번만
+
+    // 페이지 변경 핸들러
+    const handlePageChange = (newPage) => {
+        if (newPage >= 0 && newPage < pagination.totalPages) {
+            setSearchParams(prev => ({
+                ...prev,
+                page: newPage
+            }));
+        }
+    };
+
+    // 날짜 포맷팅 함수
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            weekday: 'short'
+        }).replace(/\./g, '.').replace(/\s/g, '');
+    };
+
+    // D-day 계산 함수
+    const calculateDDay = (endDate) => {
+        if (!endDate) return '';
+        const today = new Date();
+        const end = new Date(endDate);
+        const diffTime = end.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 0) return '종료';
+        if (diffDays === 0) return 'D-Day';
+        return `D-${diffDays}`;
+    };
+
+    // 상태 텍스트 변환 (백엔드 NoncurConstants와 동일)
+    const getStatusText = (statusCode) => {
+        if (!statusCode) return '알 수 없음';
+        
+        const statusMap = {
+            '01': '모집중',      // RECRUITING
+            '02': '마감임박',    // DEADLINE_SOON
+            '03': '모집완료',    // RECRUITMENT_CLOSED
+            '04': '운영중',      // IN_PROGRESS
+            '05': '종료'        // COMPLETED
+        };
+        return statusMap[statusCode] || '알 수 없음';
+    };
+
+    // 상태별 스타일 클래스
+    const getStatusClass = (statusCode) => {
+        const classMap = {
+            '01': 'status-recruiting',
+            '02': 'status-deadline',
+            '03': 'status-closed',
+            '04': 'status-running',
+            '05': 'status-ended'
+        };
+        return classMap[statusCode] || 'status-default';
+    };
+
+    // 필터 변경 핸들러 (검색어는 즉시 검색하지 않음)
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        
+        if (name === 'keyword') {
+            // 검색어는 상태만 업데이트, 실제 검색은 Enter나 버튼으로
+            setSearchParams(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        } else {
+            // 필터는 즉시 적용
+            setSearchParams(prev => ({
+                ...prev,
+                [name]: value,
+                page: 0 // 필터 변경시 첫 페이지로
+            }));
+        }
+    };
+
+    // 검색 실행 핸들러
+    const handleSearch = () => {
+        setSearchParams(prev => ({
+            ...prev,
+            page: 0 // 검색시 첫 페이지로
+        }));
+    };
+
+    // Enter 키 핸들러
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
+    };
+
+    // 공유 기능
+    const handleShare = (program) => {
+        if (navigator.share) {
+            navigator.share({
+                title: program.prgNm,
+                text: program.prgDesc,
+                url: window.location.href
+            });
+        } else {
+            // fallback: 클립보드에 복사
+            navigator.clipboard.writeText(window.location.href);
+            alert('링크가 클립보드에 복사되었습니다.');
+        }
+    };
+
+    // 페이지네이션 버튼 렌더링 함수
+    const renderPaginationButtons = () => {
+        const buttons = [];
+        const { currentPage, totalPages } = pagination;
+        
+        // 이전 버튼
+        buttons.push(
+            <button 
+                key="prev"
+                className="pagination-btn" 
+                disabled={pagination.isFirst}
+                onClick={() => handlePageChange(currentPage - 1)}
+            >
+                이전
+            </button>
+        );
+
+        // 페이지 번호 버튼들
+        const startPage = Math.max(0, currentPage - 2);
+        const endPage = Math.min(totalPages - 1, currentPage + 2);
+
+        for (let i = startPage; i <= endPage; i++) {
+            buttons.push(
+                <button
+                    key={i}
+                    className={`pagination-btn ${i === currentPage ? 'active' : ''}`}
+                    onClick={() => handlePageChange(i)}
+                >
+                    {i + 1}
+                </button>
+            );
+        }
+
+        // 다음 버튼
+        buttons.push(
+            <button 
+                key="next"
+                className="pagination-btn" 
+                disabled={pagination.isLast}
+                onClick={() => handlePageChange(currentPage + 1)}
+            >
+                다음
+            </button>
+        );
+
+        return buttons;
+    };
+
+    if (loading) {
+        return (
+            <>
+                <Header />
+                <div className="container_layout">
+                    <Sidebar />
+                    <div className="noncur-list-page">
+                        <div className="loading">로딩 중...</div>
+                    </div>
+                </div>
+                <Footer />
+            </>
+        );
+    }
+
+    if (error) {
+        return (
+            <>
+                <Header />
+                <div className="container_layout">
+                    <Sidebar />
+                    <div className="noncur-list-page">
+                        <div className="error">오류: {error}</div>
+                    </div>
+                </div>
+                <Footer />
+            </>
+        );
+    }
+
     return (
         <>
             <Header />
             <div className="container_layout">
-
                 <Sidebar />
                 <div className="noncur-list-page">
-
                     <h4>비교과 프로그램</h4>
-                    <select id='program_filter' className='noncur-select'>
-                        <option value="all">전체</option>
-                        <option value="program1">프로그램 분류 1</option>
-                        <option value="program2">프로그램 분류 2</option>
-                        <option value="program3">프로그램 분류 3</option>
-                        <option value="program4">프로그램 분류 4</option>
-                    </select>
-                    <div className='noncur-list '>
-                        <span class="material-symbols-outlined slider L">
-                            chevron_left
-                        </span>
-                        <span class="material-symbols-outlined slider R">
-                            chevron_right
-                        </span>
-                        <div className='noncur-item'>
-                            <div className='topWrap'>
-                                <img src="data:image/jpeg;base64,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"
-                                    alt="프로그램 이미지" className='noncur-image' />
-                                <div className='dayWrap'>
-
-                                    <span className='noncur-day'>D-1
-                                        <span className='noncur-point'>
-                                            <span className="material-symbols-outlined">paid</span>
-                                            100</span>
-                                    </span>
-                                    <button type='button' className='noncur-share'>
-                                        <span className="material-symbols-outlined">share</span>
-                                    </button>
-                                </div>
-
-                            </div>
-                            <div className='bottomWrap'>
-                                <span className='noncur-title'>프로그램 제목 1</span>
-                                <span className='noncur-subtitle'>프로그램 부제목 1</span>
-                                <span className='noncur-date'>2025.06.09(월) ~ 2025.06.10(화)</span>
-                            </div>
+                    
+                    {/* 검색 및 필터 */}
+                    <div className="filter-section">
+                        <div className="search-wrapper">
+                            <input
+                                type="text"
+                                name="keyword"
+                                placeholder="프로그램 검색..."
+                                value={searchParams.keyword}
+                                onChange={handleFilterChange}
+                                onKeyPress={handleKeyPress}
+                                className="search-input"
+                            />
+                            <button 
+                                type="button" 
+                                onClick={handleSearch}
+                                className="search-btn"
+                            >
+                                검색
+                            </button>
                         </div>
-                        <div className='noncur-item'>
-                            <div className='topWrap'>
-                                <img src="data:image/jpeg;base64,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"
-                                    alt="프로그램 이미지" className='noncur-image' />
-                                <div className='dayWrap'>
-
-                                    <span className='noncur-day'>D-1
-                                        <span className='noncur-point'>
-                                            <span className="material-symbols-outlined">paid</span>
-                                            100</span>
-                                    </span>
-                                    <button type='button' className='noncur-share'>
-                                        <span className="material-symbols-outlined">share</span>
-                                    </button>
-                                </div>
-
-                            </div>
-                            <div className='bottomWrap'>
-                                <span className='noncur-title'>프로그램 제목 1</span>
-                                <span className='noncur-subtitle'>프로그램 부제목 1</span>
-                                <span className='noncur-date'>2025.06.09(월) ~ 2025.06.10(화)</span>
-                            </div>
-                        </div>
-                        <div className='noncur-item'>
-                            <div className='topWrap'>
-                                <img src="data:image/jpeg;base64,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"
-                                    alt="프로그램 이미지" className='noncur-image' />
-                                <div className='dayWrap'>
-
-                                    <span className='noncur-day'>D-1
-                                        <span className='noncur-point'>
-                                            <span className="material-symbols-outlined">paid</span>
-                                            100</span>
-                                    </span>
-                                    <button type='button' className='noncur-share'>
-                                        <span className="material-symbols-outlined">share</span>
-                                    </button>
-                                </div>
-
-                            </div>
-                            <div className='bottomWrap'>
-                                <span className='noncur-title'>프로그램 제목 1</span>
-                                <span className='noncur-subtitle'>프로그램 부제목 1</span>
-                                <span className='noncur-date'>2025.06.09(월) ~ 2025.06.10(화)</span>
-                            </div>
-                        </div>
-                        <div className='noncur-item'>
-                            <div className='topWrap'>
-                                <img src="data:image/jpeg;base64,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"
-                                    alt="프로그램 이미지" className='noncur-image' />
-                                <div className='dayWrap'>
-
-                                    <span className='noncur-day'>D-1
-                                        <span className='noncur-point'>
-                                            <span className="material-symbols-outlined">paid</span>
-                                            100</span>
-                                    </span>
-                                    <button type='button' className='noncur-share'>
-                                        <span className="material-symbols-outlined">share</span>
-                                    </button>
-                                </div>
-
-                            </div>
-                            <div className='bottomWrap'>
-                                <span className='noncur-title'>프로그램 제목 1</span>
-                                <span className='noncur-subtitle'>프로그램 부제목 1</span>
-                                <span className='noncur-date'>2025.06.09(월) ~ 2025.06.10(화)</span>
-                            </div>
-                        </div>
+                        <select 
+                            id='program_filter' 
+                            name="searchStatusCode"
+                            className='noncur-select'
+                            value={searchParams.searchStatusCode}
+                            onChange={handleFilterChange}
+                        >
+                            <option value="">전체 상태</option>
+                            <option value="01">모집중</option>
+                            <option value="02">마감임박</option>
+                            <option value="03">모집완료</option>
+                            <option value="04">운영중</option>
+                            <option value="05">종료</option>
+                        </select>
                     </div>
-                    <div className='pageCircle'>
-                        <button type='button' className='circleButton' />
-                        <button type='button' className='circleButton' />
-                        <button type='button' className='circleButton' />
-                        <button type='button' className='circleButton' />
+
+                    {/* 검색 결과 수 표시 */}
+                    <div className="result-info">
+                        총 {pagination.totalElements}개의 프로그램이 있습니다. 
+                        ({pagination.currentPage + 1}/{pagination.totalPages} 페이지)
                     </div>
+
+                    <div className='noncur-list'>
+                        {programs.length === 0 ? (
+                            <div className="no-programs">등록된 프로그램이 없습니다.</div>
+                        ) : (
+                            programs.map((program) => (
+                                <div key={program.prgId} className='noncur-item'>
+                                    <div className='topWrap'>
+                                        <img 
+                                            src="/images/default-program.jpg"
+                                            alt={program.prgNm} 
+                                            className='noncur-image'
+                                            onError={(e) => {
+                                                e.target.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDIwMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik05MCA2MEw3MCA4MEg5MEg5MEwxMTAgODBMOTAgNjBaIiBmaWxsPSIjQ0REMUQzIi8+Cjwvc3ZnPg==";
+                                            }}
+                                        />
+                                        <div className='dayWrap'>
+                                            <span className={`noncur-day ${getStatusClass(program.prgStatCd)}`}>
+                                                {calculateDDay(program.prgEndDt)}
+                                                <span className='noncur-point'>
+                                                    <span className="material-symbols-outlined">paid</span>
+                                                    100
+                                                </span>
+                                            </span>
+                                            <button 
+                                                type='button' 
+                                                className='noncur-share'
+                                                onClick={() => handleShare(program)}
+                                            >
+                                                <span className="material-symbols-outlined">share</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className='bottomWrap'>
+                                        <span className='noncur-title'>{program.prgNm}</span>
+                                        <span className='noncur-subtitle'>
+                                            {program.prgDesc?.substring(0, 50)}
+                                            {program.prgDesc?.length > 50 ? '...' : ''}
+                                        </span>
+                                        <span className='noncur-date'>
+                                            {formatDate(program.prgStDt)} ~ {formatDate(program.prgEndDt)}
+                                        </span>
+                                        <span className='noncur-status'>
+                                            상태: {getStatusText(program.prgStatCd)} | 모집인원: {program.maxCnt}명
+                                        </span>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    
+                    {/* 동적 페이지네이션 */}
+                    {pagination.totalPages > 1 && (
+                        <div className='pageCircle'>
+                            {renderPaginationButtons()}
+                        </div>
+                    )}
                 </div>
             </div>
             <Footer />
         </>
     );
-}
+};
+
 export default NoncurricularListPage;
