@@ -73,7 +73,7 @@ public class OAuthController {
             // OAuth 처리 및 JWT 토큰 생성
             LoginResponse loginResponse = oAuthService.processOAuthCallback(provider.toUpperCase(), code);
             
-            // Access Token을 HttpOnly Cookie로 설정 (AuthController와 동일)
+            // Access Token을 HttpOnly Cookie로 설정
             if (loginResponse.getAccessToken() != null) {
                 Cookie accessCookie = new Cookie("accessToken", loginResponse.getAccessToken());
                 accessCookie.setHttpOnly(true);
@@ -84,7 +84,7 @@ public class OAuthController {
                 log.info("Access Token을 HttpOnly Cookie로 설정: provider = {}", provider);
             }
             
-            // Refresh Token을 HttpOnly Cookie로 설정 (AuthController와 동일)
+            // Refresh Token을 HttpOnly Cookie로 설정 
             if (loginResponse.getRefreshToken() != null) {
                 Cookie refreshCookie = new Cookie("refreshToken", loginResponse.getRefreshToken());
                 refreshCookie.setHttpOnly(true);
@@ -102,7 +102,7 @@ public class OAuthController {
             request.getSession().setAttribute("userId", loginResponse.getUserId());
             request.getSession().setAttribute("identifierNo", loginResponse.getIdentifierNo());
             
-            // 모든 OAuth 제공자를 팝업 콜백 페이지로 리디렉션 (통일)
+            // 모든 OAuth 제공자를 팝업 콜백 페이지로 리디렉션 
             response.sendRedirect("http://localhost:5173/auth/callback?success=true");
             
         } catch (Exception e) {
@@ -113,7 +113,7 @@ public class OAuthController {
             request.getSession().setAttribute("oauthError", e.getMessage());
             
             try {
-                // 모든 OAuth 제공자를 팝업 콜백 페이지로 에러 리디렉션 (통일)
+                // 모든 OAuth 제공자를 팝업 콜백 페이지로 에러 리디렉션 
                 response.sendRedirect("http://localhost:5173/auth/callback?success=false");
             } catch (IOException ioException) {
                 log.error("리다이렉트 실패: {}", ioException.getMessage());
@@ -121,7 +121,7 @@ public class OAuthController {
         }
     }
     
-    // OAuth 결과 조회 API (AuthController의 refresh와 유사한 패턴)
+    // OAuth 결과 조회 API 
     @PostMapping("/result")
     public ResponseEntity<?> getOAuthResult(HttpServletRequest request) {
         try {
@@ -140,7 +140,6 @@ public class OAuthController {
                 request.getSession().removeAttribute("userId");
                 request.getSession().removeAttribute("identifierNo");
                 
-                // AuthController의 login 응답과 동일한 형식으로 반환
                 Map<String, Object> result = new HashMap<>();
                 result.put("success", true);
                 result.put("userId", userId);
@@ -168,7 +167,7 @@ public class OAuthController {
         }
     }
     
-    // 수동 콜백 처리 (AJAX 방식) - AuthController 스타일
+    // 수동 콜백 처리 (AJAX 방식)
     @PostMapping("/{provider}/callback")
     public ResponseEntity<?> handleOAuthCallbackAjax(
             @PathVariable("provider") String provider,
@@ -180,7 +179,7 @@ public class OAuthController {
             
             LoginResponse loginResponse = oAuthService.processOAuthCallback(provider.toUpperCase(), code);
             
-            // Access Token을 HttpOnly Cookie로 설정 (AuthController와 동일)
+            // Access Token을 HttpOnly Cookie로 설정
             if (loginResponse.getAccessToken() != null) {
                 Cookie accessCookie = new Cookie("accessToken", loginResponse.getAccessToken());
                 accessCookie.setHttpOnly(true);
@@ -190,7 +189,7 @@ public class OAuthController {
                 response.addCookie(accessCookie);
             }
             
-            // Refresh Token을 HttpOnly Cookie로 설정 (AuthController와 동일)
+            // Refresh Token을 HttpOnly Cookie로 설정
             if (loginResponse.getRefreshToken() != null) {
                 Cookie refreshCookie = new Cookie("refreshToken", loginResponse.getRefreshToken());
                 refreshCookie.setHttpOnly(true);
@@ -200,7 +199,7 @@ public class OAuthController {
                 response.addCookie(refreshCookie);
             }
             
-            // 응답에서는 토큰들 제거하고 로그인 성공 정보만 반환 (AuthController와 동일)
+            // 응답에서는 토큰들 제거하고 로그인 성공 정보만 반환
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("success", true);
             responseData.put("userId", loginResponse.getUserId());
