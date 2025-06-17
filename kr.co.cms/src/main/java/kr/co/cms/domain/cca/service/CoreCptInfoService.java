@@ -1,15 +1,17 @@
 package kr.co.cms.domain.cca.service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.transaction.Transactional;
 import kr.co.cms.domain.cca.dto.CoreCptInfoDto;
 import kr.co.cms.domain.cca.dto.CoreCptSurveyDto;
+import kr.co.cms.domain.cca.dto.CoreCptSurveyDto.QuestionDto;
 import kr.co.cms.domain.cca.entity.CoreCptInfo;
 import kr.co.cms.domain.cca.entity.CoreCptQst;
 import kr.co.cms.domain.cca.repository.CoreCptInfoRepository;
@@ -23,47 +25,122 @@ public class CoreCptInfoService {
     private final CoreCptInfoRepository infoRepo;
     private final CoreCptQstRepository qstRepo;
 
+    /**
+     * 1) 새로운 설문 등록 (CORE_CPT_INFO + CORE_CPT_QST)
+     */
     @Transactional
     public void registerSurvey(CoreCptSurveyDto dto) {
-        // 1) CORE_CPT_INFO 저장
-        String cciId = UUID.randomUUID().toString()
-                           .replace("-", "")
-                           .substring(0, 20);
-
+        // 1) CoreCptInfo 엔티티 생성
         CoreCptInfo info = CoreCptInfo.builder()
-                .cciId(cciId)
-                .cciNm(dto.getTitle())
-                .categoryCd(dto.getCcaId())
-                .regUserId(dto.getRegUserId())
-                .regDt(LocalDateTime.now())
-                .visibleYn("Y")
-                .build();
+            .cciId(UUID.randomUUID().toString())
+            .cciNm(dto.getTitle())        // DTO 의 title
+            .categoryCd(dto.getCcaId())   // DTO 의 ccaId
+            .cciDesc(null)                // DTO 에 description 이 없으므로 필요하다면 DTO 에 추가하거나 null 처리
+            .regUserId(dto.getRegUserId())
+            .regDt(LocalDateTime.now())
+            .visibleYn("Y")
+            .build();
+
+        // 2) 저장
         infoRepo.save(info);
 
-        // 2) CORE_CPT_QST 저장 (foreign key: coreCptInfo)
-        for (CoreCptSurveyDto.QuestionDto q : dto.getQuestions()) {
-            CoreCptQst question = CoreCptQst.builder()
-                    .qstId(UUID.randomUUID().toString()
-                                 .replace("-", "")
-                                 .substring(0, 20))
-                    // <-- 여기!
+        // 3) 문항 매핑 & 저장
+        List<CoreCptQst> questions = dto.getQuestions().stream()
+        	    .map(q -> CoreCptQst.builder()
+        	        .qstId(UUID.randomUUID().toString().replace("-", "").substring(0, 20))
+        	        .coreCptInfo(info)
+        	        .qstCont(q.getContent())
+        	        .qstOrd(q.getOrder())
+        	        .regUserId(dto.getRegUserId())
+        	        .regDt(LocalDateTime.now())
+        	        .build()
+        	    ).collect(Collectors.toList());
+
+        	// 여기서 CoreCptQstRepository를 사용하세요!
+        	qstRepo.saveAll(questions);
+    }
+
+    public List<CoreCptInfoDto> getAll() {
+        return infoRepo.findAll().stream()
+            .map(entity -> {
+                CoreCptInfoDto dto = new CoreCptInfoDto();
+                dto.setCciId(entity.getCciId());
+                dto.setCciNm(entity.getCciNm());
+                dto.setCciDesc(entity.getCciDesc());
+                dto.setCategoryCd(entity.getCategoryCd());
+                dto.setRegDt(entity.getRegDt());    // ← 날짜 매핑 추가!
+                return dto;
+            })
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * 3) 특정 설문 상세(제목, 카테고리, 문항리스트) 조회
+     */
+    @Transactional(readOnly = true)
+    public CoreCptSurveyDto getSurveyDetail(String cciId) {
+        CoreCptInfo info = infoRepo.findById(cciId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 설문 ID: " + cciId));
+
+        CoreCptSurveyDto dto = new CoreCptSurveyDto();
+        dto.setTitle(info.getCciNm());
+        dto.setCcaId(info.getCategoryCd());
+        dto.setRegUserId(info.getRegUserId());
+        // 문항 정렬 후 매핑
+        List<QuestionDto> questions = info.getQuestions().stream()
+            .sorted(Comparator.comparing(CoreCptQst::getQstOrd))
+            .map(q -> {
+                QuestionDto qdto = new QuestionDto();
+                qdto.setOrder(q.getQstOrd());
+                qdto.setContent(q.getQstCont());
+                return qdto;
+            })
+            .collect(Collectors.toList());
+        dto.setQuestions(questions);
+
+        return dto;
+    }
+
+    /**
+     * 4) 설문 수정 (제목/카테고리/문항 전체 교체)
+     */
+    @Transactional
+    public void updateSurvey(String cciId, CoreCptSurveyDto dto) {
+        CoreCptInfo info = infoRepo.findById(cciId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 설문 ID: " + cciId));
+
+        // 1) 설문 정보 업데이트
+        info.setCciNm(dto.getTitle());
+        info.setCategoryCd(dto.getCcaId());
+        info.setRegUserId(dto.getRegUserId());
+        info.setRegDt(LocalDateTime.now());
+
+        // 2) 문항 전부 삭제 후 재생성 (orphanRemoval: true)
+        info.getQuestions().clear();
+
+        List<CoreCptQst> newQuestions = dto.getQuestions().stream()
+            .map(q -> CoreCptQst.builder()
+                    .qstId(UUID.randomUUID().toString().replace("-", "").substring(0, 20))
                     .coreCptInfo(info)
                     .qstCont(q.getContent())
                     .qstOrd(q.getOrder())
                     .regUserId(dto.getRegUserId())
                     .regDt(LocalDateTime.now())
-                    .build();
-            qstRepo.save(question);
-        }
+                    .build()
+            ).collect(Collectors.toList());
+        info.setQuestions(newQuestions);
+
+        infoRepo.save(info);
     }
-    public List<CoreCptInfoDto> getAll() {
-        return infoRepo.findAll().stream().map(entity -> {
-            CoreCptInfoDto dto = new CoreCptInfoDto();
-            dto.setCciId(entity.getCciId());
-            dto.setCciNm(entity.getCciNm());
-            dto.setCciDesc(entity.getCciDesc());
-            dto.setCategoryCd(entity.getCategoryCd());
-            return dto;
-        }).collect(Collectors.toList());
+
+    /**
+     * 5) 설문 삭제 (CORE_CPT_INFO + CORE_CPT_QST 모두 cascade 삭제)
+     */
+    @Transactional
+    public void deleteSurvey(String cciId) {
+        if (!infoRepo.existsById(cciId)) {
+            throw new IllegalArgumentException("삭제할 설문이 존재하지 않습니다. ID: " + cciId);
+        }
+        infoRepo.deleteById(cciId);
     }
 }

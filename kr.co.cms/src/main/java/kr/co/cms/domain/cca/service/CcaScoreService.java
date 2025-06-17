@@ -24,12 +24,12 @@ public class CcaScoreService {
     public List<CcaCompScoreDto> calculateScores(String stdNo, String cciId) {
         // 1) 답안 전체 조회 (메서드 이름 변경)
         List<CoreCptEval> evals = evalRepo
-            .findByStdNoAndCoreCptQst_CoreCptInfo_CciId(stdNo, cciId);
+            .findByStdNoAndQuestion_CoreCptInfo_CciId(stdNo, cciId);
 
-        // 2) 역량별 그룹핑
+        // 2) 역량별 그룹핑: CoreCptEval::getQuestion 으로 접근
         Map<String, List<CoreCptEval>> byComp = evals.stream()
             .collect(Collectors.groupingBy(e ->
-                e.getCoreCptQst()
+                e.getQuestion()
                  .getCoreCptInfo()
                  .getCategoryCd()
             ));

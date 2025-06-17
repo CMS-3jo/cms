@@ -39,6 +39,7 @@ public class CoreCptEval {
      * CoreCptQst 와의 다대일 연관관계 매핑
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "QST_ID", referencedColumnName = "QST_ID", nullable = false)
-    private CoreCptQst coreCptQst;
+    @JoinColumn(name = "QST_ID", nullable = false)
+    private CoreCptQst question;    //<— 이 이름이 mappedBy="question" 과 일치해야 합니다.
+
 }

@@ -11,7 +11,8 @@ import kr.co.cms.domain.cca.entity.CoreCptEval;
 public interface CoreCptEvalRepository extends JpaRepository<CoreCptEval, String> {
 
     /**
-     * stdNo, coreCptQst.coreCptInfo.cciId 로 답안 조회
+     * stdNo와 question.coreCptInfo.cciId로 답안 조회
      */
-    List<CoreCptEval> findByStdNoAndCoreCptQst_CoreCptInfo_CciId(String stdNo, String cciId);
+    List<CoreCptEval> findByStdNoAndQuestion_CoreCptInfo_CciId(String stdNo, String cciId);
+
 }

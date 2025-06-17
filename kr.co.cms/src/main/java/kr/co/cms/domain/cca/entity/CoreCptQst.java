@@ -1,6 +1,8 @@
 package kr.co.cms.domain.cca.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,9 +10,7 @@ import lombok.*;
 @Table(name = "CORE_CPT_QST")
 @Getter
 @Setter
-// JPA가 사용할 기본 생성자
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-// Builder가 생성자를 통해 객체를 만들 수 있도록 전체 필드 생성자
 @AllArgsConstructor
 @Builder
 public class CoreCptQst {
@@ -31,8 +31,15 @@ public class CoreCptQst {
     @Column(name = "REG_DT")
     private LocalDateTime regDt;
 
-    /** CORE_CPT_INFO 테이블의 CCI_ID 컬럼과 매핑 */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CCI_ID", nullable = false)
     private CoreCptInfo coreCptInfo;
+
+    // ★ 평가(CoreCptEval)와의 양방향 매핑 추가
+    @OneToMany(
+        mappedBy = "question",
+        cascade = CascadeType.REMOVE,
+        orphanRemoval = true
+    )
+    private List<CoreCptEval> evals = new ArrayList<>();
 }

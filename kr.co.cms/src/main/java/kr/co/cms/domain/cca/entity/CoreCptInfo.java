@@ -14,27 +14,28 @@ import lombok.*;
 public class CoreCptInfo {
 
     @Id
-    @Column(name = "CCI_ID", length = 20)
+    @Column(name = "CCI_ID", length = 36)
     private String cciId;
 
-    @Column(name = "CCI_NM", length = 100)
-    private String cciNm;
+    @Column(name = "CCI_NM", length = 200, nullable = false)
+    private String cciNm;            // 설문 제목
 
-    @Column(name = "CCI_DESC")
-    private String cciDesc;
+    @Column(name = "CATEGORY_CD", length = 20, nullable = false)
+    private String categoryCd;       // 학과 코드
 
-    @Column(name = "CATEGORY_CD")
-    private String categoryCd;
+    @Column(name = "CCI_DESC", length = 500)
+    private String cciDesc;          // 상세 설명 (옵션)
 
-    @Column(name = "REG_USER_ID")
-    private String regUserId;
+    @Column(name = "REG_USER_ID", length = 50, nullable = false)
+    private String regUserId;        // 작성자
 
-    @Column(name = "REG_DT")
-    private LocalDateTime regDt;
+    @Column(name = "REG_DT", nullable = false)
+    private LocalDateTime regDt;     // 등록일
 
-    @Column(name = "VISIBLE_YN", length = 1)
-    private String visibleYn;
+    @Column(name = "VISIBLE_YN", length = 1, nullable = false)
+    private String visibleYn;        // Y/N 플래그
 
     @OneToMany(mappedBy = "coreCptInfo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CoreCptQst> questions;
+
 }
