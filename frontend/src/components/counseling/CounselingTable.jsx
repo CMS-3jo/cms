@@ -19,7 +19,6 @@ const CounselingTable = ({ data = [], loading = false }) => {
             <tr>
               <th>현황</th>
               <th>상담자 이름</th>
-              <th>성별</th>
               <th>학번</th>
               <th>이메일</th>
               <th>연락처</th>
@@ -27,7 +26,7 @@ const CounselingTable = ({ data = [], loading = false }) => {
           </thead>
           <tbody>
             <tr>
-              <td style={{ textAlign: 'center' }} colSpan="6">로딩 중...</td>
+              <td style={{ textAlign: 'center' }} colSpan="5">로딩 중...</td>
             </tr>
           </tbody>
         </table>
@@ -41,7 +40,6 @@ const CounselingTable = ({ data = [], loading = false }) => {
         <colgroup>
           <col className="col1" style={{ width: '15%' }} />
           <col className="col2" style={{ width: '15%' }} />
-          <col className="col1" style={{ width: '8%' }} />
           <col className="col1" style={{ width: '17%' }} />
           <col className="col1" style={{ width: '25%' }} />
           <col className="col1" style={{ width: '20%' }} />
@@ -50,7 +48,6 @@ const CounselingTable = ({ data = [], loading = false }) => {
           <tr>
             <th>현황</th>
             <th>상담자 이름</th>
-            <th>성별</th>
             <th>학번</th>
             <th>이메일</th>
             <th>연락처</th>
@@ -59,7 +56,7 @@ const CounselingTable = ({ data = [], loading = false }) => {
         <tbody id="counselee_list">
           {data.length === 0 ? (
             <tr>
-              <td style={{ textAlign: 'center' }} colSpan="6">신청된 상담이 없습니다.</td>
+              <td style={{ textAlign: 'center' }} colSpan="5">신청된 상담이 없습니다.</td>
             </tr>
           ) : (
             data.map((counselee, index) => (
@@ -70,7 +67,6 @@ const CounselingTable = ({ data = [], loading = false }) => {
                   </div>
                 </td>
                 <td>{counselee.name}</td>
-                <td>{counselee.gender}</td>
                 <td>{counselee.studentId}</td>
                 <td>{counselee.email}</td>
                 <td>{counselee.phone}</td>

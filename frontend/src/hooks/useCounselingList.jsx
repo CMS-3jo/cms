@@ -1,6 +1,6 @@
 // src/hooks/useCounselingList.jsx
 import { useState, useCallback } from 'react';
-// import { counselingApi } from '../services/api';
+import { counselingApi } from '../services/api';
 
 export const useCounselingList = () => {
   const [counselingData, setCounselingData] = useState([]);
@@ -40,52 +40,25 @@ export const useCounselingList = () => {
     }
   ];
 
-  const fetchCounselingList = useCallback(async ({ 
-    page = 1, 
-    search = '', 
-    category = '모두보기', 
-    limit = 10 
+  const fetchCounselingList = useCallback(async ({
+    page = 1,
+    search = '',
+    category = '모두보기',
+    limit = 10
   } = {}) => {
     try {
       setLoading(true);
       setError(null);
 
-      // 임시로 1초 지연 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // 필터링 로직
-      let filteredData = mockData;
-      
-      if (category !== '모두보기') {
-        filteredData = mockData.filter(item => item.status === category);
-      }
-      
-      if (search) {
-        filteredData = filteredData.filter(item => 
-          item.name.toLowerCase().includes(search.toLowerCase())
-        );
-      }
-
-      // 페이지네이션 로직
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedData = filteredData.slice(startIndex, endIndex);
-
-      setCounselingData(paginatedData);
-      setTotalCount(filteredData.length);
-      setTotalPages(Math.ceil(filteredData.length / limit));
-
-      // 실제 API 호출 코드 (주석 처리)
-      /*
       const params = {
-        page,
-        limit,
+        page: page - 1, // 백엔드는 0부터 시작
+        size: limit,
         ...(search && { search }),
         ...(category !== '모두보기' && { status: category })
       };
 
       const response = await counselingApi.getCounselingList(params);
-      
+
       if (response.success) {
         setCounselingData(response.data.items);
         setTotalCount(response.data.totalCount);
@@ -93,7 +66,6 @@ export const useCounselingList = () => {
       } else {
         setError(new Error(response.message || '데이터를 불러오는데 실패했습니다.'));
       }
-      */
     } catch (err) {
       setError(err);
       console.error('Fetch counseling list error:', err);
@@ -105,34 +77,23 @@ export const useCounselingList = () => {
   const updateCounselingStatus = useCallback(async (id, status) => {
     try {
       setLoading(true);
-      
-      // 임시로 목 데이터 업데이트
-      const updatedData = counselingData.map(item => 
-        item.id === id ? { ...item, status } : item
-      );
-      setCounselingData(updatedData);
-      
-      return { success: true };
-      
-      // 실제 API 호출 코드 (주석 처리)
-      /*
+
       const response = await counselingApi.updateCounselingStatus(id, status);
-      
+
       if (response.success) {
-        await fetchCounselingList();
+        await fetchCounselingList(); // 갱신
         return { success: true };
       } else {
         setError(new Error(response.message || '상태 업데이트에 실패했습니다.'));
         return { success: false, error: response.message };
       }
-      */
     } catch (err) {
       setError(err);
       return { success: false, error: err.message };
     } finally {
       setLoading(false);
     }
-  }, [counselingData]);
+  }, [fetchCounselingList]);
 
   const deleteCounseling = useCallback(async (id) => {
     try {

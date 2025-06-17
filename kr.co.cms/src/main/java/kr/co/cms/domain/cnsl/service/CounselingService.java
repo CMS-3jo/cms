@@ -5,16 +5,23 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import kr.co.cms.domain.cnsl.dto.CounselingApplyRequest;
+import kr.co.cms.domain.cnsl.dto.CounselingListResponse;
+import kr.co.cms.domain.cnsl.dto.CounselingSearchCondition;
 import kr.co.cms.domain.cnsl.entity.CounselingApply;
 import kr.co.cms.domain.cnsl.repository.CounselingApplyRepository;
+import kr.co.cms.domain.cnsl.repository.CounselingRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class CounselingService {
+
+    private final CounselingRepository counselingRepository;
 
     private final CounselingApplyRepository counselingApplyRepository;
 
@@ -34,5 +41,9 @@ public class CounselingService {
 
         counselingApplyRepository.save(entity);
         return entity.getCnslAplyId();
+    }
+    
+    public Page<CounselingListResponse> getCounselingList(CounselingSearchCondition condition, Pageable pageable) {
+        return counselingRepository.findCounselingList(condition, pageable);
     }
 }
