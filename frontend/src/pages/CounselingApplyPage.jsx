@@ -5,6 +5,7 @@ import Footer from '../components/layout/Footer';
 import { useParams } from 'react-router-dom';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import { counselingApi } from '../services/api';
 
 const CounselingApplyPage = () => {
   const { parentCd } = useParams();
@@ -22,11 +23,16 @@ const CounselingApplyPage = () => {
   });
   
   useEffect(() => {
-    fetch('/api/common/codes?group=CNSL_TYPE_CD')
-      .then(res => res.json())
-      .then(data => {
-        const filtered = data.filter(c => c.desc === parentCd);
+    counselingApi.getCodes('CNSL_TYPE_CD')
+      .then((data) => {
+		console.log("parentCd 원형:", parentCd, typeof parentCd);
+        console.log("API 응답:", data);
+        const filtered = data.filter((c) => c.desc === parentCd);
+        console.log("필터링 결과:", filtered);
         setSubTypes(filtered);
+      })
+      .catch((err) => {
+        console.error('코드 목록 가져오기 실패', err);
       });
   }, [parentCd]);
   
