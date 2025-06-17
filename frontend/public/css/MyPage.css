@@ -6,10 +6,13 @@
   margin: 0;
   padding: 0;
   background-color: #f4f4f4;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100vh;
 }
 
 .mypage-container {
-  width: 85%;
   max-width: 1200px;
   margin: 40px auto;
   padding: 20px;
@@ -21,18 +24,18 @@
   z-index: 1;
 
   width: 100% !important;
-  margin-left: 0 !important;
+  margin: 100px auto !important;
   padding-left: 20px !important;
   min-height: calc(100vh - 52px - 18vh - 144px);
 }
 
 .container_layout .side_navbar {
-    display: none !important;
+  display: none !important;
 }
 
 .mypage-container.container_layout {
-    display: block !important;
-    position: static !important;
+  display: block !important;
+  position: static !important;
 }
 
 .profile-header {
@@ -89,7 +92,7 @@
 
 .modal-content {
   background-color: #fff;
-  margin: 15% auto;
+  margin: 50px auto;
   padding: 20px;
   border-radius: 8px;
   width: auto;
@@ -169,17 +172,17 @@
 }
 
 .side_area .shownav {
-    display: none !important;
+  display: none !important;
 }
 
 @media (max-width: 768px) {
-    .side_area .shownav {
-        display: flex !important;
-    }
+  .side_area .shownav {
+    display: flex !important;
+  }
 
-    .mypage-container {
-        width: 100% !important;
-        padding: 30px 12px !important;
-        margin: 0 !important;
-    }
+  .mypage-container {
+    width: 100% !important;
+    padding: 30px 12px !important;
+    margin: 0 !important;
+  }
 }
