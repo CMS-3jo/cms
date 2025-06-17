@@ -2,7 +2,7 @@
 .container_layout .side_navbar+section {
     width: calc(100vw - 235px);
     padding: 71px 20px 20px 0;
-    margin-left: 235px;
+    margin: auto;
 }
 
 .cca_reg {

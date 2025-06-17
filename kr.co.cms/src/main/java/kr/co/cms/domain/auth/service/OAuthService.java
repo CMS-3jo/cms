@@ -58,7 +58,7 @@ public class OAuthService {
     }
     
     /**
-     * OAuth 인증 URL 생성 - 수정된 버전
+     * OAuth 인증 URL 생성
      */
     public String generateAuthUrl(String provider) {
         switch (provider) {
@@ -68,7 +68,7 @@ public class OAuthService {
                     kakaoClientId, kakaoRedirectUri
                 );
             case "GOOGLE":
-                // URL 인코딩 수정 (%%20 → %20)
+                // URL 인코딩
                 return String.format(
                     "https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code&scope=openid profile email",
                     googleClientId, googleRedirectUri
@@ -100,7 +100,7 @@ public class OAuthService {
             SocialUserInfo userInfo = getUserInfo(provider, accessToken);
             log.info("사용자 정보 조회 성공: provider = {}, email = {}", provider, userInfo.getEmail());
             
-            // 3. 사용자 존재 여부 확인 (GuestSocialUserRepository 사용)
+            // 3. 사용자 존재 여부 확인
             Optional<GuestSocialUser> existingUser = guestSocialUserRepository
                 .findActiveUserByProviderAndProviderId(provider, userInfo.getProviderId());
             
@@ -136,20 +136,19 @@ public class OAuthService {
     }
     
     /**
-     * JWT 토큰 생성 (GuestSocialUser 기반)
+     * JWT 토큰 생성
      */
     private String generateJwtToken(GuestSocialUser user) {
         try {
-            // 기존 JwtUtil의 generateAccessToken 메서드 사용
             return jwtUtil.generateAccessToken(
                 user.getProviderId(),    // userId
-                "EXTERNAL",              // role - 교외 회원 역할
+                "GUEST",              // role - 교외 회원 역할
                 user.getDisplayName()    // name - displayName 사용
             );
         } catch (Exception e) {
             log.warn("JWT 토큰 생성 방식 조정: {}", e.getMessage());
             // 기본 메서드 사용
-            return jwtUtil.generateAccessToken(user.getProviderId(), "EXTERNAL");
+            return jwtUtil.generateAccessToken(user.getProviderId(), "GUEST");
         }
     }
     
@@ -166,12 +165,11 @@ public class OAuthService {
     }
     
     /**
-     * LoginResponse 생성 - 기존 LoginResponse 구조에 맞춤
+     * LoginResponse 생성
      */
     private LoginResponse createLoginResponse(String jwtToken, String refreshToken, 
                                             GuestSocialUser user, boolean isNewUser) {
         try {
-            // 기존 LoginResponse 생성자 사용 (이름, 학번/사번 포함)
             String message = isNewUser ? "신규 OAuth 회원가입 및 로그인 성공" : "OAuth 로그인 성공";
             
             return new LoginResponse(
@@ -381,7 +379,7 @@ public class OAuthService {
     }
     
     /**
-     * 신규 OAuth 사용자 생성 - 데이터베이스 스키마에 맞춰 수정
+     * 신규 OAuth 사용자 생성
      */
     private GuestSocialUser createNewOAuthUser(String provider, SocialUserInfo userInfo) {
         GuestSocialUser newUser = GuestSocialUser.builder()
@@ -391,14 +389,14 @@ public class OAuthService {
             .displayName(userInfo.getName())  // name -> displayName 매핑
             .profileImageUrl(userInfo.getProfileImageUrl())
             .accountStatus("ACTIVE")
-            .createdDate(LocalDateTime.now())  // createdAt -> createdDate
+            .createdDate(LocalDateTime.now())
             .build();
             
         return guestSocialUserRepository.save(newUser);
     }
     
     /**
-     * 기존 사용자 정보 업데이트 - 데이터베이스 스키마에 맞춰 수정
+     * 기존 사용자 정보 업데이트
      */
     private void updateUserInfo(GuestSocialUser user, SocialUserInfo userInfo) {
         boolean updated = false;
