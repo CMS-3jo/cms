@@ -27,9 +27,11 @@ const LoginForm = () => {
         userType
       }
       
-      await login(loginData)
+      const result = await login(loginData)
+      console.log('일반 로그인 성공:', result)
       navigate('/') // 로그인 성공시 메인으로 이동
     } catch (err) {
+      console.error('일반 로그인 실패:', err)
       setError(err.message || '로그인에 실패했습니다.')
     } finally {
       setIsLoading(false)
