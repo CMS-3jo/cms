@@ -81,9 +81,9 @@ function App() {
               path="/center-intro/location"
               element={<CenterIntroPage activeTab="location" />}
             />
-            <Route path="/noncur/list" element={<NoncurricularListPage />} />
-            <Route path="/noncur/view" element={<NoncurricularViewPage />} />
-            <Route path="/noncur/reg" element={<NoncurricularRegisterPage />} />
+            <Route path="/noncur" element={<NoncurricularListPage />} />
+            <Route path="/noncur/:prgId" element={<NoncurricularViewPage />} />
+            <Route path="/noncur/register" element={<NoncurricularRegisterPage />} />
 
             {/* 심리상담 관련 페이지들 */}
             <Route

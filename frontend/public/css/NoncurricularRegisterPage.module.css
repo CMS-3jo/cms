@@ -1,0 +1,161 @@
+/* NoncurricularRegisterPage.module.css */
+
+.wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    min-height: 100vh;
+}
+
+.formContainer {
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.title {
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+}
+
+.formGrid {
+    display: grid;
+    gap: 25px;
+}
+
+.section {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.sectionTitle {
+    color: #495057;
+    margin-bottom: 20px;
+}
+
+.gridTwoColumns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.gridThreeColumns {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+}
+
+.label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.input, .textarea, .select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box; /* 패딩과 테두리를 너비에 포함 */
+}
+
+.textarea {
+    resize: vertical;
+}
+
+.marginTop20 {
+    margin-top: 20px;
+}
+
+/* 마일리지 섹션 특별 스타일 */
+.mileageSection {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+}
+
+.mileageTitle {
+    color: #856404;
+}
+
+.mileageGrid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 20px;
+    align-items: center;
+}
+
+.mileageInfo {
+    color: #856404;
+    font-size: 14px;
+    font-style: italic;
+}
+
+/* 핵심역량 섹션 */
+.competencyGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.competencyItem {
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: 2px solid #dee2e6;
+    background-color: #fff;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.competencyItem.selected {
+    border-color: #007bff;
+    background-color: #007bff;
+    color: white;
+}
+
+/* 첨부파일 */
+.fileList {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+/* 등록 버튼 */
+.submitContainer {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.submitButton {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-width: 150px;
+}
+
+.submitButton:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.mainContentContainer {
+  display: flex; /* Sidebar와 formContainer를 가로로 배치 */
+  margin-top: 0; /* 헤더의 높이만큼 상단 여백 추가! */
+}
