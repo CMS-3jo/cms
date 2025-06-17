@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import kr.co.cms.domain.cca.dto.CoreCptInfoDto;
 import kr.co.cms.domain.cca.dto.CoreCptSurveyDto;
 import kr.co.cms.domain.cca.entity.CoreCptInfo;
@@ -22,29 +23,36 @@ public class CoreCptInfoService {
     private final CoreCptInfoRepository infoRepo;
     private final CoreCptQstRepository qstRepo;
 
+    @Transactional
     public void registerSurvey(CoreCptSurveyDto dto) {
-        // 핵심역량 설문 info 등록
-        String cciId = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
+        // 1) CORE_CPT_INFO 저장
+        String cciId = UUID.randomUUID().toString()
+                           .replace("-", "")
+                           .substring(0, 20);
 
-        CoreCptInfo info = new CoreCptInfo();
-        info.setCciId(cciId);
-        info.setCciNm(dto.getTitle());
-        info.setCategoryCd(dto.getCcaId());
-        info.setRegUserId(dto.getRegUserId());
-        info.setRegDt(LocalDateTime.now());
-        info.setVisibleYn("Y");
-
+        CoreCptInfo info = CoreCptInfo.builder()
+                .cciId(cciId)
+                .cciNm(dto.getTitle())
+                .categoryCd(dto.getCcaId())
+                .regUserId(dto.getRegUserId())
+                .regDt(LocalDateTime.now())
+                .visibleYn("Y")
+                .build();
         infoRepo.save(info);
 
-        // 문항 등록
+        // 2) CORE_CPT_QST 저장 (foreign key: coreCptInfo)
         for (CoreCptSurveyDto.QuestionDto q : dto.getQuestions()) {
-            CoreCptQst question = new CoreCptQst();
-            question.setQstId(UUID.randomUUID().toString().replace("-", "").substring(0, 20));
-            question.setCciId(cciId);
-            question.setQstCont(q.getContent());
-            question.setQstOrd(q.getOrder());
-            question.setRegUserId(dto.getRegUserId());
-            question.setRegDt(LocalDateTime.now());
+            CoreCptQst question = CoreCptQst.builder()
+                    .qstId(UUID.randomUUID().toString()
+                                 .replace("-", "")
+                                 .substring(0, 20))
+                    // <-- 여기!
+                    .coreCptInfo(info)
+                    .qstCont(q.getContent())
+                    .qstOrd(q.getOrder())
+                    .regUserId(dto.getRegUserId())
+                    .regDt(LocalDateTime.now())
+                    .build();
             qstRepo.save(question);
         }
     }

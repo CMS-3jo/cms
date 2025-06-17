@@ -66,11 +66,11 @@ public class SecurityConfig {
                 .requestMatchers("OPTIONS", "/**").permitAll()
             		
                 // 인증 없이 접근 가능
+                .requestMatchers("/api/dept/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/", "/login","/api/common/**").permitAll()
                 .requestMatchers("/api/noncur/**").permitAll() // 이 줄 추가!
                 .requestMatchers("/api/core-cpt/**").permitAll() // 이 줄 추가!
-                
                 // 권한별 접근 제어
                 .requestMatchers("/api/student/**","/cnsl/**").hasRole("STUDENT")
                 .requestMatchers("/api/counselor/**","/cnsl/**").hasRole("COUNSELOR")
