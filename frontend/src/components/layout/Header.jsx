@@ -1,7 +1,7 @@
 // src/components/layout/Header.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth.jsx';
+import { useAuth } from '../../hooks/useAuth'
 
 const Header = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);

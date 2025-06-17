@@ -55,8 +55,8 @@ public class AuthService {
         String accessToken = jwtUtil.generateAccessToken(
             user.getUserId(),              // USER_ID (로그인 ID)
             role,                          // 권한
-            userInfo.getUserName(),        // 이름 ⭐
-            userInfo.getIdentifierNo()     // 학번/사번 ⭐
+            userInfo.getUserName(),        // 이름
+            userInfo.getIdentifierNo()     // 학번/사번
         );
         
         String refreshToken = jwtUtil.generateRefreshToken(user.getUserId());
@@ -132,14 +132,12 @@ public class AuthService {
         // TODO: Refresh Token DB에서 삭제
     }
     
-    // 사용자 역할 조회 (임시 구현)
+    // 사용자 역할 조회 (토큰에서 조회)
     private String getUserRole(String userId) {
-        // 실제로는 USER_ROLES 테이블에서 조회해야 함
-        // 임시로 사용자 정보에서 추정
         UnifiedMyPageView userInfo = myPageRepository.findByUserId(userId).orElse(null);
         if (userInfo != null && userInfo.getUserType() != null) {
             return userInfo.getUserType();
         }
-        return "STUDENT"; // 기본값
+        return ""; 
     }
 }

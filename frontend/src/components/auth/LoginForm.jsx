@@ -12,32 +12,64 @@ const LoginForm = () => {
   const [error, setError] = useState('')
   
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, googleLogin, kakaoLogin, naverLogin } = useAuth()
 
+  // 일반 로그인 처리
   const handleSubmit = async (e) => {
-  e.preventDefault()
-  setError('')
-  setIsLoading(true)
+    e.preventDefault()
+    setError('')
+    setIsLoading(true)
 
-  try {
-    const loginData = {
-      id,
-      password,
-      userType
+    try {
+      const loginData = {
+        id,
+        password,
+        userType
+      }
+      
+      const result = await login(loginData)
+      console.log('일반 로그인 성공:', result)
+      navigate('/') // 로그인 성공시 메인으로 이동
+    } catch (err) {
+      console.error('일반 로그인 실패:', err)
+      setError(err.message || '로그인에 실패했습니다.')
+    } finally {
+      setIsLoading(false)
     }
-    
-    await login(loginData)
-    navigate('/') // 로그인 성공시 메인으로 이동
-  } catch (err) {
-    setError(err.message || '로그인에 실패했습니다.')
-  } finally {
-    setIsLoading(false)
   }
-}
 
-  const handleSocialLogin = (provider) => {
-    // TODO: 소셜 로그인은 나중에 구현
-    console.log(`${provider} 로그인`)
+  // 백엔드 OAuth 소셜 로그인 처리
+  const handleSocialLogin = async (provider) => {
+    setError('')
+    setIsLoading(true)
+
+    try {
+      let result;
+      
+      switch (provider) {
+        case 'kakao':
+          result = await kakaoLogin();
+          break;
+        case 'google':
+          result = await googleLogin();
+          break;
+        case 'naver':
+          result = await naverLogin();
+          break;
+        default:
+          throw new Error('지원하지 않는 로그인 방식입니다');
+      }
+
+      // 로그인 성공
+      console.log(`${provider} 로그인 성공:`, result);
+      navigate('/');
+      
+    } catch (err) {
+      console.error(`${provider} 로그인 실패:`, err);
+      setError(err.message || `${provider} 로그인에 실패했습니다.`);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const isExternal = userType === 'external'
@@ -83,6 +115,7 @@ const LoginForm = () => {
                   value="school"
                   checked={userType === 'school'}
                   onChange={(e) => setUserType(e.target.value)}
+                  disabled={isLoading}
                 />
                 <label htmlFor="schoolUser">
                   <span className="radio-circle"></span>
@@ -98,6 +131,7 @@ const LoginForm = () => {
                   value="external"
                   checked={userType === 'external'}
                   onChange={(e) => setUserType(e.target.value)}
+                  disabled={isLoading}
                 />
                 <label htmlFor="externalUser">
                   <span className="radio-circle"></span>
@@ -165,7 +199,11 @@ const LoginForm = () => {
                   disabled={isLoading}
                   title="카카오 로그인"
                 >
-                  <SiKakaotalk size={24} />
+                  {isLoading ? (
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  ) : (
+                    <SiKakaotalk size={24} />
+                  )}
                 </button>
                 
                 <button
@@ -174,7 +212,11 @@ const LoginForm = () => {
                   disabled={isLoading}
                   title="네이버 로그인"
                 >
-                  <SiNaver size={24} />
+                  {isLoading ? (
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  ) : (
+                    <SiNaver size={24} />
+                  )}
                 </button>
                 
                 <button
@@ -183,9 +225,20 @@ const LoginForm = () => {
                   disabled={isLoading}
                   title="구글 로그인"
                 >
-                  <FaGoogle size={20} />
+                  {isLoading ? (
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  ) : (
+                    <FaGoogle size={20} />
+                  )}
                 </button>
               </div>
+              
+              {/* 로딩 중일 때 메시지 */}
+              {isLoading && (
+                <p className="text-center text-muted mt-3 small">
+                  소셜 로그인 처리 중...
+                </p>
+              )}
             </div>
           )}
 

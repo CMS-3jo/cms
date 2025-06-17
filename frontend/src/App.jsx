@@ -40,6 +40,7 @@ import ChatModalRoute from "./pages/ChatModalRoute.jsx";
 
 //로그인 페이지
 import LoginPage from "./pages/LoginPage";
+import OAuthCallbackPage from './pages/OAuthCallbackPage.jsx';
 
 function App() {
   return (
@@ -56,6 +57,7 @@ function App() {
             
             {/* 로그인 페이지 */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/callback" element={<OAuthCallbackPage />} />
             
             {/* 퍼블릭 페이지들 */}
             <Route path="/cnsl/apply/:parentCd" element={<CounselingApplyPage />} />

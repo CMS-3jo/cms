@@ -10,63 +10,47 @@ export const useAuth = () => {
   return context;
 };
 
-// JWT 토큰 디코딩 함수
-const decodeToken = (token) => {
-  try {
-    const payload = token.split('.')[1];
-    const decoded = JSON.parse(atob(payload));
-    return decoded;
-  } catch (error) {
-    return null;
-  }
-};
-
-// 토큰 만료 확인 함수
-const isTokenExpired = (token) => {
-  const decoded = decodeToken(token);
-  if (!decoded) return true;
-  
-  const currentTime = Date.now() / 1000;
-  return decoded.exp < currentTime;
-};
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 토큰에서 사용자 정보 추출하여 상태 업데이트
-  const updateUserFromToken = (token) => {
-    const decoded = decodeToken(token);
-    if (decoded) {
-      setUser({
-        userId: decoded.sub,            // USER_ID (로그인 ID)
-        role: decoded.role,             // 권한
-        name: decoded.name || 'Unknown', // 이름
-        identifierNo: decoded.idNo || '' // 학번/사번
+  // 현재 사용자 정보 확인 (쿠키 기반)
+  const checkCurrentUser = async () => {
+    try {
+      const response = await fetch('http://localhost:8082/api/auth/me', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-    } else {
-      setUser(null);
-    }
-  };
 
-  // 페이지 로드 시 토큰 확인
-  useEffect(() => {
-    const initAuth = async () => {
-      const accessToken = localStorage.getItem('accessToken');
-      
-      if (accessToken && !isTokenExpired(accessToken)) {
-        // 토큰이 유효하면 토큰에서 사용자 정보 추출
-        updateUserFromToken(accessToken);
-      } else {
-        // 토큰이 없거나 만료되었으면 refresh 시도
-        const refreshed = await tryRefreshToken();
-        if (!refreshed) {
-          // refresh도 실패하면 로그아웃 처리
-          localStorage.removeItem('accessToken');
-          setUser(null);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUser({
+            userId: data.userId,
+            role: data.role,
+            name: data.name || 'Unknown',
+            identifierNo: data.identifierNo || ''
+          });
+          return true;
         }
       }
       
+      setUser(null);
+      return false;
+    } catch (error) {
+      console.log('Current user check failed:', error);
+      setUser(null);
+      return false;
+    }
+  };
+
+  // 페이지 로드 시 사용자 상태 확인
+  useEffect(() => {
+    const initAuth = async () => {
+      await checkCurrentUser();
       setLoading(false);
     };
 
@@ -78,7 +62,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await fetch('http://localhost:8082/api/auth/refresh', {
         method: 'POST',
-        credentials: 'include', // HttpOnly Cookie 전송
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -86,27 +70,30 @@ export const AuthProvider = ({ children }) => {
 
       if (response.ok) {
         const data = await response.json();
-        
-        // Access Token만 localStorage에 저장
-        localStorage.setItem('accessToken', data.accessToken);
-        
-        // 토큰에서 사용자 정보 추출하여 상태 업데이트
-        updateUserFromToken(data.accessToken);
-        
-        return true;
+        if (data.success) {
+          setUser({
+            userId: data.userId,
+            role: data.role,
+            name: data.name || 'Unknown',
+            identifierNo: data.identifierNo || ''
+          });
+          return true;
+        }
       }
     } catch (error) {
       console.log('Token refresh failed:', error);
     }
+    
+    setUser(null);
     return false;
   };
 
-  // 로그인 함수
+  // 일반 로그인 함수
   const login = async (loginData) => {
     try {
       const response = await fetch('http://localhost:8082/api/auth/login', {
         method: 'POST',
-        credentials: 'include', // HttpOnly Cookie 수신
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -120,77 +107,231 @@ export const AuthProvider = ({ children }) => {
 
       const data = await response.json();
       
-      // Access Token만 localStorage에 저장
-      localStorage.setItem('accessToken', data.accessToken);
-      
-      // 토큰에서 사용자 정보 추출하여 상태 업데이트
-      updateUserFromToken(data.accessToken);
-      
-      // Refresh Token은 서버에서 HttpOnly Cookie로 자동 설정됨
-      
-      return data;
+      if (data.success) {
+        setUser({
+          userId: data.userId,
+          role: data.role,
+          name: data.name || 'Unknown',
+          identifierNo: data.identifierNo || ''
+        });
+        return data;
+      } else {
+        throw new Error(data.message || '로그인에 실패했습니다.');
+      }
     } catch (error) {
       throw new Error(error.message || '로그인에 실패했습니다.');
     }
   };
 
+  // 통합 OAuth 로그인 함수
+  const oauthLogin = async (provider) => {
+    try {
+      console.log(`${provider} OAuth 로그인 시작`);
+      
+      const response = await fetch(`http://localhost:8082/api/auth/oauth/${provider}/url`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      console.log(`${provider} OAuth URL 응답 상태:`, response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`${provider} OAuth URL 요청 실패:`, response.status, errorText);
+        throw new Error(`OAuth URL 요청 실패: ${response.status} ${response.statusText}`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        console.error(`${provider} 예상과 다른 응답 타입:`, contentType, responseText);
+        throw new Error(`서버에서 잘못된 응답을 받았습니다. Content-Type: ${contentType}`);
+      }
+
+      const urlData = await response.json();
+      console.log(`${provider} OAuth URL 데이터:`, urlData);
+
+      if (!urlData.authUrl) {
+        throw new Error('OAuth URL이 응답에 포함되지 않았습니다');
+      }
+
+      // 팝업으로 OAuth 페이지 열기
+      const popup = window.open(
+        urlData.authUrl,
+        'oauth_popup',
+        'width=500,height=600,scrollbars=yes,resizable=yes'
+      );
+
+      if (!popup) {
+        throw new Error('팝업이 차단되었습니다. 팝업 차단을 해제해 주세요.');
+      }
+
+      return new Promise((resolve, reject) => {
+        let messageReceived = false;
+        let checkCount = 0;
+        const maxChecks = 300;
+        let intervalId = null;
+        
+        let cleanup = null;
+        let handlePopupClosed = null;
+        let handleTimeout = null;
+        
+        const messageHandler = (event) => {
+          if (event.origin !== window.location.origin) {
+            console.warn('잘못된 origin에서 메시지:', event.origin);
+            return;
+          }
+          
+          if (event.data.type === 'OAUTH_SUCCESS') {
+            messageReceived = true;
+            cleanup();
+            
+            // OAuth 성공 후 사용자 정보 새로고침
+            setTimeout(async () => {
+              const success = await checkCurrentUser();
+              if (success) {
+                console.log('소셜 로그인 성공 - 사용자 정보 업데이트 완료');
+                resolve({ success: true });
+              } else {
+                reject(new Error('사용자 정보를 가져올 수 없습니다'));
+              }
+            }, 500);
+          } else if (event.data.type === 'OAUTH_ERROR') {
+            messageReceived = true;
+            cleanup();
+            reject(new Error(event.data.error));
+          }
+        };
+
+        cleanup = () => {
+          window.removeEventListener('message', messageHandler);
+          if (intervalId) {
+            clearInterval(intervalId);
+          }
+          try {
+            if (popup && !popup.closed) {
+              popup.close();
+            }
+          } catch (error) {
+            console.warn('팝업 닫기 실패:', error);
+          }
+        };
+
+        handlePopupClosed = () => {
+          if (messageReceived) return;
+          
+          cleanup();
+          
+          // 팝업이 닫혔을 때 사용자 정보 확인
+          setTimeout(async () => {
+            const success = await checkCurrentUser();
+            if (success) {
+              resolve({ success: true });
+            } else {
+              reject(new Error('소셜 로그인이 취소되었습니다'));
+            }
+          }, 1000);
+        };
+        
+        handleTimeout = () => {
+          if (messageReceived) return;
+          cleanup();
+          reject(new Error('로그인 시간이 초과되었습니다'));
+        };
+
+        window.addEventListener('message', messageHandler);
+
+        intervalId = setInterval(() => {
+          checkCount++;
+          
+          try {
+            if (popup.closed) {
+              handlePopupClosed();
+              return;
+            }
+          } catch (error) {
+            console.warn('popup.closed 접근 실패:', error);
+            // COOP 에러 시에도 사용자 정보 체크
+            checkCurrentUser().then(success => {
+              if (success) {
+                messageReceived = true;
+                cleanup();
+                resolve({ success: true });
+              }
+            });
+          }
+          
+          if (checkCount >= maxChecks) {
+            handleTimeout();
+            return;
+          }
+        }, 1000);
+      });
+
+    } catch (error) {
+      console.error(`${provider} 로그인 실패:`, error);
+      throw error;
+    }
+  };
+
+  // 개별 소셜 로그인 함수들
+  const googleLogin = async () => {
+    return await oauthLogin('google');
+  };
+
+  const kakaoLogin = async () => {
+    return await oauthLogin('kakao');
+  };
+
+  const naverLogin = async () => {
+    return await oauthLogin('naver');
+  };
+
   // 로그아웃 함수
   const logout = async () => {
     try {
-      // 서버에 로그아웃 요청 (HttpOnly Cookie 삭제)
       await fetch('http://localhost:8082/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Content-Type': 'application/json',
         },
       });
     } catch (error) {
       console.log('Logout request failed:', error);
     }
     
-    // 클라이언트 저장소 정리
-    localStorage.removeItem('accessToken');
     setUser(null);
   };
 
-  // API 호출용 헬퍼 함수 (토큰 자동 갱신)
+  // API 호출용 헬퍼 함수 (쿠키 기반)
   const apiCall = async (url, options = {}) => {
-    let accessToken = localStorage.getItem('accessToken');
-    
-    // 토큰이 만료되었으면 refresh 시도
-    if (!accessToken || isTokenExpired(accessToken)) {
-      const refreshed = await tryRefreshToken();
-      if (!refreshed) {
-        logout();
-        throw new Error('Authentication required');
-      }
-      accessToken = localStorage.getItem('accessToken');
-    }
-    
     // 첫 번째 시도
     let response = await fetch(url, {
       ...options,
+      credentials: 'include',
       headers: {
+        'Content-Type': 'application/json',
         ...options.headers,
-        'Authorization': `Bearer ${accessToken}`,
       },
     });
 
-    // 401 에러면 토큰 갱신 후 재시도 (서버에서 토큰이 무효하다고 판단)
+    // 401 에러면 토큰 갱신 후 재시도
     if (response.status === 401) {
       const refreshed = await tryRefreshToken();
       if (refreshed) {
-        accessToken = localStorage.getItem('accessToken');
         response = await fetch(url, {
           ...options,
+          credentials: 'include',
           headers: {
+            'Content-Type': 'application/json',
             ...options.headers,
-            'Authorization': `Bearer ${accessToken}`,
           },
         });
       } else {
-        // 토큰 갱신 실패 시 로그아웃
         logout();
         throw new Error('Authentication required');
       }
@@ -203,8 +344,13 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     login,
+    oauthLogin,
+    googleLogin,
+    kakaoLogin,
+    naverLogin,
     logout,
-    apiCall, // 토큰 자동 갱신 기능 포함
+    apiCall,
+    checkCurrentUser,
     isLoggedIn: !!user,
     isAuthenticated: !!user
   };

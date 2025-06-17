@@ -9,7 +9,9 @@ import kr.co.cms.domain.auth.dto.UserResponse;
 import kr.co.cms.domain.auth.service.AuthService;
 import kr.co.cms.domain.auth.entity.User;
 import kr.co.cms.domain.auth.repository.UserRepository;
+import kr.co.cms.global.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,44 +21,77 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173")
+@Slf4j
 public class AuthController {
     
-	private final AuthService authService;
+    private final AuthService authService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
     
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletResponse response) {
         try {
+            log.info("일반 로그인 시도: userId = {}", request.getId());
+            
             LoginResponse loginResponse = authService.login(request);
             
+            // Access Token을 HttpOnly Cookie로 설정
+            if (loginResponse.getAccessToken() != null) {
+                Cookie accessCookie = new Cookie("accessToken", loginResponse.getAccessToken());
+                accessCookie.setHttpOnly(true);        // JavaScript 접근 차단
+                accessCookie.setSecure(false);         // 개발환경에서는 false (운영에서는 true)
+                accessCookie.setPath("/");
+                accessCookie.setMaxAge(24 * 60 * 60);  // 24시간
+                response.addCookie(accessCookie);
+                log.info("Access Token을 HttpOnly Cookie로 설정: userId = {}", request.getId());
+            }
+            
             // Refresh Token을 HttpOnly Cookie로 설정
-            Cookie refreshCookie = new Cookie("refreshToken", loginResponse.getRefreshToken());
-            refreshCookie.setHttpOnly(true);        // JavaScript 접근 차단
-            refreshCookie.setSecure(false);         // 개발환경에서는 false (운영에서는 true)
-            refreshCookie.setPath("/");
-            refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
-            response.addCookie(refreshCookie);
+            if (loginResponse.getRefreshToken() != null) {
+                Cookie refreshCookie = new Cookie("refreshToken", loginResponse.getRefreshToken());
+                refreshCookie.setHttpOnly(true);        // JavaScript 접근 차단
+                refreshCookie.setSecure(false);         // 개발환경에서는 false (운영에서는 true)
+                refreshCookie.setPath("/");
+                refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
+                response.addCookie(refreshCookie);
+                log.info("Refresh Token을 HttpOnly Cookie로 설정: userId = {}", request.getId());
+            }
             
-            // 응답에서는 refreshToken 제거 (accessToken만 반환)
-            loginResponse.setRefreshToken(null);
+            // 응답에서는 토큰들 제거하고 로그인 성공 정보만 반환
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("success", true);
+            responseData.put("userId", loginResponse.getUserId());
+            responseData.put("role", loginResponse.getRole());
+            responseData.put("name", loginResponse.getName());
+            responseData.put("identifierNo", loginResponse.getIdentifierNo());
+            responseData.put("message", loginResponse.getMessage());
             
-            return ResponseEntity.ok(loginResponse);
+            log.info("일반 로그인 성공: userId = {}, name = {}, role = {}", 
+                    loginResponse.getUserId(), loginResponse.getName(), loginResponse.getRole());
+            
+            return ResponseEntity.ok(responseData);
+            
         } catch (Exception e) {
+            log.error("일반 로그인 실패: userId = {}, error = {}", request.getId(), e.getMessage());
             return ResponseEntity.badRequest().body("로그인 실패: " + e.getMessage());
         }
     }
 
     @PostMapping("/refresh")  
-    public ResponseEntity<?> refresh(HttpServletRequest request) {
+    public ResponseEntity<?> refresh(HttpServletRequest request, HttpServletResponse response) {
         try {
+            log.info("토큰 갱신 요청");
+            
             // HttpOnly Cookie에서 refreshToken 추출
             String refreshToken = null;
             if (request.getCookies() != null) {
@@ -69,31 +104,126 @@ public class AuthController {
             }
             
             if (refreshToken == null) {
+                log.warn("Refresh Token이 Cookie에서 발견되지 않음");
                 return ResponseEntity.badRequest().body("Refresh token not found");
             }
             
             RefreshRequest refreshRequest = new RefreshRequest();
             refreshRequest.setRefreshToken(refreshToken);
             
-            LoginResponse response = authService.refreshToken(refreshRequest);
-            return ResponseEntity.ok(response);
+            LoginResponse loginResponse = authService.refreshToken(refreshRequest);
+            
+            // 갱신된 Access Token을 Cookie로 설정
+            if (loginResponse.getAccessToken() != null) {
+                Cookie accessCookie = new Cookie("accessToken", loginResponse.getAccessToken());
+                accessCookie.setHttpOnly(true);
+                accessCookie.setSecure(false);
+                accessCookie.setPath("/");
+                accessCookie.setMaxAge(24 * 60 * 60); // 24시간
+                response.addCookie(accessCookie);
+                log.info("갱신된 Access Token을 Cookie로 설정");
+            }
+            
+            // 응답에서는 토큰 제거하고 갱신 성공 정보만 반환
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("success", true);
+            responseData.put("userId", loginResponse.getUserId());
+            responseData.put("role", loginResponse.getRole());
+            responseData.put("name", loginResponse.getName());
+            responseData.put("identifierNo", loginResponse.getIdentifierNo());
+            responseData.put("message", "토큰 갱신 성공");
+            
+            log.info("토큰 갱신 성공: userId = {}", loginResponse.getUserId());
+            return ResponseEntity.ok(responseData);
+            
         } catch (Exception e) {
+            log.error("토큰 갱신 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().body("토큰 갱신 실패: " + e.getMessage());
         }
     }
     
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@AuthenticationPrincipal String userId) {
+    public ResponseEntity<?> logout(@AuthenticationPrincipal String userId, HttpServletResponse response) {
         try {
+            log.info("로그아웃 시도: userId = {}", userId);
+            
             authService.logout(userId);
-            return ResponseEntity.ok("로그아웃 성공");
+            
+            // Access Token 쿠키 삭제
+            Cookie accessCookie = new Cookie("accessToken", null);
+            accessCookie.setHttpOnly(true);
+            accessCookie.setSecure(false);
+            accessCookie.setPath("/");
+            accessCookie.setMaxAge(0); // 즉시 만료
+            response.addCookie(accessCookie);
+            
+            // Refresh Token 쿠키 삭제
+            Cookie refreshCookie = new Cookie("refreshToken", null);
+            refreshCookie.setHttpOnly(true);
+            refreshCookie.setSecure(false);
+            refreshCookie.setPath("/");
+            refreshCookie.setMaxAge(0); // 즉시 만료
+            response.addCookie(refreshCookie);
+            
+            log.info("로그아웃 성공 및 쿠키 삭제: userId = {}", userId);
+            
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("success", true);
+            responseData.put("message", "로그아웃 성공");
+            
+            return ResponseEntity.ok(responseData);
+            
         } catch (Exception e) {
+            log.error("로그아웃 실패: userId = {}, error = {}", userId, e.getMessage());
             return ResponseEntity.badRequest().body("로그아웃 실패: " + e.getMessage());
         }
     }
     
-    //
- // 사용자 생성
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
+        try {
+            // Cookie에서 accessToken 추출
+            String accessToken = null;
+            if (request.getCookies() != null) {
+                for (Cookie cookie : request.getCookies()) {
+                    if ("accessToken".equals(cookie.getName())) {
+                        accessToken = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+            
+            if (accessToken == null) {
+                return ResponseEntity.badRequest().body("로그인이 필요합니다");
+            }
+            
+            // JWT 토큰 검증 및 사용자 정보 추출
+            if (!jwtUtil.isValidToken(accessToken)) {
+                return ResponseEntity.badRequest().body("유효하지 않은 토큰입니다");
+            }
+            
+            String userId = jwtUtil.getUserId(accessToken);
+            String role = jwtUtil.getRole(accessToken);
+            String name = jwtUtil.getName(accessToken);
+            String identifierNo = jwtUtil.getIdentifierNo(accessToken);
+            
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("success", true);
+            responseData.put("userId", userId);
+            responseData.put("role", role);
+            responseData.put("name", name);
+            responseData.put("identifierNo", identifierNo);
+            responseData.put("message", "인증된 사용자");
+            
+            return ResponseEntity.ok(responseData);
+            
+        } catch (Exception e) {
+            log.error("사용자 정보 조회 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body("사용자 정보 조회 실패: " + e.getMessage());
+        }
+    }
+    
+    // 사용자 생성
     @PostMapping("/users")
     public ResponseEntity<?> createUser(@RequestBody CreateUserRequest request) {
         try {

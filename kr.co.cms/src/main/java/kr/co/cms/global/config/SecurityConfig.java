@@ -62,18 +62,22 @@ public class SecurityConfig {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authorizeHttpRequests(authz -> authz
+            	// OPTIONS 요청은 모두 허용 (Preflight)
+                .requestMatchers("OPTIONS", "/**").permitAll()
+            		
                 // 인증 없이 접근 가능
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/", "/login","/api/common/**").permitAll()
                 .requestMatchers("/api/noncur/**").permitAll() // 이 줄 추가!
-
+                .requestMatchers("/api/core-cpt/**").permitAll() // 이 줄 추가!
                 
                 // 권한별 접근 제어
                 .requestMatchers("/api/student/**","/cnsl/**").hasRole("STUDENT")
                 .requestMatchers("/api/counselor/**","/cnsl/**").hasRole("COUNSELOR")
                 .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                
+                .requestMatchers("/api/core-cpt/list", "/api/core-cpt/{cciId}/questions").permitAll()
+                .requestMatchers("/api/core-cpt/submit").hasRole("STUDENT")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
