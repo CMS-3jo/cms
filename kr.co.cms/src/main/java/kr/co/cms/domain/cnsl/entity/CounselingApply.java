@@ -27,7 +27,7 @@ public class CounselingApply {
     @Column(name = "STD_NO", nullable = false)
     private String stdNo;
 
-    @Column(name = "EMPL_NO")
+    @Column(name = "EMPL_NO", nullable = true)
     private String emplNo; // 상담사 배정 전엔 null
 
     @Column(name = "APLY_DTTM")
@@ -41,9 +41,6 @@ public class CounselingApply {
 
     @Column(name = "STAT_CD")
     private String statCd;
-
-    @Column(name = "APPLY_EMAIL")
-    private String applyEmail;
 
     @Lob 
     @Column(name = "APPLY_CONTENT")

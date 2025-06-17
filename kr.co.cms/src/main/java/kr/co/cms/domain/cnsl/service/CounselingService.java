@@ -29,7 +29,6 @@ public class CounselingService {
                 LocalDate.parse(dto.getApplyDate()),
                 LocalTime.parse(dto.getApplyTime())
             ))
-            .applyEmail(dto.getApplyEmail())
             .applyContent(dto.getApplyContent())
             .build();
 
