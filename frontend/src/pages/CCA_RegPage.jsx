@@ -3,217 +3,193 @@ import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 
+import '../../public/css/CCARegPage.css';
+import '../../public/css/NoncurricularList.css';
+const COMPETENCIES = [
+  '의사소통',
+  '문제해결',
+  '자기관리',
+  '대인관계',
+  '글로벌역량',
+  '직업윤리 및 책임역량'
+];
+
 const CCARegPage = () => {
-    const [surveys, setSurveys] = useState([]); // 기존 설문들 (DB에서 가져올 수도 있음)
+  const [step, setStep] = useState(1);
 
-    const [surveyTitle, setSurveyTitle] = useState('');
-    const [selectedCCA, setSelectedCCA] = useState('');
-    const [questions, setQuestions] = useState([{ id: 1, content: '' }]);
+  // Step1
+  const [surveyTitle, setSurveyTitle] = useState('');
+  const [department, setDepartment] = useState('');
 
-    const [isEditMode, setIsEditMode] = useState(false);
-    const [editSurveyId, setEditSurveyId] = useState(null);
+  // Step2: 역량별 질문들
+  const [questionsByComp, setQuestionsByComp] = useState(
+    COMPETENCIES.reduce((acc, comp) => {
+      acc[comp] = [{ id: 1, content: '' }];
+      return acc;
+    }, {})
+  );
 
-    const handleAddQuestion = () => {
-        const newId = questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1;
-        setQuestions([...questions, { id: newId, content: '' }]);
+  const handleAddQuestion = (comp) => {
+    setQuestionsByComp(prev => {
+      const list = prev[comp];
+      const newId = list.length + 1;
+      return { ...prev, [comp]: [...list, { id: newId, content: '' }] };
+    });
+  };
+
+  const handleQuestionChange = (comp, id, value) => {
+    setQuestionsByComp(prev => ({
+      ...prev,
+      [comp]: prev[comp].map(q => q.id === id ? { ...q, content: value } : q)
+    }));
+  };
+
+  const handleDeleteQuestion = (comp, id) => {
+    setQuestionsByComp(prev => ({
+      ...prev,
+      [comp]: prev[comp].filter(q => q.id !== id)
+    }));
+  };
+
+  const handleNext = () => {
+    if (!surveyTitle.trim() || !department) {
+      alert('제목과 학과를 모두 입력해주세요.');
+      return;
+    }
+    setStep(2);
+  };
+
+  const handlePrev = () => setStep(1);
+
+  const handleSubmit = async () => {
+    // 유효성: 최소 하나라도 비어있으면 막기
+    for (let comp of COMPETENCIES) {
+      if (questionsByComp[comp].some(q => !q.content.trim())) {
+        alert(`${comp} 문항을 모두 입력해주세요.`);
+        return;
+      }
+    }
+
+    const payload = {
+      title: surveyTitle,
+      department,
+      questions: COMPETENCIES.flatMap(comp =>
+        questionsByComp[comp].map((q, idx) => ({
+          competency: comp,
+          order: idx + 1,
+          content: q.content
+        }))
+      ),
+      regUserId: 'admin001'  // 실제 로그인된 ID로 교체
     };
 
-    const handleQuestionChange = (id, value) => {
-        const updatedQuestions = questions.map(q =>
-            q.id === id ? { ...q, content: value } : q
-        );
-        setQuestions(updatedQuestions);
-    };
+    try {
+      const res = await fetch('http://localhost:8082/api/core-cpt/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        alert('설문이 성공적으로 등록되었습니다.');
+        window.location.reload();
+      } else {
+        alert('등록 실패: 서버 오류');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('네트워크 오류');
+    }
+  };
 
-    const handleDeleteQuestion = (id) => {
-        const updatedQuestions = questions.filter(q => q.id !== id);
-        setQuestions(updatedQuestions);
-    };
+  return (
+    <>
+      <Header />
+      <div className="cca-reg-container">
+        <Sidebar />
+        <div className="cca-reg-content">
 
-    const handleSubmit = () => {
-        if (isEditMode) {
-            // 수정모드 → 기존 설문 수정
-            const updatedSurveys = surveys.map(survey =>
-                survey.id === editSurveyId
-                    ? {
-                        ...survey,
-                        title: surveyTitle,
-                        cciId: selectedCCA,
-                        questions: [...questions]
-                    }
-                    : survey
-            );
-            setSurveys(updatedSurveys);
-            alert('설문이 수정되었습니다.');
-        } else {
-            // 새로 등록
-            const newSurvey = {
-                id: Date.now(), // 간단한 고유 ID
-                title: surveyTitle,
-                cciId: selectedCCA,
-                questions: [...questions],
-                regDate: new Date().toISOString().split('T')[0]
-            };
-            setSurveys([...surveys, newSurvey]);
-            alert('설문이 등록되었습니다.');
-        }
+          <h3>핵심역량 설문 등록</h3>
 
-        // 폼 초기화
-        resetForm();
-    };
-
-    const resetForm = () => {
-        setSurveyTitle('');
-        setSelectedCCA('');
-        setQuestions([{ id: 1, content: '' }]);
-        setIsEditMode(false);
-        setEditSurveyId(null);
-    };
-
-    const handleEditSurvey = (survey) => {
-        setSurveyTitle(survey.title);
-        setSelectedCCA(survey.cciId);
-        setQuestions(survey.questions);
-        setIsEditMode(true);
-        setEditSurveyId(survey.id);
-    };
-
-    const handleDeleteSurvey = (id) => {
-        if (window.confirm('정말 삭제하시겠습니까?')) {
-            const updatedSurveys = surveys.filter(survey => survey.id !== id);
-            setSurveys(updatedSurveys);
-        }
-    };
-
-    return (
-        <>
-            <Header />
-            <div className="container_layout">
-                <Sidebar />
-                <div className="noncur-list-page">
-
-                    <h4>기존 설문 목록</h4>
-                    {surveys.length === 0 ? (
-                        <p>등록된 설문이 없습니다.</p>
-                    ) : (
-                        <ul className='survey-list'>
-                            {surveys.map((survey) => (
-                                <li key={survey.id} style={{ marginBottom: '10px' }}>
-                                    <strong>{survey.title}</strong> ({survey.cciId}) - 등록일: {survey.regDate}{' '}
-                                    <button type='button'
-                                        className='edit-button'
-                                        onClick={() => handleEditSurvey(survey)}
-                                    >
-                                        수정
-                                    </button>
-                                    <button type='button'
-                                        className='delete-button'
-                                        onClick={() => handleDeleteSurvey(survey.id)}
-                                    >
-                                        삭제
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-
-                    <h4 style={{ marginTop: '30px' }}>
-                        {isEditMode ? '설문 수정' : '핵심역량 설문 등록'}
-                    </h4>
-
-                    {/* 설문 제목 */}
-                    <div className="form-group">
-                        <label htmlFor="survey_title">설문 제목</label>
-                        <input
-                            type="text"
-                            id="survey_title"
-                            className="noncur-search-input"
-                            placeholder="설문 제목을 입력하세요."
-                            value={surveyTitle}
-                            onChange={(e) => setSurveyTitle(e.target.value)}
-                        />
-                    </div>
-
-                    {/* 역량 선택 */}
-                    <div className="form-group">
-                        <label htmlFor="cci_id">핵심역량 선택</label>
-                        <select
-                            id="cci_id"
-                            className="noncur-select"
-                            value={selectedCCA}
-                            onChange={(e) => setSelectedCCA(e.target.value)}
-                        >
-                            <option value="">선택하세요</option>
-                            <option value="의사소통">의사소통</option>
-                            <option value="문제해결">문제해결</option>
-                            <option value="자기관리">자기관리</option>
-                            <option value="대인관계">대인관계</option>
-                            <option value="글로벌역량">글로벌역량</option>
-                            <option value="직업윤리">직업윤리</option>
-                        </select>
-                    </div>
-
-                    {/* 문항 리스트 */}
-                    <div className="survey-question-list">
-                        {questions.map((q) => (
-                            <div key={q.id} className="form-group" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                                <label style={{ marginRight: '10px', minWidth: '60px' }}>문항 {q.id}</label>
-                                <input
-                                    type="text"
-                                    className="noncur-search-input"
-                                    placeholder={`문항 ${q.id} 내용을 입력하세요.`}
-                                    value={q.content}
-                                    onChange={(e) =>
-                                        handleQuestionChange(q.id, e.target.value)
-                                    }
-                                    style={{ flex: 1 }}
-                                />
-                                <button
-                                    type="button"
-                                    style={{
-                                        marginLeft: '10px',
-                                        padding: '6px 10px',
-                                        backgroundColor: '#ff4d4f',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
-                                    }}
-                                    onClick={() => handleDeleteQuestion(q.id)}
-                                >
-                                    삭제
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* 문항 추가 버튼 */}
-                    <div className="form-group">
-                        <button
-                            type="button"
-                            className="cca-list-item-button"
-                            onClick={handleAddQuestion}
-                        >
-                            문항 추가하기
-                        </button>
-                    </div>
-
-                    {/* 설문 등록/수정 버튼 */}
-                    <div className="form-group">
-                        <button
-                            type="button"
-                            className="cca-list-item-button"
-                            onClick={handleSubmit}
-                        >
-                            {isEditMode ? '설문 수정 완료' : '설문 등록하기'}
-                        </button>
-                    </div>
-
-                </div>
+          {step === 1 && (
+            <div className="step step-1">
+              <h4>Step 1. 설문 기본정보</h4>
+              <div className="form-group">
+                <label>설문 제목</label>
+                <input
+                  type="text"
+                  value={surveyTitle}
+                  onChange={e => setSurveyTitle(e.target.value)}
+                  placeholder="설문 제목을 입력하세요"
+                />
+              </div>
+              <div className="form-group">
+                <label>학과 선택</label>
+                <select
+                  value={department}
+                  onChange={e => setDepartment(e.target.value)}
+                >
+                  <option value="">-- 학과 선택 --</option>
+                  <option value="컴퓨터공학과">컴퓨터공학과</option>
+                  <option value="경영학과">경영학과</option>
+                  <option value="심리학과">심리학과</option>
+                  {/* 필요시 추가 */}
+                </select>
+              </div>
+              <button className="btn-primary" onClick={handleNext}>
+                다음 단계
+              </button>
             </div>
-            <Footer />
-        </>
-    );
+          )}
+
+          {step === 2 && (
+            <div className="step step-2">
+              <h4>Step 2. 역량별 문항 작성</h4>
+
+              {COMPETENCIES.map(comp => (
+                <div key={comp} className="comp-section">
+                  <h5>{comp}</h5>
+                  {questionsByComp[comp].map(q => (
+                    <div key={q.id} className="question-row">
+                      <label>문항 {q.id}</label>
+                      <input
+                        type="text"
+                        value={q.content}
+                        onChange={e => handleQuestionChange(comp, q.id, e.target.value)}
+                        placeholder={`"${comp}" 관련 문항을 입력하세요`}
+                      />
+                      <button
+                        className="btn-delete"
+                        onClick={() => handleDeleteQuestion(comp, q.id)}
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    className="btn-add"
+                    onClick={() => handleAddQuestion(comp)}
+                  >
+                    문항 추가
+                  </button>
+                </div>
+              ))}
+
+              <div className="step-nav">
+                <button className="btn-secondary" onClick={handlePrev}>
+                  이전
+                </button>
+                <button className="btn-primary" onClick={handleSubmit}>
+                  설문 등록하기
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+      <Footer />
+    </>
+  );
 };
 
 export default CCARegPage;
