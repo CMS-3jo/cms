@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import PublicHeader from '../components/layout/PublicHeader';
 import Footer from '../components/layout/Footer';
 import '../../public/css/MyPage.css';
@@ -6,31 +7,70 @@ import '../../public/css/MyPage.css';
 const MyPage = () => {
   const [activeModal, setActiveModal] = useState(null);
   const [detailContent, setDetailContent] = useState('');
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  
+  const { user, apiCall, checkCurrentUser } = useAuth();
 
-  const userInfo = {
-    name: "홍길동",
-    email: "hong@nate.com",
-    department: "컴퓨터공학",
-    counselingCount: 3,
-    phone: "010-1234-5678",
-    zipcode: "12345",
-    address1: "서울시 마포구 신촌로 176",
-    address2: "중앙빌딩 301호",
-    studentId: "2024001234", // 학번 추가
-    grade: "3학년" // 학년 추가
-  };
+  // 사용자 프로필 정보 조회
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        const response = await apiCall('http://localhost:8082/api/mypage/profile', {
+          method: 'GET',
+        });
 
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setUserProfile(result.data);
+          } else {
+            setError(result.message || '프로필 정보를 불러오는데 실패했습니다.');
+          }
+        } else {
+          setError('프로필 정보를 불러오는데 실패했습니다.');
+        }
+      } catch (err) {
+        console.error('프로필 조회 실패:', err);
+        setError('프로필 정보를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [user, apiCall]);
+
+  // 임시 상담 활동 데이터 (추후 API 연동)
   const activities = [
     { id: 1, date: "2025-06-10", type: "심리상담", status: "완료", detail: "스트레스 관리 상담을 진행했습니다.", counselor: "김상담사" },
     { id: 2, date: "2025-06-05", type: "학업상담", status: "완료", detail: "진로 계획에 대한 상담을 받았습니다.", counselor: "이상담사" },
     { id: 3, date: "2025-05-28", type: "진로상담", status: "완료", detail: "취업 준비 방향에 대해 논의했습니다.", counselor: "박상담사" }
   ];
 
+  // 임시 검사 기록 데이터 (추후 API 연동)
   const testRecords = [
     { id: 1, name: "심리상담 자가진단", date: "2025-06-08", score: 25, result: "보통" },
     { id: 2, name: "직업선호도 검사", date: "2025-06-01", score: 78, result: "우수" }
   ];
 
+  // 사용자 타입별 라벨 반환
+  const getUserTypeLabel = (userType) => {
+    switch (userType) {
+      case 'STUDENT': return '학생';
+      case 'PROFESSOR': return '교수';
+      case 'COUNSELOR': return '상담사';
+      case 'ADMIN': return '관리자';
+      case 'GUEST': return '게스트';
+      default: return '사용자';
+    }
+  };
+
+  // 모달 관련 함수들
   const openModal = (modalType) => {
     setActiveModal(modalType);
   };
@@ -112,37 +152,110 @@ const MyPage = () => {
     };
   }, [activeModal]);
 
+  // 로딩 상태
+  if (loading) {
+    return (
+      <div className="mypage-body">
+        <PublicHeader />
+        <main>
+          <div className="container_layout mypage-container">
+            <div className="loading-container">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="mt-3">프로필 정보를 불러오는 중...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // 에러 상태
+  if (error) {
+    return (
+      <div className="mypage-body">
+        <PublicHeader />
+        <main>
+          <div className="container_layout mypage-container">
+            <div className="alert alert-danger" role="alert">
+              <h4 className="alert-heading">오류 발생</h4>
+              <p>{error}</p>
+              <button 
+                className="btn btn-primary"
+                onClick={() => window.location.reload()}
+              >
+                다시 시도
+              </button>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // 프로필 정보가 없는 경우
+  if (!userProfile) {
+    return (
+      <div className="mypage-body">
+        <PublicHeader />
+        <main>
+          <div className="container_layout mypage-container">
+            <div className="alert alert-warning" role="alert">
+              프로필 정보를 찾을 수 없습니다.
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="mypage-body">
       <PublicHeader />
       
       <main>
         <div className="container_layout mypage-container">
-          {/* 프로필 헤더 개선 */}
+          {/* 프로필 헤더 - 실제 데이터 사용 */}
           <div className="profile-header-new">
             <div className="profile-avatar">
               <div className="avatar-circle">
-                <span className="avatar-text">{userInfo.name.charAt(0)}</span>
+                {userProfile.profileImageUrl ? (
+                  <img 
+                    src={userProfile.profileImageUrl} 
+                    alt="프로필 이미지"
+                    className="avatar-image"
+                  />
+                ) : (
+                  <span className="avatar-text">{userProfile.userName?.charAt(0) || 'U'}</span>
+                )}
               </div>
             </div>
             <div className="profile-info">
               <h1 className="profile-name">
-                {userInfo.name} <span className="profile-badge">학생</span>
+                {userProfile.userName || '이름 없음'} 
+                <span className="profile-badge">{getUserTypeLabel(userProfile.userType)}</span>
               </h1>
               <div className="profile-details">
                 <div className="profile-item">
                   <span className="profile-icon">🆔</span>
-                  <span>{userInfo.studentId}</span>
+                  <span>{userProfile.identifierNo || userProfile.userId}</span>
                 </div>
                 <div className="profile-item">
                   <span className="profile-icon">🎓</span>
-                  <span>{userInfo.department} {userInfo.grade}</span>
+                  <span>
+                    {userProfile.deptName || '소속 없음'}
+                    {userProfile.gradeYear && ` ${userProfile.gradeYear}학년`}
+                  </span>
                 </div>
               </div>
             </div>
             <div className="profile-stats">
               <div className="stat-card">
-                <div className="stat-number">{userInfo.counselingCount}</div>
+                <div className="stat-number">{activities.length}</div>
                 <div className="stat-label">총 상담 횟수</div>
               </div>
               <div className="stat-card">
@@ -214,20 +327,25 @@ const MyPage = () => {
                       <div className="info-grid">
                         <div className="info-item">
                           <span className="info-label">이름</span>
-                          <span className="info-value">{userInfo.name}</span>
+                          <span className="info-value">{userProfile.userName || '정보 없음'}</span>
                         </div>
                         <div className="info-item">
-                          <span className="info-label">학번</span>
-                          <span className="info-value">{userInfo.studentId}</span>
+                          <span className="info-label">
+                            {userProfile.userType === 'STUDENT' ? '학번' : '사번'}
+                          </span>
+                          <span className="info-value">{userProfile.identifierNo || '정보 없음'}</span>
                         </div>
                         <div className="info-item">
-                          <span className="info-label">학과</span>
-                          <span className="info-value">{userInfo.department}</span>
+                          <span className="info-label">소속</span>
+                          <span className="info-value">{userProfile.deptName || '정보 없음'}</span>
                         </div>
-                        <div className="info-item">
-                          <span className="info-label">학년</span>
-                          <span className="info-value">{userInfo.grade}</span>
-                        </div>
+                        {userProfile.userType === 'STUDENT' && userProfile.gradeYear && (
+                          <div className="info-item">
+                            <span className="info-label">학년</span>
+                            <span className="info-value">{userProfile.gradeYear}학년</span>
+                          </div>
+                        )}
+                        
                       </div>
                     </div>
                     
@@ -236,19 +354,94 @@ const MyPage = () => {
                       <div className="info-grid">
                         <div className="info-item">
                           <span className="info-label">이메일</span>
-                          <span className="info-value">{userInfo.email}</span>
+                          <span className="info-value">{userProfile.email || '정보 없음'}</span>
                         </div>
                         <div className="info-item">
                           <span className="info-label">전화번호</span>
-                          <span className="info-value">{userInfo.phone}</span>
+                          <span className="info-value">{userProfile.phoneNumber || '정보 없음'}</span>
                         </div>
-                        <div className="info-item full-width">
-                          <span className="info-label">주소</span>
-                          <span className="info-value">
-                            ({userInfo.zipcode}) {userInfo.address1}<br/>
-                            {userInfo.address2}
-                          </span>
+                        {(userProfile.postalCode || userProfile.address) && (
+                          <div className="info-item full-width">
+                            <span className="info-label">주소</span>
+                            <span className="info-value">
+                              {userProfile.postalCode && `(${userProfile.postalCode}) `}
+                              {userProfile.address || '정보 없음'}
+                              {userProfile.detailAddress && (
+                                <>
+                                  <br/>
+                                  {userProfile.detailAddress}
+                                </>
+                              )}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 게스트 사용자 추가 정보 */}
+                    {userProfile.userType === 'GUEST' && (
+                      <div className="info-card">
+                        <h3>소셜 로그인 정보</h3>
+                        <div className="info-grid">
+                          <div className="info-item">
+                            <span className="info-label">로그인 제공업체</span>
+                            <span className="info-value">{userProfile.provider || '정보 없음'}</span>
+                          </div>
+                          {userProfile.lastLoginDate && (
+                            <div className="info-item">
+                              <span className="info-label">마지막 로그인</span>
+                              <span className="info-value">
+                                {new Date(userProfile.lastLoginDate).toLocaleString('ko-KR')}
+                              </span>
+                            </div>
+                          )}
                         </div>
+                      </div>
+                    )}
+
+                    {/* 학생 추가 정보 */}
+                    {userProfile.userType === 'STUDENT' && (
+                      <div className="info-card">
+                        <h3>학적 정보</h3>
+                        <div className="info-grid">
+                          <div className="info-item">
+                            <span className="info-label">학과</span>
+                            <span className="info-value">{userProfile.deptName || '정보 없음'}</span>
+                          </div>
+                          {userProfile.gradeYear && (
+                            <div className="info-item">
+                              <span className="info-label">학년</span>
+                              <span className="info-value">{userProfile.gradeYear}학년</span>
+                            </div>
+                          )}
+                          {userProfile.enterDate && (
+                            <div className="info-item">
+                              <span className="info-label">입학일</span>
+                              <span className="info-value">
+                                {new Date(userProfile.enterDate).toLocaleDateString('ko-KR')}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 계정 정보 */}
+                    <div className="info-card">
+                      <h3>계정 정보</h3>
+                      <div className="info-grid">
+                        <div className="info-item">
+                          <span className="info-label">사용자 ID</span>
+                          <span className="info-value">{userProfile.userId}</span>
+                        </div>
+                        {userProfile.accountCreatedDate && (
+                          <div className="info-item">
+                            <span className="info-label">계정 생성일</span>
+                            <span className="info-value">
+                              {new Date(userProfile.accountCreatedDate).toLocaleDateString('ko-KR')}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
