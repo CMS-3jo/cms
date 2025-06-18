@@ -13,7 +13,7 @@ import {
 const CCAResultPage = () => {
     const { user, apiCall } = useAuth();
     const [data, setData] = useState([]);
-    const [summary, setSummary] = useState({ strengths: [], weaknesses: [], recommendations: [] });
+ const [summary, setSummary] = useState({ strengths: [], weaknesses: [], recommendations: [], latestDate: null });
 
     useEffect(() => {
         if (!user) return;
@@ -37,7 +37,7 @@ const CCAResultPage = () => {
                     map[s.competency] = { ...(map[s.competency] || { subject: s.competency }), all: s.score };
                 });
                 setData(Object.values(map));
-                setSummary({ strengths: dto.strengths, weaknesses: dto.weaknesses, recommendations: dto.recommendations });
+                setSummary({ strengths: dto.strengths, weaknesses: dto.weaknesses, recommendations: dto.recommendations, latestDate: dto.latestAnswerDate });
             } catch (e) {
                 console.error(e);
             }
@@ -55,7 +55,7 @@ const CCAResultPage = () => {
                     <h4>내 핵심역량 결과</h4>
 
                     <div className="result-meta">
-                        <p>최근 응시일자: -</p>
+                         <p>최근 응시일자: {summary.latestDate ? new Date(summary.latestDate).toLocaleDateString() : '-'}</p>
                     </div>
 
                     {/* 육각형 그래프 */}
