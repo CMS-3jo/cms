@@ -28,10 +28,12 @@ export const useNotices = () => {
     try {
       setLoading(true);
       
-      await noticeApi.createNotice(noticeData);
+       await noticeApi.createNotice({
+        ...noticeData,
+        regUserId: 'ADMIN001',
+      });
       await fetchNotices();
       
-      setNotices(prev => [newNotice, ...prev]);
       
       return { success: true };
     } catch (err) {

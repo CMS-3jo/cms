@@ -37,8 +37,10 @@ const NoticeListPage = () => {
             <table className="table">
               <thead>
                 <tr>
-                  <th>번호</th>
+                     <th>번호</th>
                   <th>제목</th>
+                  <th>작성자</th>
+                  <th>조회수</th>
                   <th>작성일</th>
                 </tr>
               </thead>
@@ -47,7 +49,9 @@ const NoticeListPage = () => {
                   <tr key={notice.id} style={{ cursor: 'pointer' }} onClick={() => handleRowClick(notice.id)}>
                     <td>{notices.length - index}</td>
                     <td>{notice.title}</td>
-                    <td>{notice.createdDate}</td>
+                    <td>{notice.regUserId}</td>
+                    <td>{notice.viewCnt}</td>
+                    <td>{notice.regDt}</td>
                   </tr>
                 ))}
               </tbody>

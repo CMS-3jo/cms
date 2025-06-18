@@ -31,8 +31,17 @@ const NoticeDetailPage = () => {
                 <th style={{ width: '20%' }}>제목</th>
                 <td>{notice.title}</td>
               </tr>
+                 <tr>
+                <th>작성자</th>
+                <td>{notice.regUserId}</td>
+              </tr>
+              <tr>
+                <th>조회수</th>
+                <td>{notice.viewCnt}</td>
+              </tr>
               <tr>
                 <th>작성일</th>
+                <td>{notice.regDt}</td>
                 <td>{notice.createdDate}</td>
               </tr>
               <tr>
