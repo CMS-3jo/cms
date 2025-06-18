@@ -5,28 +5,34 @@ import Footer from '../components/layout/Footer';
 import { useParams } from 'react-router-dom';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import { counselingApi } from '../services/api';
+import { useAuth } from '../hooks/useAuth';
+import { useUserProfile } from '../hooks/useUserProfile'; 
 
 const CounselingApplyPage = () => {
+  const { user } = useAuth();
+  const profile = useUserProfile();
   const { parentCd } = useParams();
   const [subTypes, setSubTypes] = useState([]);
   const [formData, setFormData] = useState({
-    parentCategory: parentCd,  // 대분류 (URL에서 받아옴, hidden 처리)
-    typeCd: '',                // 소분류 CD (ex: 'EMPLOY')
-    statCd: 'REQUESTED',       // 상태코드 기본값
-    applyMethod: '대면',       // 상담 방식
-    applyDate: '',             // 희망 일자
-    applyTime: '',             // 희망 시간
-    applyFile: null,           // 파일 (FormData로 전송)
-    applyEmail: '',            // 이메일
-    applyContent: ''           // 내용
+	parentCategory: parentCd,     // 대분류 코드
+	typeCd: '',                   // 소분류 코드
+	statCd: '15',
+	applyMethod: '대면',
+	applyDate: '',
+	applyTime: '',
+	applyEmail: '',
+	applyContent: ''         // 내용
   });
   
   useEffect(() => {
-    fetch('/api/common/codes?group=CNSL_TYPE_CD')
-      .then(res => res.json())
-      .then(data => {
-        const filtered = data.filter(c => c.desc === parentCd);
+    counselingApi.getCodes('CNSL_TYPE_CD')
+      .then((data) => {
+        const filtered = data.filter((c) => c.desc === parentCd);
         setSubTypes(filtered);
+      })
+      .catch((err) => {
+        console.error('코드 목록 가져오기 실패', err);
       });
   }, [parentCd]);
   
@@ -38,10 +44,33 @@ const CounselingApplyPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('상담 신청 데이터:', formData);
-    // 여기에 실제 제출 로직 구현
+
+    if (!user?.identifierNo) {
+      alert("로그인이 필요합니다");
+      return;
+    }
+
+    const payload = {
+      stdNo: user.identifierNo,
+      typeCd: formData.typeCd,
+      statCd: formData.statCd,
+      applyDate: formData.applyDate,
+      applyTime: formData.applyTime,
+      applyEmail: formData.applyEmail,
+      applyContent: formData.applyContent
+    };
+
+    try {
+      const result = await counselingApi.createCounselingApplication(payload);
+      alert("상담 신청이 완료되었습니다!");
+      console.log("신청 결과:", result);
+      // 이동 또는 초기화 처리 필요 시 여기에
+    } catch (err) {
+      console.error("상담 신청 에러:", err);
+      alert("신청 중 오류가 발생했습니다.");
+    }
   };
 
   return (
@@ -113,11 +142,11 @@ const CounselingApplyPage = () => {
                     <tr>
                       <td><label htmlFor="applyDepartment">학과</label></td>
                       <td>
-                        <input type="text" readOnly />
+                        <input type="text" value={profile?.deptName || ''} readOnly />
                       </td>
                       <td><label htmlFor="applyContact">연락처</label></td>
                       <td>
-                        <input type="text" readOnly />
+                        <input type="text" value={profile?.phoneNumber || ''} readOnly />
                       </td>
                     </tr>
                     <tr>
@@ -129,6 +158,7 @@ const CounselingApplyPage = () => {
                           name="applyDate" 
                           value={formData.applyDate}
                           onChange={handleInputChange}
+						  min={new Date().toISOString().split('T')[0]}
                           style={{ width: '100%' }} 
                           required 
                         />
@@ -164,7 +194,6 @@ const CounselingApplyPage = () => {
                           name="applyFile" 
                           onChange={handleInputChange}
                           style={{ width: '100%' }} 
-                          required 
                           multiple 
                         />
                       </td>
@@ -174,7 +203,7 @@ const CounselingApplyPage = () => {
                           type="email" 
                           id="applyEmail"
                           name="applyEmail"
-                          value={formData.applyEmail}
+                          value={profile?.email || ''}
                           onChange={handleInputChange}
                         />
                       </td>
