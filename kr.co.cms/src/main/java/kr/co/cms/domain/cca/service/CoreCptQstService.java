@@ -25,6 +25,7 @@ public class CoreCptQstService {
                 dto.setQstId(entity.getQstId());
                 dto.setQstCont(entity.getQstCont());
                 dto.setQstOrd(entity.getQstOrd());
+                dto.setCompetency(entity.getCategoryCd());
                 return dto;
             })
             .collect(Collectors.toList());

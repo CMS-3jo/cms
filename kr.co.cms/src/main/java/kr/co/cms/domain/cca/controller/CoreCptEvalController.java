@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import kr.co.cms.domain.cca.dto.CcaCompScoreDto;
+import kr.co.cms.domain.cca.dto.CcaScoreSummaryDto;
 import kr.co.cms.domain.cca.dto.CoreCptEvalRequestDto;
 import kr.co.cms.domain.cca.service.CcaScoreService;
 import kr.co.cms.domain.cca.service.CoreCptEvalService;
@@ -42,5 +43,17 @@ public class CoreCptEvalController {
 
         List<CcaCompScoreDto> scores = scoreService.calculateScores(stdNo, cciId);
         return ResponseEntity.ok(scores);
+    }
+
+    /**
+     * 학생 점수와 평균, 추천 정보를 포함하여 반환
+     * GET /api/core-cpt/{cciId}/summary?stdNo=학번
+     */
+    @GetMapping(value = "/{cciId}/summary", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CcaScoreSummaryDto> getScoreSummary(
+            @PathVariable("cciId") String cciId,
+            @RequestParam("stdNo") String stdNo) {
+        CcaScoreSummaryDto dto = scoreService.calculateScoreSummary(stdNo, cciId);
+        return ResponseEntity.ok(dto);
     }
 }

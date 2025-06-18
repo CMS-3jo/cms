@@ -45,15 +45,16 @@ public class CoreCptInfoService {
 
         // 3) 문항 매핑 & 저장
         List<CoreCptQst> questions = dto.getQuestions().stream()
-        	    .map(q -> CoreCptQst.builder()
-        	        .qstId(UUID.randomUUID().toString().replace("-", "").substring(0, 20))
-        	        .coreCptInfo(info)
-        	        .qstCont(q.getContent())
-        	        .qstOrd(q.getOrder())
-        	        .regUserId(dto.getRegUserId())
-        	        .regDt(LocalDateTime.now())
-        	        .build()
-        	    ).collect(Collectors.toList());
+                    .map(q -> CoreCptQst.builder()
+                        .qstId(UUID.randomUUID().toString().replace("-", "").substring(0, 20))
+                        .coreCptInfo(info)
+                        .qstCont(q.getContent())
+                        .categoryCd(q.getCompetency())
+                        .qstOrd(q.getOrder())
+                        .regUserId(dto.getRegUserId())
+                        .regDt(LocalDateTime.now())
+                        .build()
+                    ).collect(Collectors.toList());
 
         	// 여기서 CoreCptQstRepository를 사용하세요!
         	qstRepo.saveAll(questions);
@@ -95,8 +96,7 @@ public class CoreCptInfoService {
                 CoreCptSurveyDto.QuestionDto qdto = new CoreCptSurveyDto.QuestionDto();
                 qdto.setOrder(q.getQstOrd());
                 qdto.setContent(q.getQstCont());
-                // **여기서 competency**: CoreCptQst → CoreCptInfo.categoryCd
-                qdto.setCompetency(q.getCoreCptInfo().getCategoryCd());
+                qdto.setCompetency(q.getCategoryCd());
                 return qdto;
             })
             .collect(Collectors.toList());
@@ -127,6 +127,7 @@ public class CoreCptInfoService {
                     .qstId(UUID.randomUUID().toString().replace("-", "").substring(0, 20))
                     .coreCptInfo(info)
                     .qstCont(q.getContent())
+                    .categoryCd(q.getCompetency())
                     .qstOrd(q.getOrder())
                     .regUserId(dto.getRegUserId())
                     .regDt(LocalDateTime.now())
