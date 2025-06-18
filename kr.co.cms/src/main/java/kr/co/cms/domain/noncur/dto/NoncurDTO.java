@@ -5,6 +5,7 @@ import java.util.List;
 
 import lombok.Data;
 
+//리스트출력용
 @Data
 public class NoncurDTO {
     private String prgId;

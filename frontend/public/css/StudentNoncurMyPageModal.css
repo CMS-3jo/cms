@@ -1,0 +1,463 @@
+/* StudentNoncurMyPageModal.css */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-container {
+    background-color: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 1000px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* 헤더 */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+}
+
+.modal-title {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.5rem;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6c757d;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.close-button:hover {
+    background-color: #f8f9fa;
+    color: #dc3545;
+}
+
+/* 마일리지 요약 */
+.mileage-summary {
+    padding: 20px 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.mileage-summary-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mileage-title {
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+}
+
+.mileage-total {
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.mileage-stats {
+    text-align: right;
+}
+
+.mileage-stat-item {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* 탭 메뉴 */
+.tab-menu {
+    display: flex;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    background-color: transparent;
+    color: #6c757d;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.tab-button.active {
+    background-color: #007bff;
+    color: white;
+}
+
+/* 탭 컨텐츠 */
+.tab-content {
+    padding: 30px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.loading {
+    text-align: center;
+    padding: 50px;
+    color: #6c757d;
+}
+
+.section-title {
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 50px;
+    color: #6c757d;
+}
+
+/* 카드 레이아웃 */
+.card-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.card {
+    padding: 20px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+.card.completed {
+    background-color: #f0f9ff;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.card-title {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-01 { background-color: #fff3cd; color: #856404; }
+.status-02 { background-color: #d4edda; color: #155724; }
+.status-03 { background-color: #f8d7da; color: #721c24; }
+.status-04 { background-color: #e2e3e5; color: #383d41; }
+.status-05 { background-color: #cce5ff; color: #004085; }
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-date {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.cancel-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.completion-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.mileage-highlight {
+    color: #007bff;
+    font-weight: 600;
+}
+
+/* 마일리지 탭 스타일 */
+.mileage-status-card {
+    padding: 20px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.mileage-status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.mileage-status-title {
+    margin: 0;
+    color: #856404;
+    font-size: 1.1rem;
+}
+
+.mileage-current-total {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #856404;
+}
+
+.mileage-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.mileage-stat-box {
+    text-align: center;
+    padding: 10px;
+    background-color: rgba(255,255,255,0.5);
+    border-radius: 6px;
+}
+
+.mileage-stat-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #856404;
+}
+
+.mileage-stat-label {
+    font-size: 0.8rem;
+    color: #856404;
+    opacity: 0.8;
+}
+
+.mileage-update-date {
+    font-size: 0.9rem;
+    color: #856404;
+    opacity: 0.8;
+}
+
+.mileage-guide {
+    padding: 15px;
+    background-color: #e7f3ff;
+    border: 1px solid #b8daff;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.mileage-guide-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.mileage-guide-title {
+    margin: 0;
+    color: #004085;
+    font-size: 1rem;
+}
+
+.mileage-guide-content {
+    font-size: 0.9rem;
+    color: #004085;
+    line-height: 1.5;
+}
+
+.mileage-history-header {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mileage-history-subtitle {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-weight: normal;
+}
+
+.mileage-history-list {
+    display: grid;
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.mileage-history-item {
+    padding: 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    transition: all 0.3s;
+}
+
+.mileage-history-item.latest {
+    background-color: #f0f9ff;
+}
+
+.mileage-history-item.positive {
+    border-left: 4px solid #28a745;
+}
+
+.mileage-history-item.negative {
+    border-left: 4px solid #dc3545;
+}
+
+.mileage-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.mileage-history-program {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.mileage-history-score {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mileage-score-value {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.mileage-score-value.positive {
+    color: #28a745;
+}
+
+.mileage-score-value.negative {
+    color: #dc3545;
+}
+
+.mileage-score-unit {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.mileage-history-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mileage-history-date {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.mileage-type-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.mileage-type-badge.positive {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.mileage-type-badge.negative {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.new-badge {
+    margin-top: 8px;
+    padding: 5px 8px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.more-button {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.more-button button {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.empty-mileage {
+    text-align: center;
+    padding: 50px;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-mileage-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.empty-mileage-title {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+}
+
+.empty-mileage-description {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
