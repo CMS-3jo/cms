@@ -3,12 +3,13 @@ package kr.co.cms.domain.cca.dto;
 import java.util.List;
 
 public class CcaScoreSummaryDto {
-	private List<CcaCompScoreDto> studentScores;
-	private List<CcaCompScoreDto> deptAvgScores;
-	private List<CcaCompScoreDto> overallAvgScores;
-	private List<String> strengths;
-	private List<String> weaknesses;
-	private List<String> recommendations;
+	  private List<CcaCompScoreDto> studentScores;
+      private List<CcaCompScoreDto> deptAvgScores;
+      private List<CcaCompScoreDto> overallAvgScores;
+      private List<String> strengths;
+      private List<String> weaknesses;
+      private List<String> recommendations;
+      private java.time.LocalDateTime latestAnswerDate;
 
 	public List<CcaCompScoreDto> getStudentScores() {
 		return studentScores;
@@ -54,7 +55,15 @@ public class CcaScoreSummaryDto {
 		return recommendations;
 	}
 
-	public void setRecommendations(List<String> recommendations) {
-		this.recommendations = recommendations;
-	}
+	   public void setRecommendations(List<String> recommendations) {
+           this.recommendations = recommendations;
+   }
+
+   public java.time.LocalDateTime getLatestAnswerDate() {
+           return latestAnswerDate;
+   }
+
+   public void setLatestAnswerDate(java.time.LocalDateTime latestAnswerDate) {
+           this.latestAnswerDate = latestAnswerDate;
+   }
 }

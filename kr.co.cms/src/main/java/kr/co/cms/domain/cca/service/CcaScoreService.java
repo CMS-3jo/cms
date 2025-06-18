@@ -80,7 +80,7 @@ public class CcaScoreService {
                     Objects.toString(r[0]),
                     r[1] != null ? ((Number) r[1]).doubleValue() : 0.0));
         }
-
+        java.time.LocalDateTime latestDate = evalRepo.findLatestAnswerDate(stdNo, cciId);
         // strengths and weaknesses from myScores
         List<CcaCompScoreDto> sorted = new ArrayList<>(myScores);
         sorted.sort(Comparator.comparingDouble(CcaCompScoreDto::getScore));
@@ -115,6 +115,7 @@ public class CcaScoreService {
         dto.setStrengths(strengths);
         dto.setWeaknesses(weaknesses);
         dto.setRecommendations(recs);
+        dto.setLatestAnswerDate(latestDate);
         return dto;
     }
 }

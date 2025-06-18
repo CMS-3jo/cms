@@ -1,5 +1,6 @@
 package kr.co.cms.domain.cca.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,7 +26,8 @@ public interface CoreCptEvalRepository extends JpaRepository<CoreCptEval, String
             WHERE q.CCI_ID = :cciId AND s.DEPT_CD = :deptCd
             GROUP BY q.CATEGORY_CD
             """, nativeQuery = true)
-    List<Object[]> findDeptAverageScores(String cciId, String deptCd);
+    List<Object[]> findDeptAverageScores(@org.springframework.data.repository.query.Param("cciId") String cciId,
+            @org.springframework.data.repository.query.Param("deptCd") String deptCd);
 
     /**
      * 전체 평균 점수 조회
@@ -37,6 +39,17 @@ public interface CoreCptEvalRepository extends JpaRepository<CoreCptEval, String
             WHERE q.CCI_ID = :cciId
             GROUP BY q.CATEGORY_CD
             """, nativeQuery = true)
-    List<Object[]> findOverallAverageScores(String cciId);
+    List<Object[]> findOverallAverageScores(@org.springframework.data.repository.query.Param("cciId") String cciId);
 
+    /**
+     * 학생의 가장 최근 응시 일자 조회
+     */
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT MAX(e.ansDt)
+            FROM CoreCptEval e
+            WHERE e.stdNo = :stdNo
+              AND e.question.coreCptInfo.cciId = :cciId
+            """)
+    LocalDateTime findLatestAnswerDate(@org.springframework.data.repository.query.Param("stdNo") String stdNo,
+                                       @org.springframework.data.repository.query.Param("cciId") String cciId);
 }
