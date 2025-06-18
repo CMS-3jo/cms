@@ -22,7 +22,7 @@ const CounselingListPage = () => {
     fetchCounselingList
   } = useCounselingList();
 
-  const categories = ['상담전', '상담완료', '상담중지'];
+  const categories = ['상담중', '상담완료', '상담대기'];
 
   useEffect(() => {
     fetchCounselingList({
@@ -45,7 +45,7 @@ const CounselingListPage = () => {
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
-
+  
   if (error) {
     return <div>오류가 발생했습니다: {error.message}</div>;
   }
@@ -68,7 +68,14 @@ const CounselingListPage = () => {
             categories={categories}
           />
           
-          <CounselingTable data={counselingData} loading={loading} />
+          <CounselingTable data={counselingData} loading={loading} 
+		  onAssigned={() => {
+		        fetchCounselingList({
+		        page: currentPage,
+		        search: searchTerm,
+		        category: selectedCategory
+		      });
+		    }} />
           
           <Pagination 
             currentPage={currentPage}

@@ -1,15 +1,17 @@
 package kr.co.cms.domain.cnsl.repository;
 
 import jakarta.persistence.*;
+import kr.co.cms.domain.cnsl.dto.CounselingDetailDto;
 import kr.co.cms.domain.cnsl.dto.CounselingListResponse;
 import kr.co.cms.domain.cnsl.dto.CounselingSearchCondition;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.*;
 
-@Repository
 @RequiredArgsConstructor
 public class CounselingCustomRepositoryImpl implements CounselingCustomRepository {
 
@@ -20,7 +22,9 @@ public class CounselingCustomRepositoryImpl implements CounselingCustomRepositor
     	// 데이터 조회용 쿼리
         StringBuilder queryBuilder = new StringBuilder("""
             SELECT 
+        		a.CNSL_APLY_ID AS cnslAplyId,
                 a.STAT_CD AS status,
+                a.EMPL_NO AS emplNo,
                 s.STD_NM AS name,
                 s.STD_NO AS studentId,
                 s.EMAIL AS email,
@@ -74,7 +78,9 @@ public class CounselingCustomRepositoryImpl implements CounselingCustomRepositor
         List<Tuple> results = query.getResultList();
         List<CounselingListResponse> content = results.stream().map(t ->
             CounselingListResponse.builder()
+                .cnslAplyId(t.get("cnslAplyId", String.class))
                 .status(convertStatus(t.get("status", String.class)))
+                .emplNo(t.get("emplNo", String.class))
                 .name(t.get("name", String.class))
                 .studentId(t.get("studentId", String.class))
                 .email(t.get("email", String.class))
@@ -91,10 +97,66 @@ public class CounselingCustomRepositoryImpl implements CounselingCustomRepositor
 
     private String convertStatus(String statCd) {
         return switch (statCd) {
-            case "REQUESTED" -> "상담대기";
-            case "COMPLETED" -> "상담완료";
-            case "CANCELLED" -> "상담중지";
+            case "15" -> "상담대기";
+            case "18" -> "상담완료";
+            case "17" -> "상담중";
             default -> statCd;
+        };
+    }
+    
+    @Override
+    public CounselingDetailDto findCounselingDetailById(String id) {
+        String sql = """
+			SELECT 
+			  a.CNSL_APLY_ID AS cnslAplyId,
+			  a.STD_NO AS stdNo,
+			  s.STD_NM AS stdNm,
+			  a.TYPE_CD AS typeCd,
+			  a.STAT_CD AS statCd,
+			  a.REQ_DTTM AS reqDttm,
+			  a.APPLY_CONTENT AS applyContent,
+			  s.DEPT_CD AS deptCd,
+			  d.DEPT_NM AS deptNm,
+			  s.PHONE_NUMBER AS phone,
+			  s.EMAIL AS email
+			FROM CNSL_APLY a
+			JOIN STD_INFO s ON a.STD_NO = s.STD_NO
+			LEFT JOIN DEPT_INFO d ON s.DEPT_CD = d.DEPT_CD
+			WHERE a.CNSL_APLY_ID = :id
+        """;
+
+        Query query = em.createNativeQuery(sql, Tuple.class);
+        query.setParameter("id", id);
+
+        Tuple t = (Tuple) query.getSingleResult();
+
+        return CounselingDetailDto.builder()
+            .cnslAplyId(t.get("cnslAplyId", String.class))
+            .stdNo(t.get("stdNo", String.class))
+            .stdNm(t.get("stdNm", String.class))
+            .typeCd(convertType(t.get("typeCd", String.class)))
+            .statCd(convertStatus(t.get("statCd", String.class)))
+            .reqDttm(Optional.ofNullable(t.get("reqDttm", Timestamp.class))
+                    .map(Timestamp::toLocalDateTime)
+                    .orElse(null))
+            .applyContent(t.get("applyContent", String.class))
+            .deptCd(t.get("deptCd", String.class))
+            .deptNm(t.get("deptNm", String.class))
+            .phone(t.get("phone", String.class))
+            .email(t.get("email", String.class))
+            .build();
+    }
+    
+    private String convertType(String typeCd) {
+        return switch (typeCd) {
+            case "08" -> "취업상담";
+            case "09" -> "진로상담";
+            case "10" -> "고충상담";
+            case "11" -> "심리상담";
+            case "12" -> "익명상담";
+            case "13" -> "위기상담";
+            case "14" -> "학업상담";
+            default -> typeCd;
         };
     }
 }

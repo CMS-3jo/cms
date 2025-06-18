@@ -1,6 +1,6 @@
 // src/hooks/useCounselingDetail.js
 import { useState, useCallback } from 'react';
-// import { counselingApi } from '../services/api';
+import { counselingApi } from '../services/api';
 
 export const useCounselingDetail = () => {
   const [counselingDetail, setCounselingDetail] = useState(null);
@@ -25,32 +25,19 @@ export const useCounselingDetail = () => {
   };
 
   const fetchCounselingDetail = useCallback(async (id) => {
-    try {
-      setLoading(true);
-      setError(null);
+      try {
+        setLoading(true);
+        setError(null);
 
-      // 임시로 1초 지연 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setCounselingDetail(mockDetailData);
-
-      // 실제 API 호출 코드 (주석 처리)
-      /*
-      const response = await counselingApi.getCounselingDetail(id);
-      
-      if (response.success) {
-        setCounselingDetail(response.data);
-      } else {
-        setError(new Error(response.message || '데이터를 불러오는데 실패했습니다.'));
+        const data = await counselingApi.getCounselingDetail(id);
+        setCounselingDetail(data);
+      } catch (err) {
+        setError(err);
+        console.error('상담 상세 조회 실패:', err);
+      } finally {
+        setLoading(false);
       }
-      */
-    } catch (err) {
-      setError(err);
-      console.error('Fetch counseling detail error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    }, []);
 
   const updateCounselingDetail = useCallback(async (id, data) => {
     try {
