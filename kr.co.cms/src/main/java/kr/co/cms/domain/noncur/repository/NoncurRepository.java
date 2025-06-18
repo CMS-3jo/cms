@@ -11,10 +11,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import kr.co.cms.domain.noncur.entity.NoncurProgram;
+import kr.co.cms.global.repository.IdManagedRepository;
 
 //entity class, primary key type
 @Repository 
-public interface NoncurRepository extends JpaRepository<NoncurProgram, String>{
+public interface NoncurRepository extends JpaRepository<NoncurProgram, String>, IdManagedRepository {
 	
     // 전체 조회 - 등록일 최신순 (내림차순)
     Page<NoncurProgram> findAllByOrderByRegDtDesc(Pageable pageable);
@@ -40,4 +41,12 @@ public interface NoncurRepository extends JpaRepository<NoncurProgram, String>{
         @Param("statusCode") String statusCode,
         Pageable pageable
     );
+    
+    //ID생성용 조회 메서드
+    @Override
+    @Query("SELECT MAX(p.prgId) FROM NoncurProgram p WHERE p.prgId LIKE :prefix%")
+    String findLatestIdByPrefix(@Param("prefix") String prefix);
+    
+   
+    
 }

@@ -32,7 +32,7 @@ public class MileageController {
      */
     @PostMapping("/program/{prgId}")
     public ResponseEntity<?> setProgramMileage(
-            @PathVariable String prgId,
+            @PathVariable("prgId") String prgId,
             @RequestParam BigDecimal mlgScore,
             @RequestParam String regUserId) {
         try {
@@ -64,7 +64,7 @@ public class MileageController {
      * 학생 마일리지 조회
      */
     @GetMapping("/student/{stdNo}")
-    public ResponseEntity<StudentMileageDTO> getStudentMileage(@PathVariable String stdNo) {
+    public ResponseEntity<StudentMileageDTO> getStudentMileage(@PathVariable("stdNo") String stdNo) {
         try {
             StudentMileageDTO mileage = mileageService.getStudentMileage(stdNo);
             return ResponseEntity.ok(mileage);
@@ -77,7 +77,7 @@ public class MileageController {
      * 프로그램 마일리지 조회
      */
     @GetMapping("/program/{prgId}")
-    public ResponseEntity<ProgramMileageDTO> getProgramMileage(@PathVariable String prgId) {
+    public ResponseEntity<ProgramMileageDTO> getProgramMileage(@PathVariable("prgId") String prgId) {
         try {
             ProgramMileageDTO mileage = mileageService.getProgramMileage(prgId);
             if (mileage == null) {

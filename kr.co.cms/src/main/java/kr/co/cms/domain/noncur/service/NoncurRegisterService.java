@@ -1,5 +1,6 @@
 package kr.co.cms.domain.noncur.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -10,10 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import kr.co.cms.domain.cca.dto.CoreCptInfoDto;
 import kr.co.cms.domain.cca.service.CoreCptInfoService;
+import kr.co.cms.domain.mileage.service.MileageService;
 import kr.co.cms.domain.noncur.dto.NoncurRegisterDTO;
 import kr.co.cms.domain.noncur.entity.NoncurProgram;
 import kr.co.cms.domain.noncur.entity.NoncurMap;
 import kr.co.cms.domain.noncur.repository.NoncurRepository;
+import kr.co.cms.global.util.IdGenerator;
 import kr.co.cms.domain.noncur.repository.NoncurMapRepository;
 
 @Service
@@ -23,21 +26,23 @@ public class NoncurRegisterService {
     private final NoncurRepository noncurRepository;
     private final NoncurMapRepository noncurMapRepository;
     private final CoreCptInfoService coreCptInfoService;
+    private final MileageService mileageService; // MileageService 필드 추가
 
-    
+    // 생성자에 MileageService 주입 추가
     public NoncurRegisterService(NoncurRepository noncurRepository, 
                                 NoncurMapRepository noncurMapRepository,
-                                CoreCptInfoService coreCptInfoService) {
+                                CoreCptInfoService coreCptInfoService,
+                                MileageService mileageService) { // 파라미터 추가
         this.noncurRepository = noncurRepository;
         this.noncurMapRepository = noncurMapRepository;
         this.coreCptInfoService = coreCptInfoService; 
-
+        this.mileageService = mileageService; // 초기화 추가
     }
     
     
     
     /**
-     * 핵심역량 매핑 저장 (기존 서비스로 검증)
+     * 핵심역량 매핑 저장
      */
     private void saveCompetencyMappings(String prgId, List<String> selectedCompetencies) {
         if (selectedCompetencies == null || selectedCompetencies.isEmpty()) {
@@ -70,7 +75,7 @@ public class NoncurRegisterService {
     @Transactional
     public String registerProgram(NoncurRegisterDTO registerDTO) {
         // 1. 프로그램 ID 생성
-        String prgId = generateProgramId();
+        String prgId = IdGenerator.generate("PRG", noncurRepository);
         registerDTO.setPrgId(prgId);
         
         // 2. 프로그램 기본 정보 저장
@@ -80,18 +85,19 @@ public class NoncurRegisterService {
         // 3. 핵심역량 매핑 저장
         saveCompetencyMappings(prgId, registerDTO.getSelectedCompetencies());
         
+        //마일리지 저장
+        if (registerDTO.getMlgScore() != null && registerDTO.getMlgScore().compareTo(BigDecimal.ZERO) >= 0) {
+            mileageService.setProgramMileage(
+                prgId, 
+                registerDTO.getMlgScore(), 
+                registerDTO.getRegUserId()
+            );
+        }
+        
         return prgId;
         
     }
     
-    /**
-     * 프로그램 ID 생성
-     */
-    private String generateProgramId() {
-        return "PRG" + LocalDateTime.now().format(
-            java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
-        ) + String.format("%03d", (int)(Math.random() * 1000));
-    }
     
     /**
      * DTO를 Entity로 변환 (수정됨)

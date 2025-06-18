@@ -1,5 +1,6 @@
 package kr.co.cms.domain.noncur.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -32,23 +33,18 @@ public class NoncurService {
     private final NoncurRepository noncurRepository;
     private final NoncurMapRepository noncurMapRepository;
     private final CoreCptInfoService coreCptInfoService;
-    private final NoncurApplicationService applicationService;
-
+    private final NoncurApplicationService applicationService; // 신청자 수 조회용
 
     public NoncurService(NoncurRepository noncurRepository, 
                         NoncurMapRepository noncurMapRepository,
                         CoreCptInfoService coreCptInfoService,
-                        NoncurApplicationService applicationService) {  
+                        NoncurApplicationService applicationService) { 
         this.noncurRepository = noncurRepository;
         this.noncurMapRepository = noncurMapRepository;
-        this.coreCptInfoService = coreCptInfoService; 
-        this.applicationService = applicationService;
+        this.coreCptInfoService = coreCptInfoService;
+        this.applicationService = applicationService;           
     }
     
-    
-    
- // NoncurService.java에 추가
-
     /**
      * 실제 DB에서 모든 부서 목록 조회
      */
@@ -87,7 +83,6 @@ public class NoncurService {
         return dept;
     }
     
-    
     public Map<String, Object> getNoncurProgramsWithPagination(NoncurSearchDTO searchDTO) {
         Sort sort = Sort.by(Sort.Direction.fromString(searchDTO.getSortDir()), searchDTO.getSortBy());
         Pageable pageable = PageRequest.of(searchDTO.getPage(), searchDTO.getSize(), sort);
@@ -122,7 +117,6 @@ public class NoncurService {
         return response;
     }
 
-    
     public NoncurDetailDTO getNoncurDetail(String prgId) {
         NoncurProgram program = noncurRepository.findById(prgId).orElse(null);
         if (program == null) {
@@ -148,15 +142,17 @@ public class NoncurService {
             long dDay = ChronoUnit.DAYS.between(LocalDateTime.now(), program.getPrgStDt());
             detail.setDDay(dDay);
         }
-  
         
         // 부서명 조회
         String deptName = noncurRepository.findDeptNameByCode(program.getPrgDeptCd());
         detail.setDeptName(deptName);
         
-        // 핵심역량 정보 설정 (목업 + 실제 매핑 데이터 조합)
+        // 마일리지는 별도 API(/api/mileage/program/{prgId})로 조회
+        
+        // 핵심역량 정보 설정 (실제 DB 연동)
         setupCompetencies(detail, prgId);
         
+        // 추가 정보 설정 (실제 DB 컬럼에서)
         detail.setLocation(program.getPrgLocation());
         detail.setContactEmail(program.getPrgContactEmail());
         detail.setContactPhone(program.getPrgContactPhone());
@@ -165,10 +161,16 @@ public class NoncurService {
         detail.setGradeInfo(program.getPrgGradeInfo());
         detail.setProgramSchedule(program.getPrgSchedule());
         
-        List<String> attachments = new ArrayList<>();
-        attachments.add("프로그램 안내서.pdf");
-        attachments.add("참가 신청서.hwp");
-        detail.setAttachments(attachments);
+        // 현재 신청자 수 (실제 계산)
+        try {
+            long currentApplicants = applicationService.getCurrentApplicantCount(prgId);
+            detail.setCurrentApplicants((int) currentApplicants);
+        } catch (Exception e) {
+            detail.setCurrentApplicants(0);
+        }
+        
+        // 첨부파일은 구현되지 않았으면 빈 리스트
+        detail.setAttachments(new ArrayList<>());
         
         return detail;
     }
@@ -185,9 +187,10 @@ public class NoncurService {
             return response;
         }
     }
-
     
-    //핵심역량설정
+    /**
+     * 핵심역량 설정 (실제 DB 연동)
+     */
     private void setupCompetencies(NoncurDetailDTO detail, String prgId) {
         try {
             // 실제 DB에서 모든 핵심역량 조회
@@ -219,8 +222,10 @@ public class NoncurService {
             detail.setAllCompetencies(new ArrayList<>());
         }
     }
-
-    // 새로 추가할 변환 메서드
+    
+    /**
+     * CoreCptInfoDto를 CompetencyDTO로 변환
+     */
     private NoncurDetailDTO.CompetencyDTO convertToCompetencyDTO(CoreCptInfoDto coreDto) {
         NoncurDetailDTO.CompetencyDTO dto = new NoncurDetailDTO.CompetencyDTO();
         dto.setCciId(coreDto.getCciId());
@@ -229,8 +234,6 @@ public class NoncurService {
         dto.setSelected(false);
         return dto;
     }
-    
-    
     
     private NoncurDTO convertToDTO(NoncurProgram program) {
         NoncurDTO dto = new NoncurDTO();
@@ -257,6 +260,8 @@ public class NoncurService {
         
         List<String> competencyIds = noncurMapRepository.findCompetencyIdsByProgramId(program.getPrgId());
         dto.setCciIds(competencyIds);
+        
+        // 마일리지는 별도 API로 조회
         
         return dto;
     }
