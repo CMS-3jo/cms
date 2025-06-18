@@ -6,17 +6,17 @@ import Footer from '../components/layout/Footer';
 import { useNotices } from '../hooks/useNotices';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
-
+import { useAuth } from '../hooks/useAuth';
 const NoticeWritePage = () => {
   const { createNotice } = useNotices();
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
-
+const { user } = useAuth();
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await createNotice({ title, content, files });
+   const result = await createNotice({ title, content, regUserId: user?.userId });
     if (result.success) {
       navigate('/notices');
     } else {
@@ -30,16 +30,25 @@ const NoticeWritePage = () => {
       <div className="container_layout">
         <Sidebar />
         <main style={{ flex: 1, padding: '20px' }}>
-          <h3 style={{ marginBottom: '20px' }}>공지사항 등록</h3>
+           <h3 style={{ marginBottom: '20px' }}>공지사항 등록</h3>
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label className="form-label">제목</label>
+               <label className="form-label">제목</label>
               <input
                 type="text"
                 className="form-control"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
+              />
+            </div>
+            <div className="mb-3">
+              <label className="form-label">작성자</label>
+              <input
+                type="text"
+                className="form-control"
+                value={user?.userId || ''}
+                disabled
               />
             </div>
             <div className="mb-3">

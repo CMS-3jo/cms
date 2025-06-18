@@ -46,7 +46,7 @@ const NoticeListPage = () => {
               </thead>
               <tbody>
                 {notices.map((notice, index) => (
-                  <tr key={notice.id} style={{ cursor: 'pointer' }} onClick={() => handleRowClick(notice.id)}>
+                  <tr key={notice.noticeId} style={{ cursor: 'pointer' }} onClick={() => handleRowClick(notice.noticeId)}>
                     <td>{notices.length - index}</td>
                     <td>{notice.title}</td>
                     <td>{notice.regUserId}</td>

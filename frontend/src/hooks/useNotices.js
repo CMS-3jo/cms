@@ -1,12 +1,12 @@
 // src/hooks/useNotices.js
 import { useState, useCallback } from 'react';
 import { noticeApi } from '../services/api';
-
+import { useAuth } from './useAuth';
 export const useNotices = () => {
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const { user } = useAuth();
  
 
   const fetchNotices = useCallback(async (params = {}) => {
@@ -27,13 +27,14 @@ export const useNotices = () => {
   const createNotice = useCallback(async (noticeData) => {
     try {
       setLoading(true);
-      
-       await noticeApi.createNotice({
-        ...noticeData,
-        regUserId: 'ADMIN001',
-      });
+        const payload = {
+        title: noticeData.title,
+        content: noticeData.content,
+        regUserId: noticeData.regUserId || user?.userId,
+      };
+
+      await noticeApi.createNotice(payload);
       await fetchNotices();
-      
       
       return { success: true };
     } catch (err) {
@@ -65,9 +66,17 @@ export const useNotices = () => {
   const updateNotice = useCallback(async (id, noticeData) => {
     try {
       setLoading(true);
-      await noticeApi.updateNotice(id, noticeData);
+     
+     const payload = {
+        title: noticeData.title,
+        content: noticeData.content,
+      };
+
+      await noticeApi.updateNotice(id, payload);
       setNotices((prev) =>
-        prev.map((n) => (n.noticeId === id || n.id === Number(id) ? { ...n, ...noticeData } : n))
+        prev.map((n) =>
+          n.noticeId === id || n.id === Number(id) ? { ...n, ...payload } : n
+        )
       );
       return { success: true };
     } catch (err) {
