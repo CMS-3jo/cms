@@ -65,15 +65,19 @@ const CCARegPage = () => {
       }
     }
 
-    const payload = {
+     const payload = {
       title: surveyTitle,
       ccaId: department,
       questions: COMPETENCIES.flatMap(comp =>
-        questionsByComp[comp].map((q, idx) => ({ order: idx + 1, content: q.content }))
+        questionsByComp[comp].map((q, idx) => ({
+          order: idx + 1,
+          content: q.content,
+          competency: comp
+        }))
       ),
       regUserId: 'admin001'
     };
-
+    
     try {
       const res = await fetch(
         isEditing ? `/api/core-cpt/${editId}` : '/api/core-cpt/register',
@@ -112,10 +116,9 @@ const CCARegPage = () => {
 
   const assignQuestions = questions => {
     const byComp = COMPETENCIES.reduce((acc, comp) => { acc[comp] = []; return acc; }, {});
-    const perComp = Math.ceil(questions.length / COMPETENCIES.length);
-    questions.forEach((q, idx) => {
-      const compIdx = Math.min(COMPETENCIES.length - 1, Math.floor(idx / perComp));
-      byComp[COMPETENCIES[compIdx]].push({ id: q.order, content: q.content });
+     questions.forEach(q => {
+      const comp = COMPETENCIES.includes(q.competency) ? q.competency : COMPETENCIES[0];
+      byComp[comp].push({ id: q.order, content: q.content });
     });
     return byComp;
   };
