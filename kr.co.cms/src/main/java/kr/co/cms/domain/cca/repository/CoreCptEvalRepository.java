@@ -52,4 +52,31 @@ public interface CoreCptEvalRepository extends JpaRepository<CoreCptEval, String
             """)
     LocalDateTime findLatestAnswerDate(@org.springframework.data.repository.query.Param("stdNo") String stdNo,
                                        @org.springframework.data.repository.query.Param("cciId") String cciId);
+
+    /**
+     * 핵심역량 응시 학생 목록과 최근 응시일 조회
+     */
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT s.stdNo, s.stdNm, s.deptCd, MAX(e.ansDt)
+            FROM CoreCptEval e JOIN StdInfo s ON e.stdNo = s.stdNo
+            WHERE e.question.coreCptInfo.cciId = :cciId
+            GROUP BY s.stdNo, s.stdNm, s.deptCd
+            """)
+    List<Object[]> findStudentsLatest(@org.springframework.data.repository.query.Param("cciId") String cciId);
+
+    /**
+     * 특정 학생의 최근 응시 답안 조회
+     */
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT e
+            FROM CoreCptEval e JOIN FETCH e.question q
+            WHERE e.stdNo = :stdNo
+              AND q.coreCptInfo.cciId = :cciId
+              AND e.ansDt = (
+                  SELECT MAX(e2.ansDt) FROM CoreCptEval e2
+                  WHERE e2.stdNo = :stdNo AND e2.question.coreCptInfo.cciId = :cciId
+              )
+            """)
+    List<CoreCptEval> findLatestEvals(@org.springframework.data.repository.query.Param("stdNo") String stdNo,
+                                      @org.springframework.data.repository.query.Param("cciId") String cciId);
 }

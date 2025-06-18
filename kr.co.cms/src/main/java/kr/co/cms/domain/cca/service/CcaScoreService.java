@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import kr.co.cms.domain.cca.dto.CcaScoreSummaryDto;
 import kr.co.cms.domain.mypage.entity.StdInfo;
 import kr.co.cms.domain.mypage.repository.StdInfoRepository;
+import kr.co.cms.domain.cca.dto.CcaStudentResultDto;
 import lombok.RequiredArgsConstructor;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -117,5 +118,43 @@ public class CcaScoreService {
         dto.setRecommendations(recs);
         dto.setLatestAnswerDate(latestDate);
         return dto;
+    }
+
+    public List<CcaStudentResultDto> getLatestResultsForCci(String cciId) {
+        List<Object[]> students = evalRepo.findStudentsLatest(cciId);
+        List<CcaStudentResultDto> result = new ArrayList<>();
+        for (Object[] row : students) {
+            String stdNo = Objects.toString(row[0]);
+            String stdNm = Objects.toString(row[1]);
+            String deptCd = Objects.toString(row[2]);
+            java.time.LocalDateTime latestDate = (java.time.LocalDateTime) row[3];
+
+            List<CoreCptEval> evals = evalRepo.findLatestEvals(stdNo, cciId);
+            Map<String, List<CoreCptEval>> byComp = evals.stream()
+                    .collect(Collectors.groupingBy(e -> e.getQuestion().getCategoryCd()));
+            List<CcaCompScoreDto> scores = new ArrayList<>();
+            for (Map.Entry<String, List<CoreCptEval>> e : byComp.entrySet()) {
+                BigDecimal sum = e.getValue().stream()
+                        .map(CoreCptEval::getAnsScore)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal max = BigDecimal.valueOf(e.getValue().size() * 5.0);
+                double pct = max.compareTo(BigDecimal.ZERO) > 0
+                        ? sum.divide(max, 4, RoundingMode.HALF_UP)
+                                .multiply(BigDecimal.valueOf(100))
+                                .setScale(2, RoundingMode.HALF_UP)
+                                .doubleValue()
+                        : 0.0;
+                scores.add(new CcaCompScoreDto(e.getKey(), pct));
+            }
+
+            CcaStudentResultDto dto = new CcaStudentResultDto();
+            dto.setStdNo(stdNo);
+            dto.setStdNm(stdNm);
+            dto.setDeptCd(deptCd);
+            dto.setLatestDate(latestDate);
+            dto.setScores(scores);
+            result.add(dto);
+        }
+        return result;
     }
 }
