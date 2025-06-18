@@ -10,9 +10,9 @@ class ApiService {
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const token = localStorage.getItem('authToken');
-    
     const config = {
-      headers: {
+	  credentials: 'include',
+	  headers: {
         'Content-Type': 'application/json',
         ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
@@ -59,6 +59,13 @@ class ApiService {
   async delete(endpoint) {
     return this.request(endpoint, { method: 'DELETE' });
   }
+  
+  async patch(endpoint, data = {}) {
+    return this.request(endpoint, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 const apiService = new ApiService(API_BASE_URL);
@@ -89,9 +96,16 @@ export const counselingApi = {
   // 상담 신청
   createCounselingApplication: (data) => 
     apiService.post('/counseling/apply', data),
+  
+  
+  
   // 상담 신청 상세 조회
   getCounselingDetail: (id) => 
-    apiService.get(`/counseling/applications/${id}`),
+    apiService.get(`/counseling/${id}`),
+  
+  // 상담사 배정
+  assignCounselor: (aplyId, payload) =>
+      apiService.patch(`/counseling/applications/${aplyId}/assign`, payload),
   
   // 상담 상태 업데이트
   updateCounselingStatus: (id, status) => 

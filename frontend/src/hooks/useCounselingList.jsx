@@ -9,37 +9,6 @@ export const useCounselingList = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // 임시 목 데이터
-  const mockData = [
-    {
-      id: 1,
-      status: '상담완료',
-      name: '홍길동',
-      gender: '남',
-      studentId: '2306081223',
-      email: 'hong@nate.com',
-      phone: '01012345678'
-    },
-    {
-      id: 2,
-      status: '상담중지',
-      name: '김영희',
-      gender: '여',
-      studentId: '2306081224',
-      email: 'kim@nate.com',
-      phone: '01012345679'
-    },
-    {
-      id: 3,
-      status: '상담대기',
-      name: '박철수',
-      gender: '남',
-      studentId: '2306081225',
-      email: 'park@nate.com',
-      phone: '01012345680'
-    }
-  ];
-
   const fetchCounselingList = useCallback(async ({
     page = 1,
     search = '',
