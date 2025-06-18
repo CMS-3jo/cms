@@ -76,7 +76,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/counselor/**","/cnsl/**").hasRole("COUNSELOR")
                 .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/core-cpt/list", "/api/core-cpt/{cciId}/questions").permitAll()
                 .requestMatchers("/api/core-cpt/submit").hasRole("STUDENT")
                 .anyRequest().authenticated()
             )
