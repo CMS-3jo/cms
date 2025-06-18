@@ -9,14 +9,15 @@ import StudentNoncurMyPageModal from './StudentNoncurMyPageModal'; // 실제 경
 import '/public/css/NoncurricularList.css';
 
 const NoncurricularListPage = () => {
-    const navigate = useNavigate(); // 이 줄 추가
+    const navigate = useNavigate();
     const [programs, setPrograms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [debouncedSearchParams, setDebouncedSearchParams] = useState(null);
-    const [showMyPageModal, setShowMyPageModal] = useState(false); // 마이페이지 모달 상태 추가
+    const [showMyPageModal, setShowMyPageModal] = useState(false);
+    const [programMileages, setProgramMileages] = useState({}); // 마일리지 데이터 저장
     
-    // 페이지네이션 상태 추가
+    // 페이지네이션 상태
     const [pagination, setPagination] = useState({
         totalElements: 0,
         totalPages: 0,
@@ -39,20 +40,44 @@ const NoncurricularListPage = () => {
     });
 
     const handleProgramClick = (prgId) => {
-             navigate(`/noncur/${prgId}`);
-}   ;
+        navigate(`/noncur/${prgId}`);
+    };
 
     // 디바운싱: 검색어 변경 후 500ms 대기
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearchParams(searchParams);
-        }, searchParams.keyword ? 500 : 0); // 키워드가 있을 때만 딜레이
+        }, searchParams.keyword ? 500 : 0);
 
         return () => clearTimeout(timer);
     }, [searchParams]);
 
+    // 마일리지 정보 조회 함수
+    const fetchProgramMileages = async (programList) => {
+        const mileagePromises = programList.map(async (program) => {
+            try {
+                const response = await fetch(`/api/mileage/program/${program.prgId}`);
+                if (response.ok) {
+                    const mileageData = await response.json();
+                    return { prgId: program.prgId, mileage: mileageData.mlgScore || 0 };
+                }
+                return { prgId: program.prgId, mileage: 0 };
+            } catch (error) {
+                console.error(`마일리지 조회 실패 (${program.prgId}):`, error);
+                return { prgId: program.prgId, mileage: 0 };
+            }
+        });
+
+        const mileageResults = await Promise.all(mileagePromises);
+        const mileageMap = {};
+        mileageResults.forEach(result => {
+            mileageMap[result.prgId] = result.mileage;
+        });
+        setProgramMileages(mileageMap);
+    };
+
     const fetchPrograms = useCallback(async () => {
-        if (!debouncedSearchParams) return; // 디바운싱된 파라미터가 없으면 실행 안함
+        if (!debouncedSearchParams) return;
         
         try {
             setLoading(true);
@@ -72,13 +97,11 @@ const NoncurricularListPage = () => {
             
             const data = await response.json();
             
-            // 디버깅: 백엔드 응답 확인
             console.log('백엔드 응답:', data);
             
-            // 백엔드 응답 구조에 맞게 수정
+            // 백엔드 응답 구조에 맞게 처리
             if (data.content && data.pagination) {
                 setPrograms(data.content);
-                console.log('페이지네이션 정보:', data.pagination);
                 setPagination({
                     totalElements: data.pagination.totalElements,
                     totalPages: data.pagination.totalPages,
@@ -89,12 +112,13 @@ const NoncurricularListPage = () => {
                     isFirst: data.pagination.isFirst,
                     isLast: data.pagination.isLast
                 });
+                // 마일리지 정보 조회
+                await fetchProgramMileages(data.content);
             } else if (Array.isArray(data)) {
-                // 이전 형태: 배열만 오는 경우 (페이지네이션 없음)
                 console.log('배열 형태 응답 감지 - 페이지네이션 정보 없음');
                 setPrograms(data);
+                await fetchProgramMileages(data);
             } else {
-            
                 if (data.programs) {
                     setPrograms(data.programs);
                     setPagination({
@@ -107,6 +131,8 @@ const NoncurricularListPage = () => {
                         isFirst: data.isFirst !== false,
                         isLast: data.isLast !== false
                     });
+                    // 마일리지 정보 조회
+                    await fetchProgramMileages(data.programs);
                 } else {
                     console.log('알 수 없는 응답 구조:', data);
                     setPrograms(data || []);
@@ -128,7 +154,7 @@ const NoncurricularListPage = () => {
     // 초기 로딩
     useEffect(() => {
         setDebouncedSearchParams(searchParams);
-    }, []); // 컴포넌트 마운트 시 한 번만
+    }, []);
 
     // 페이지 변경 핸들러
     const handlePageChange = (newPage) => {
@@ -170,11 +196,11 @@ const NoncurricularListPage = () => {
         if (!statusCode) return '알 수 없음';
         
         const statusMap = {
-            '01': '모집중',      // RECRUITING
-            '02': '마감임박',    // DEADLINE_SOON
-            '03': '모집완료',    // RECRUITMENT_CLOSED
-            '04': '운영중',      // IN_PROGRESS
-            '05': '종료'        // COMPLETED
+            '01': '모집중',
+            '02': '마감임박',
+            '03': '모집완료',
+            '04': '운영중',
+            '05': '종료'
         };
         return statusMap[statusCode] || '알 수 없음';
     };
@@ -191,22 +217,20 @@ const NoncurricularListPage = () => {
         return classMap[statusCode] || 'status-default';
     };
 
-    // 필터 변경 핸들러 (검색어는 즉시 검색하지 않음)
+    // 필터 변경 핸들러
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
         
         if (name === 'keyword') {
-            // 검색어는 상태만 업데이트, 실제 검색은 Enter나 버튼으로
             setSearchParams(prev => ({
                 ...prev,
                 [name]: value
             }));
         } else {
-            // 필터는 즉시 적용
             setSearchParams(prev => ({
                 ...prev,
                 [name]: value,
-                page: 0 // 필터 변경시 첫 페이지로
+                page: 0
             }));
         }
     };
@@ -215,7 +239,7 @@ const NoncurricularListPage = () => {
     const handleSearch = () => {
         setSearchParams(prev => ({
             ...prev,
-            page: 0 // 검색시 첫 페이지로
+            page: 0
         }));
     };
 
@@ -227,18 +251,16 @@ const NoncurricularListPage = () => {
     };
 
     // 공유 기능
-  const handleShare = (e, program) => { 
-    e.stopPropagation(); 
+    const handleShare = (e, program) => { 
+        e.stopPropagation(); 
 
         if (navigator.share) {
             navigator.share({
                 title: program.prgNm,
                 text: program.prgDesc,
                 url: `${window.location.origin}/noncur/${program.prgId}`
-
             });
         } else {
-            // fallback: 클립보드에 복사
             navigator.clipboard.writeText(window.location.href);
             alert('링크가 클립보드에 복사되었습니다.');
         }
@@ -249,7 +271,6 @@ const NoncurricularListPage = () => {
         const buttons = [];
         const { currentPage, totalPages } = pagination;
         
-        // 이전 버튼
         buttons.push(
             <button 
                 key="prev"
@@ -261,7 +282,6 @@ const NoncurricularListPage = () => {
             </button>
         );
 
-        // 페이지 번호 버튼들
         const startPage = Math.max(0, currentPage - 2);
         const endPage = Math.min(totalPages - 1, currentPage + 2);
 
@@ -277,7 +297,6 @@ const NoncurricularListPage = () => {
             );
         }
 
-        // 다음 버튼
         buttons.push(
             <button 
                 key="next"
@@ -329,7 +348,8 @@ const NoncurricularListPage = () => {
                 <Sidebar />
                 <div className="noncur-list-page">
                     <h4>비교과 프로그램</h4>
-                                     {/* 마이페이지 버튼 */}
+                    
+                    {/* 마이페이지 버튼 */}
                     <button
                         onClick={() => setShowMyPageModal(true)}
                         style={{
@@ -409,11 +429,11 @@ const NoncurricularListPage = () => {
                         ) : (
                             programs.map((program) => (
                                 <div 
-                                        key={program.prgId} 
-                                        className='noncur-item clickable'
-                                        onClick={() => handleProgramClick(program.prgId)}
-                                        style={{ cursor: 'pointer' }}
-                                    >
+                                    key={program.prgId} 
+                                    className='noncur-item clickable'
+                                    onClick={() => handleProgramClick(program.prgId)}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     <div className='topWrap'>
                                         <img 
                                             src="/images/default-program.jpg"
@@ -428,7 +448,7 @@ const NoncurricularListPage = () => {
                                                 {calculateDDay(program.prgEndDt)}
                                                 <span className='noncur-point'>
                                                     <span className="material-symbols-outlined">paid</span>
-                                                    100
+                                                    {programMileages[program.prgId] || 0}
                                                 </span>
                                             </span>
                                             <button 
@@ -465,16 +485,13 @@ const NoncurricularListPage = () => {
                         </div>
                     )}
 
-                   {/* 마이페이지 모달 */}
+                    {/* 마이페이지 모달 */}
                     <StudentNoncurMyPageModal 
-                    isOpen={showMyPageModal}
-                    onClose={() => setShowMyPageModal(false)}
+                        isOpen={showMyPageModal}
+                        onClose={() => setShowMyPageModal(false)}
                     /> 
+                </div>
             </div>
-            </div>
-
-
-
             <Footer />
         </>
     );

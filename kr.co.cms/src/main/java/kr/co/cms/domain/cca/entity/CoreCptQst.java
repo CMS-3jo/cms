@@ -1,24 +1,23 @@
 package kr.co.cms.domain.cca.entity;
 
-
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "CORE_CPT_QST")
-@Data
-@NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Builder
 public class CoreCptQst {
 
     @Id
     @Column(name = "QST_ID", length = 20)
     private String qstId;
-
-    @Column(name = "CCI_ID", length = 20, nullable = false)
-    private String cciId;
 
     @Column(name = "QST_CONT", length = 500)
     private String qstCont;
@@ -26,15 +25,21 @@ public class CoreCptQst {
     @Column(name = "QST_ORD")
     private Integer qstOrd;
 
-    @Column(name = "REG_USER_ID", length = 20)
+    @Column(name = "REG_USER_ID", length = 50)
     private String regUserId;
 
     @Column(name = "REG_DT")
     private LocalDateTime regDt;
 
-    @Column(name = "UPD_USER_ID", length = 20)
-    private String updUserId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "CCI_ID", nullable = false)
+    private CoreCptInfo coreCptInfo;
 
-    @Column(name = "UPD_DT")
-    private LocalDateTime updDt;
+    // ★ 평가(CoreCptEval)와의 양방향 매핑 추가
+    @OneToMany(
+        mappedBy = "question",
+        cascade = CascadeType.REMOVE,
+        orphanRemoval = true
+    )
+    private List<CoreCptEval> evals = new ArrayList<>();
 }

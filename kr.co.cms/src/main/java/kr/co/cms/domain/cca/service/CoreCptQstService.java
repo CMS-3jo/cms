@@ -15,16 +15,18 @@ public class CoreCptQstService {
 
     private final CoreCptQstRepository qstRepo;
 
+    /** 특정 설문(cciId)의 문항 리스트를 qstOrd 오름차순으로 반환 */
     public List<CoreCptQuestionDto> getQuestionsByCciId(String cciId) {
-        return qstRepo.findByCciIdOrderByQstOrdAsc(cciId)
-                .stream()
-                .map(entity -> {
-                    CoreCptQuestionDto dto = new CoreCptQuestionDto();
-                    dto.setQstId(entity.getQstId());
-                    dto.setQstCont(entity.getQstCont());
-                    dto.setQstOrd(entity.getQstOrd());
-                    return dto;
-                })
-                .collect(Collectors.toList());
+        return qstRepo
+            .findByCoreCptInfo_CciIdOrderByQstOrdAsc(cciId)
+            .stream()
+            .map(entity -> {
+                CoreCptQuestionDto dto = new CoreCptQuestionDto();
+                dto.setQstId(entity.getQstId());
+                dto.setQstCont(entity.getQstCont());
+                dto.setQstOrd(entity.getQstOrd());
+                return dto;
+            })
+            .collect(Collectors.toList());
     }
 }

@@ -4,227 +4,15 @@ import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import '/public/css/NoncurricularView.css';
+import ProgramApplicationModal from './ProgramApplicationModal';
 
-// 신청 모달 컴포넌트
-const ApplicationModal = ({ isOpen, onClose, programData, onSubmit }) => {
-    const [formData, setFormData] = useState({
-        motivation: '',
-        experience: '',
-        expectations: '',
-        additionalInfo: ''
-    });
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState(false);
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        if (!formData.motivation.trim()) {
-            setError('지원 동기를 입력해주세요.');
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-
-        try {
-            // 백엔드 DTO에 맞는 데이터 구조로 변환
-            const requestData = {
-                prgId: programData.prgId,  // 백엔드에서 필수값으로 요구
-                stdNo: '', // 이 값은 백엔드에서 JWT 토큰에서 가져와야 할 것 같음
-                motivation: formData.motivation,
-                expectation: formData.expectations, // expectations -> expectation
-                aplySelCd: '01' // 기본값
-            };
-
-            console.log('전송 데이터:', requestData); // 디버깅용
-
-            const response = await fetch(`/api/noncur/${programData.prgId}/apply`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include', // HttpOnly Cookie 포함
-                body: JSON.stringify(requestData)
-            });
-
-
-
-            if (response.ok) {
-                setSuccess(true);
-                setTimeout(() => {
-                    onSubmit();
-                    onClose();
-                }, 2000);
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.message || '신청 처리 중 오류가 발생했습니다.');
-            }
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const resetForm = () => {
-        setFormData({
-            motivation: '',
-            experience: '',
-            expectations: '',
-            additionalInfo: ''
-        });
-        setError('');
-        setSuccess(false);
-        setLoading(false);
-    };
-
-    const handleClose = () => {
-        resetForm();
-        onClose();
-    };
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="application-modal-overlay" onClick={handleClose}>
-            <div className="application-modal-container" onClick={(e) => e.stopPropagation()}>
-                <div className="application-modal-header">
-                    <h3 className="application-modal-title">
-                        📝 프로그램 신청
-                    </h3>
-                    <button 
-                        className="application-modal-close"
-                        onClick={handleClose}
-                    >
-                        ×
-                    </button>
-                </div>
-
-                <div className="application-modal-content">
-                    {success ? (
-                        <div className="application-success">
-                            ✅ 신청이 완료되었습니다! 곧 목록으로 돌아갑니다.
-                        </div>
-                    ) : (
-                        <>
-                            <div className="application-form-info">
-                                <div className="application-form-info-title">
-                                    📋 신청 프로그램 정보
-                                </div>
-                                <div className="application-form-info-content">
-                                    <strong>{programData?.prgNm}</strong><br/>
-                                    기간: {new Date(programData?.prgStDt).toLocaleDateString()} ~ {new Date(programData?.prgEndDt).toLocaleDateString()}<br/>
-                                    모집인원: {programData?.maxCnt}명 (현재 {programData?.currentApplicants}명 신청)
-                                </div>
-                            </div>
-
-                            {error && (
-                                <div className="application-error">
-                                    ❌ {error}
-                                </div>
-                            )}
-
-                            <form onSubmit={handleSubmit}>
-                                <div className="application-form-group">
-                                    <label className="application-form-label">
-                                        지원 동기 <span style={{color: '#dc3545'}}>*</span>
-                                    </label>
-                                    <textarea
-                                        name="motivation"
-                                        className="application-form-textarea"
-                                        placeholder="이 프로그램에 지원하는 이유를 작성해주세요..."
-                                        value={formData.motivation}
-                                        onChange={handleInputChange}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="application-form-group">
-                                    <label className="application-form-label">
-                                        관련 경험 또는 배경
-                                    </label>
-                                    <textarea
-                                        name="experience"
-                                        className="application-form-textarea"
-                                        placeholder="관련된 경험이나 배경이 있다면 작성해주세요..."
-                                        value={formData.experience}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-
-                                <div className="application-form-group">
-                                    <label className="application-form-label">
-                                        프로그램을 통해 얻고자 하는 것
-                                    </label>
-                                    <textarea
-                                        name="expectations"
-                                        className="application-form-textarea"
-                                        placeholder="이 프로그램을 통해 무엇을 얻고 싶은지 작성해주세요..."
-                                        value={formData.expectations}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-
-                                <div className="application-form-group">
-                                    <label className="application-form-label">
-                                        추가 정보
-                                    </label>
-                                    <textarea
-                                        name="additionalInfo"
-                                        className="application-form-textarea"
-                                        placeholder="기타 전달하고 싶은 내용이 있다면 작성해주세요..."
-                                        value={formData.additionalInfo}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-
-                                <div className="application-form-actions">
-                                    <button 
-                                        type="button"
-                                        className="application-btn-cancel"
-                                        onClick={handleClose}
-                                        disabled={loading}
-                                    >
-                                        취소
-                                    </button>
-                                    <button 
-                                        type="submit"
-                                        className="application-btn-submit"
-                                        disabled={loading || !formData.motivation.trim()}
-                                    >
-                                        {loading ? (
-                                            <div className="application-loading">
-                                                <span>신청 중...</span>
-                                            </div>
-                                        ) : (
-                                            '신청하기'
-                                        )}
-                                    </button>
-                                </div>
-                            </form>
-                        </>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-};
 
 const NoncurricularViewPage = () => {
     const { prgId } = useParams();
     
     const [programData, setProgramData] = useState(null);
     const [allCompetencies, setAllCompetencies] = useState([]);
+    const [mileageData, setMileageData] = useState(null); // 마일리지 데이터 상태 추가
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showApplicationModal, setShowApplicationModal] = useState(false);
@@ -233,6 +21,7 @@ const NoncurricularViewPage = () => {
         if (prgId) {
             fetchProgramDetail(prgId);
             fetchAllCompetencies();
+            fetchMileageInfo(prgId); // 마일리지 정보 조회 추가
         }
     }, [prgId]);
 
@@ -260,6 +49,23 @@ const NoncurricularViewPage = () => {
             }
         } catch (err) {
             console.error('핵심역량 정보를 불러오는데 실패했습니다:', err);
+        }
+    };
+
+    // 마일리지 정보 조회 함수 추가
+    const fetchMileageInfo = async (prgId) => {
+        try {
+            const response = await fetch(`/api/mileage/program/${prgId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setMileageData(data);
+            } else {
+                console.warn('마일리지 정보 조회 실패:', response.status);
+                setMileageData({ mlgScore: 0 }); // 기본값
+            }
+        } catch (err) {
+            console.warn('마일리지 정보를 불러오는데 실패했습니다:', err);
+            setMileageData({ mlgScore: 0 }); // 기본값
         }
     };
 
@@ -398,11 +204,11 @@ const NoncurricularViewPage = () => {
                             
                             <div className="noncur-view-info">
                                 {[
-                                    { label: '카테고리', value: '카테고리 1' },
+                                    // ❌ 카테고리 하드코딩 제거
                                     { label: '운영부서', value: programData.deptName },
-                                    { label: '장소', value: programData.location },
-                                    { label: '연락처', value: `📧 ${programData.contactEmail}\n📞 ${programData.contactPhone}` },
-                                    { label: '대상', value: `대상: ${programData.targetInfo}\n학과: ${programData.departmentInfo}\n학년: ${programData.gradeInfo}` }
+                                    { label: '장소', value: programData.location || '미정' },
+                                    { label: '연락처', value: `📧 ${programData.contactEmail || '미정'}\n📞 ${programData.contactPhone || '미정'}` },
+                                    { label: '대상', value: `대상: ${programData.targetInfo || '전체'}\n학과: ${programData.departmentInfo || '전체'}\n학년: ${programData.gradeInfo || '전체'}` }
                                 ].map((item, index) => (
                                     <div key={index} className="info-item">
                                         <div className="info-label">
@@ -430,6 +236,37 @@ const NoncurricularViewPage = () => {
                                 </span>
                             </div>
                         </div>
+
+                        {/* 마일리지 정보 (새로 추가) */}
+                        {mileageData && (
+                            <div className="noncur-view-section">
+                                <h2 className="section-title">
+                                    💰 마일리지 정보
+                                </h2>
+                                <div className="mileage-info" style={{
+                                    backgroundColor: '#f8f9fa',
+                                    padding: '20px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #dee2e6',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{
+                                        fontSize: '2rem',
+                                        fontWeight: 'bold',
+                                        color: '#007bff',
+                                        marginBottom: '10px'
+                                    }}>
+                                        {mileageData.mlgScore || 0}점
+                                    </div>
+                                    <div style={{
+                                        color: '#6c757d',
+                                        fontSize: '14px'
+                                    }}>
+                                        이 프로그램을 완료하면 <strong>{mileageData.mlgScore || 0}점</strong>의 마일리지를 획득할 수 있습니다.
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* 핵심역량 영역 */}
                         <div className="noncur-view-section">
@@ -487,8 +324,8 @@ const NoncurricularViewPage = () => {
                             </div>
                         )}
 
-                        {/* 첨부파일 */}
-                        {(programData.attachments && programData.attachments.length > 0) ? (
+                        {/* 첨부파일 - 목업 제거, 실제 데이터가 있을 때만 표시 */}
+                        {(programData.attachments && programData.attachments.length > 0) && (
                             <div className="noncur-view-section">
                                 <h2 className="section-title">
                                     📎 첨부파일
@@ -502,27 +339,6 @@ const NoncurricularViewPage = () => {
                                             </a>
                                         </div>
                                     ))}
-                                </div>
-                            </div>
-                        ) : (
-                            // 파일첨부 기능이 구현되지 않았을 때의 목업
-                            <div className="noncur-view-section">
-                                <h2 className="section-title">
-                                    📎 첨부파일
-                                </h2>
-                                <div className="attachments-list">
-                                    <div className="attachment-item">
-                                        <span className="attachment-icon">📎</span>
-                                        <a href="#" className="attachment-link">
-                                            프로그램 안내서.pdf
-                                        </a>
-                                    </div>
-                                    <div className="attachment-item">
-                                        <span className="attachment-icon">📎</span>
-                                        <a href="#" className="attachment-link">
-                                            참가 신청서.hwp
-                                        </a>
-                                    </div>
                                 </div>
                             </div>
                         )}
@@ -539,7 +355,7 @@ const NoncurricularViewPage = () => {
             <Footer />
 
             {/* 신청 모달 */}
-            <ApplicationModal 
+            <ProgramApplicationModal 
                 isOpen={showApplicationModal}
                 onClose={() => setShowApplicationModal(false)}
                 programData={programData}

@@ -1,17 +1,23 @@
 package kr.co.cms.domain.mypage.service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import kr.co.cms.domain.auth.entity.User;
 import kr.co.cms.domain.auth.repository.UserRepository;
 import kr.co.cms.domain.mypage.dto.ChangePasswordRequest;
 import kr.co.cms.domain.mypage.dto.MyPageProfileResponse;
 import kr.co.cms.domain.mypage.dto.UpdateProfileRequest;
+import kr.co.cms.domain.mypage.entity.EmplInfo;
+import kr.co.cms.domain.mypage.entity.StdInfo;
 import kr.co.cms.domain.mypage.entity.UnifiedMyPageView;
+import kr.co.cms.domain.mypage.repository.EmplInfoRepository;
+import kr.co.cms.domain.mypage.repository.GuestSocialUserMyPageRepository;
 import kr.co.cms.domain.mypage.repository.MyPageRepository;
+import kr.co.cms.domain.mypage.repository.StdInfoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +28,9 @@ public class MyPageService {
     private final MyPageRepository myPageRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final StdInfoRepository stdInfoRepository;
+    private final EmplInfoRepository emplInfoRepository;
+    private final GuestSocialUserMyPageRepository guestSocialUserRepository;
     
     // 마이페이지 프로필 조회
     public MyPageProfileResponse getMyProfile(String userId) {
@@ -44,16 +53,12 @@ public class MyPageService {
         
         // 이메일 중복 확인
         if (request.getEmail() != null && !request.getEmail().equals(currentInfo.getEmail())) {
-            if (myPageRepository.existsByEmailAndUserIdNot(request.getEmail(), userId)) {
-                throw new RuntimeException("이미 사용 중인 이메일입니다: " + request.getEmail());
-            }
+            validateEmailDuplication(userId, currentInfo.getUserType(), request.getEmail());
         }
         
         // 연락처 중복 확인
         if (request.getPhoneNumber() != null && !request.getPhoneNumber().equals(currentInfo.getPhoneNumber())) {
-            if (myPageRepository.existsByPhoneNumberAndUserIdNot(request.getPhoneNumber(), userId)) {
-                throw new RuntimeException("이미 사용 중인 연락처입니다: " + request.getPhoneNumber());
-            }
+            validatePhoneDuplication(userId, currentInfo.getUserType(), request.getPhoneNumber());
         }
         
         // 사용자 타입에 따라 적절한 테이블 업데이트
@@ -136,26 +141,67 @@ public class MyPageService {
                 .build();
     }
     
+    // 이메일 중복 검증
+    private void validateEmailDuplication(String userId, String userType, String email) {
+        boolean isDuplicate = false;
+        
+        switch (userType) {
+            case "STUDENT":
+                isDuplicate = stdInfoRepository.existsByEmailAndUserIdNot(email, userId);
+                break;
+            case "COUNSELOR":
+            case "PROFESSOR":
+            case "ADMIN":
+                isDuplicate = emplInfoRepository.existsByEmailAndUserIdNot(email, userId);
+                break;
+            case "GUEST":
+                // 게스트는 guestId로 확인해야 하므로 별도 처리 필요
+                break;
+        }
+        
+        if (isDuplicate) {
+            throw new RuntimeException("이미 사용 중인 이메일입니다: " + email);
+        }
+    }
+    
+    // 연락처 중복 검증
+    private void validatePhoneDuplication(String userId, String userType, String phoneNumber) {
+        boolean isDuplicate = false;
+        
+        switch (userType) {
+            case "STUDENT":
+                isDuplicate = stdInfoRepository.existsByPhoneNumberAndUserIdNot(phoneNumber, userId);
+                break;
+            case "COUNSELOR":
+            case "PROFESSOR":
+            case "ADMIN":
+                isDuplicate = emplInfoRepository.existsByPhoneNumberAndUserIdNot(phoneNumber, userId);
+                break;
+            case "GUEST":
+                // 게스트는 연락처 정보가 없으므로 스킵
+                break;
+        }
+        
+        if (isDuplicate) {
+            throw new RuntimeException("이미 사용 중인 연락처입니다: " + phoneNumber);
+        }
+    }
+    
     // 사용자 타입별 정보 업데이트
     @Transactional
     protected void updateUserInfoByType(String userId, String userType, UpdateProfileRequest request) {
-        // 실제 구현에서는 userType에 따라 STD_INFO 또는 EMPL_INFO 테이블을 직접 업데이트
-        // 여기서는 예시로 로그만 출력
         log.info("사용자 타입 {} 정보 업데이트: userId = {}", userType, userId);
         
         switch (userType) {
             case "STUDENT":
-                // 학생 정보 업데이트 로직
                 updateStudentInfo(userId, request);
                 break;
             case "COUNSELOR":
             case "PROFESSOR":
             case "ADMIN":
-                // 교직원 정보 업데이트 로직
                 updateEmployeeInfo(userId, request);
                 break;
             case "GUEST":
-                // 게스트 정보 업데이트 로직
                 updateGuestInfo(userId, request);
                 break;
             default:
@@ -163,21 +209,67 @@ public class MyPageService {
         }
     }
     
-    // 학생 정보 업데이트 (실제 구현 필요)
+    // 학생 정보 업데이트
     private void updateStudentInfo(String userId, UpdateProfileRequest request) {
-        // STD_INFO 테이블 업데이트 로직
         log.info("학생 정보 업데이트: userId = {}", userId);
+        
+        StdInfo student = stdInfoRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("학생 정보를 찾을 수 없습니다: " + userId));
+        
+        if (request.getPhoneNumber() != null) {
+            student.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getEmail() != null) {
+            student.setEmail(request.getEmail());
+        }
+        if (request.getPostalCode() != null) {
+            student.setPostalCode(request.getPostalCode());
+        }
+        if (request.getAddress() != null) {
+            student.setAddress(request.getAddress());
+        }
+        if (request.getDetailAddress() != null) {
+            student.setDetailAddress(request.getDetailAddress());
+        }
+        
+        stdInfoRepository.save(student);
+        log.info("학생 정보 업데이트 완료: userId = {}", userId);
     }
     
-    // 교직원 정보 업데이트 (실제 구현 필요)
+    // 교직원 정보 업데이트
     private void updateEmployeeInfo(String userId, UpdateProfileRequest request) {
-        // EMPL_INFO 테이블 업데이트 로직
         log.info("교직원 정보 업데이트: userId = {}", userId);
+        
+        EmplInfo employee = emplInfoRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("교직원 정보를 찾을 수 없습니다: " + userId));
+        
+        if (request.getPhoneNumber() != null) {
+            employee.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getEmail() != null) {
+            employee.setEmail(request.getEmail());
+        }
+        if (request.getPostalCode() != null) {
+            employee.setPostalCode(request.getPostalCode());
+        }
+        if (request.getAddress() != null) {
+            employee.setAddress(request.getAddress());
+        }
+        if (request.getDetailAddress() != null) {
+            employee.setDetailAddress(request.getDetailAddress());
+        }
+        
+        emplInfoRepository.save(employee);
+        log.info("교직원 정보 업데이트 완료: userId = {}", userId);
     }
     
-    // 게스트 정보 업데이트 (실제 구현 필요)
+    // 게스트 정보 업데이트
     private void updateGuestInfo(String userId, UpdateProfileRequest request) {
-        // GUEST_SOCIAL_USER 테이블 업데이트 로직
         log.info("게스트 정보 업데이트: userId = {}", userId);
+        
+        // 게스트는 providerId로 조회해야 함
+        // 실제 구현에서는 userId를 이용해 guestId를 찾는 로직 필요
+        
+        log.info("게스트 정보 업데이트 스킵 (현재 구현 제한): userId = {}", userId);
     }
 }

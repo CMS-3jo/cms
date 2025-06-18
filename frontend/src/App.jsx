@@ -102,7 +102,7 @@ function App() {
             {/* 핵심역량 */}
             {/* 학생용 페이지 */}
             <Route path="/cca/list" element={<CCAViewPage />} />
-            <Route path="/cca/survey" element={<CCASurveyPage />} />
+            <Route path="/cca/survey/:cciId" element={<CCASurveyPage />} />
             <Route path="/cca/result" element={<CCAResultPage />} />
             {/* 상담사용 페이지 */}
             <Route path="/cca/register" element={<CCARegPage />} />
