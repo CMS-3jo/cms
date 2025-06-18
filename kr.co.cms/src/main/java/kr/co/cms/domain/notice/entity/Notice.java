@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Setter
 @NoArgsConstructor
 public class Notice {
+	
     @Id
     @Column(name = "NOTICE_ID", length = 20)
     private String noticeId;
