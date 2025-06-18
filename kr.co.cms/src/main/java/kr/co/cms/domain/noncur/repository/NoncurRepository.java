@@ -47,6 +47,11 @@ public interface NoncurRepository extends JpaRepository<NoncurProgram, String>, 
     @Query("SELECT MAX(p.prgId) FROM NoncurProgram p WHERE p.prgId LIKE :prefix%")
     String findLatestIdByPrefix(@Param("prefix") String prefix);
     
-   
+ // 여러 상태의 프로그램 조회
+    List<NoncurProgram> findByPrgStatCdIn(List<String> statusCodes);
+
+    // 승인된 신청자 수 조회
+    @Query("SELECT COUNT(a) FROM NoncurApplication a WHERE a.prgId = :prgId AND a.aplyStatCd = '02'")
+    Long countApprovedApplications(@Param("prgId") String prgId);
     
 }
