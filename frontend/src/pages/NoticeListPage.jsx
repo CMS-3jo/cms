@@ -1,0 +1,63 @@
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Header from '../components/layout/Header';
+import Sidebar from '../components/layout/Sidebar';
+import Footer from '../components/layout/Footer';
+import { useNotices } from '../hooks/useNotices';
+
+const NoticeListPage = () => {
+  const { notices, fetchNotices, loading } = useNotices();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchNotices();
+  }, []);
+
+  const handleRowClick = (id) => {
+    navigate(`/notices/${id}`);
+  };
+
+  const handleCreate = () => {
+    navigate('/notices/new');
+  };
+
+  return (
+    <>
+      <Header />
+      <div className="container_layout">
+        <Sidebar />
+        <main style={{ flex: 1, padding: '20px' }}>
+          <h3 style={{ marginBottom: '20px' }}>공지사항</h3>
+          <button className="btn btn-primary" onClick={handleCreate} style={{ marginBottom: '10px' }}>
+            글쓰기
+          </button>
+          {loading ? (
+            <p>로딩 중...</p>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>번호</th>
+                  <th>제목</th>
+                  <th>작성일</th>
+                </tr>
+              </thead>
+              <tbody>
+                {notices.map((notice, index) => (
+                  <tr key={notice.id} style={{ cursor: 'pointer' }} onClick={() => handleRowClick(notice.id)}>
+                    <td>{notices.length - index}</td>
+                    <td>{notice.title}</td>
+                    <td>{notice.createdDate}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </main>
+      </div>
+      <Footer />
+    </>
+  );
+};
+
+export default NoticeListPage;
