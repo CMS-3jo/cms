@@ -28,10 +28,13 @@ public class NoticeService {
                    .map(NoticeDto::fromEntity)
                    .collect(Collectors.toList());
     }
-
+    @Transactional
     public NoticeDto get(String noticeId) {
         return repo.findById(noticeId)
-                   .map(NoticeDto::fromEntity)
+.map(n -> {
+    n.setViewCnt(n.getViewCnt() + 1);
+    return NoticeDto.fromEntity(n);
+})
                    .orElse(null);
     }
 
@@ -41,6 +44,7 @@ public class NoticeService {
         n.setNoticeId(generateId());
         n.setTitle(dto.getTitle());
         n.setContent(dto.getContent());
+        n.setRegUserId(dto.getRegUserId());
         repo.save(n);
         return n.getNoticeId();
     }

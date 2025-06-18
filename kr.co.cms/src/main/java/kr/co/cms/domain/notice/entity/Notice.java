@@ -21,6 +21,11 @@ public class Notice {
 
     @Column(name = "CONTENT", columnDefinition = "CLOB")
     private String content;
+    @Column(name = "REG_USER_ID", length = 20)
+    private String regUserId;
+
+    @Column(name = "VIEW_CNT")
+    private Integer viewCnt = 0;
 
     @Column(name = "REG_DT")
     private LocalDateTime regDt;
