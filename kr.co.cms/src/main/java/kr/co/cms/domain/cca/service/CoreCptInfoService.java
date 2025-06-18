@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import kr.co.cms.domain.cca.dto.CoreCptInfoDto;
 import kr.co.cms.domain.cca.dto.CoreCptSurveyDto;
-import kr.co.cms.domain.cca.dto.CoreCptSurveyDto.QuestionDto;
 import kr.co.cms.domain.cca.entity.CoreCptInfo;
 import kr.co.cms.domain.cca.entity.CoreCptQst;
 import kr.co.cms.domain.cca.repository.CoreCptInfoRepository;
@@ -86,18 +85,23 @@ public class CoreCptInfoService {
         dto.setTitle(info.getCciNm());
         dto.setCcaId(info.getCategoryCd());
         dto.setRegUserId(info.getRegUserId());
-        // 문항 정렬 후 매핑
-        List<QuestionDto> questions = info.getQuestions().stream()
+
+        List<CoreCptQst> qsts = info.getQuestions().stream()
             .sorted(Comparator.comparing(CoreCptQst::getQstOrd))
+            .collect(Collectors.toList());
+
+        List<CoreCptSurveyDto.QuestionDto> questions = qsts.stream()
             .map(q -> {
-                QuestionDto qdto = new QuestionDto();
+                CoreCptSurveyDto.QuestionDto qdto = new CoreCptSurveyDto.QuestionDto();
                 qdto.setOrder(q.getQstOrd());
                 qdto.setContent(q.getQstCont());
+                // **여기서 competency**: CoreCptQst → CoreCptInfo.categoryCd
+                qdto.setCompetency(q.getCoreCptInfo().getCategoryCd());
                 return qdto;
             })
             .collect(Collectors.toList());
-        dto.setQuestions(questions);
 
+        dto.setQuestions(questions);
         return dto;
     }
 
@@ -115,7 +119,7 @@ public class CoreCptInfoService {
         info.setRegUserId(dto.getRegUserId());
         info.setRegDt(LocalDateTime.now());
 
-        // 2) 문항 전부 삭제 후 재생성 (orphanRemoval: true)
+        // 2) 기존 문항 컬렉션 유지한 채 내용 교체 (orphanRemoval=true)
         info.getQuestions().clear();
 
         List<CoreCptQst> newQuestions = dto.getQuestions().stream()
@@ -128,7 +132,7 @@ public class CoreCptInfoService {
                     .regDt(LocalDateTime.now())
                     .build()
             ).collect(Collectors.toList());
-        info.setQuestions(newQuestions);
+        info.getQuestions().addAll(newQuestions);
 
         infoRepo.save(info);
     }
