@@ -1,5 +1,6 @@
 package kr.co.cms.domain.cnsl.controller;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ import kr.co.cms.domain.cnsl.dto.CounselingSearchCondition;
 import kr.co.cms.domain.cnsl.service.CounselingRecordService;
 import kr.co.cms.domain.cnsl.service.CounselingScheduleService;
 import kr.co.cms.domain.cnsl.service.CounselingService;
+import kr.co.cms.domain.dept.repository.DeptInfoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @RequestMapping("/api/counseling")
 public class CounselingController {
-
+	
     private final CounselingService counselingService;
     private final CounselingRecordService counselingRecordService;
     private final CounselingScheduleService scheduleService;
@@ -69,6 +71,11 @@ public class CounselingController {
         ));
 
         return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/reserved-times")
+    public List<String> getReservedTimes(@RequestParam("date") String date) {
+        return counselingService.getReservedTimes(date);
     }
     
     @PatchMapping("/applications/{id}/assign")
