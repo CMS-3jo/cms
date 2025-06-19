@@ -3,7 +3,7 @@ import React from 'react';
 
 const ChatbotButton = () => {
   const openPopup = async () => {
-	  const res = await fetch('http://localhost:8082/api/chat/room', {
+	  const res = await fetch('http://localhost:8082/api/chat/rooms', {
 	    method: 'POST',
 	    headers: { 'Content-Type': 'application/json' },
 	    body: JSON.stringify({ customerName: '테스트유저' }),
