@@ -19,7 +19,7 @@ const MainContent = () => {
         </p>
         <button 
           className="btn cta-button"
-          onClick={() => window.location.href = '/self-diagnosis'}
+          onClick={() => window.location.href = '/center-intro'}
         >
           자가진단 받아보기
         </button>
