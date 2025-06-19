@@ -62,7 +62,9 @@ const PublicHeader = () => {
                 onClick={handleLoginClick}
                 style={{ cursor: 'pointer' }}
               >
-                <img alt="로그인" src="./images/counselor/basic-login.svg" />
+                <span class="material-symbols-outlined login_icon">
+login
+</span>
               </a>
             </p>
           )}
