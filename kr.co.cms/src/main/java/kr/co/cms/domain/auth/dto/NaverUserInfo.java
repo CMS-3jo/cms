@@ -22,7 +22,5 @@ public class NaverUserInfo {
      private String name;            // 이름
      private String nickname;        // 닉네임
      private String profile_image;   // 프로필 이미지
-     private String age;             // 연령대
-     private String gender;          // 성별
  }
 }
