@@ -162,6 +162,10 @@ export const counselingApi = {
 	// 상담 일지 수정
 	updateCounselingRecord: (id, data) =>
 		apiService.put(`/counseling/records/${id}`, data),
+	
+	// 예약 시간 받아오기
+	getReservedTimes: (date) =>
+	  apiService.get('/counseling/reserved-times', { date }),
 };
 
 // 인증 관련 API
