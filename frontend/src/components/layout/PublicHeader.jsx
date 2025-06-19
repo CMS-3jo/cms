@@ -75,6 +75,7 @@ const PublicHeader = () => {
                 <span className="material-symbols-outlined header-icons">
                   login
                 </span>
+
               </a>
             </p>
           )}

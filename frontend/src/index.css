@@ -95,9 +95,12 @@ button:focus-visible {
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1000;
 }
 .shownav.show {
-  display: block !important;
+  display: flex !important;
 }
 /* ensure header menu button is always visible */
 .menu img {
@@ -108,6 +111,12 @@ button:focus-visible {
 .dynamic-text {
   mix-blend-mode: difference;
   color: inherit;
+}
+
+.login_icon{
+  font-size: 30px;
+  margin-right: 8px;
+  font-weight: bold;
 }
 
 @media (prefers-color-scheme: light) {

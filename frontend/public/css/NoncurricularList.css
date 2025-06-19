@@ -1,7 +1,46 @@
-.noncur-list-page {}
+.noncur-list-page {
+    flex: 1;
+    padding: 40px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
 
-.noncur-select {}
+.noncur-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
 
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-btn {
+    padding: 8px 12px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.search-btn:hover {
+    background-color: #0056b3;
+}
+
+.result-info {
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #555;
+}
 /* 클릭 가능한 아이템 스타일 */
 .noncur-item.clickable {
     cursor: pointer;

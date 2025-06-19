@@ -172,7 +172,10 @@
 }
 
 .side_area .shownav {
-  display: none !important;
+  display: none;
+}
+.side_area .shownav.show {
+  display: flex !important;
 }
 
 /* 새로운 스타일들 */
@@ -825,6 +828,6 @@
   }
 
   .side_area .shownav {
-    display: flex !important;
+  display: none;
   }
 }
