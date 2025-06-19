@@ -13,14 +13,10 @@ const Header = () => {
   };
 
   const handleLoginClick = () => {
-    console.log('🔴 로그인 버튼 클릭됨!');
-    console.log('현재 isLoggedIn:', isLoggedIn);
     navigate('/login');
   };
 
   const handleLogout = () => {
-    console.log('🔴 로그아웃 버튼 클릭됨!');
-    logout();
     navigate('/');
   };
 
@@ -31,9 +27,6 @@ const Header = () => {
     { label: '상담 일지 리스트', path: '/counseling/records' },
     { label: '공지사항', path: '/notices' }
   ];
-
-  // 디버깅을 위한 로그
-  console.log('🔵 Header 렌더링 - isLoggedIn:', isLoggedIn, 'loading:', loading);
 
   return (
     <header>

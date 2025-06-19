@@ -56,7 +56,7 @@ const PublicHeader = () => {
               </a>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="/diagnosis-data">
+              <a className="nav-link" href="/resources">
                 자료실
               </a>
             </li>
@@ -131,7 +131,7 @@ const PublicHeader = () => {
                 </a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/self-diagnosis">
+                <a className="nav-link" href="/resources">
                   자료실
                 </a>
               </li>

@@ -1,5 +1,6 @@
 // src/components/common/HeroSection.jsx
 import React from 'react';
+import '../../../public/css/HeroSection.css';
 
 const HeroSection = () => {
   return (
@@ -9,7 +10,7 @@ const HeroSection = () => {
         <div className="hero-content">
           <h1>한국방송통신대학 상담센터</h1>
           <p>학생들의 고민을 함께 해결합니다.</p>
-          <a href="#" className="cta-button">자세히 알아보기</a>
+          <a href="/center-intro" className="cta-button">자세히 알아보기</a>
         </div>
       </div>
     </section>
