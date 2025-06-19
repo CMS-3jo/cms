@@ -1,7 +1,9 @@
 package kr.co.cms.domain.cnsl.controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,7 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 import kr.co.cms.domain.cnsl.dto.CounselingApplyRequest;
 import kr.co.cms.domain.cnsl.dto.CounselingDetailDto;
 import kr.co.cms.domain.cnsl.dto.CounselingListResponse;
+import kr.co.cms.domain.cnsl.dto.CounselingRecordDto;
 import kr.co.cms.domain.cnsl.dto.CounselingSearchCondition;
+import kr.co.cms.domain.cnsl.service.CounselingRecordService;
+import kr.co.cms.domain.cnsl.service.CounselingScheduleService;
 import kr.co.cms.domain.cnsl.service.CounselingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +37,9 @@ import lombok.extern.slf4j.Slf4j;
 public class CounselingController {
 
     private final CounselingService counselingService;
-
+    private final CounselingRecordService counselingRecordService;
+    private final CounselingScheduleService scheduleService;
+    
     @PostMapping("/apply")
     public ResponseEntity<?> apply(@RequestBody CounselingApplyRequest request) {
         String id = counselingService.registerCounseling(request);
@@ -70,7 +77,7 @@ public class CounselingController {
         @RequestBody Map<String, String> payload
     ) {
         String empNo = payload.get("empNo");
-        log.info("상담사 배정: {} → {}", cnslAplyId, empNo);
+
         counselingService.assignCounselor(cnslAplyId, empNo);
         return ResponseEntity.ok(Map.of("success", true));
     }
@@ -79,5 +86,27 @@ public class CounselingController {
     public ResponseEntity<CounselingDetailDto> getCounselingDetail(@PathVariable("id") String id) {
         CounselingDetailDto dto = counselingService.getCounselingDetail(id);
         return ResponseEntity.ok(dto);
+    }
+    
+    @GetMapping("/schedule/exists/{emplNo}")
+    public ResponseEntity<?> checkScheduleExists(@PathVariable("emplNo") String emplNo) {
+        boolean exists = scheduleService.hasSchedule(emplNo);
+        return ResponseEntity.ok(Map.of("exists", exists));
+    }
+    
+    @GetMapping("/records/{cnslAplyId}")
+    public ResponseEntity<List<CounselingRecordDto>> getRecords(@PathVariable("cnslAplyId") String cnslAplyId) {
+        List<CounselingRecordDto> records = counselingRecordService.getRecordsByApplyId(cnslAplyId);
+        if (records.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(records);
+    }
+
+    @PostMapping("/records/{cnslAplyId}")
+    public ResponseEntity<?> saveRecord(@PathVariable("cnslAplyId") String cnslAplyId,
+                                        @RequestBody CounselingRecordDto dto) {
+        counselingRecordService.saveCounselingRecord(cnslAplyId, dto);
+        return ResponseEntity.ok(Map.of("success", true));
     }
 }

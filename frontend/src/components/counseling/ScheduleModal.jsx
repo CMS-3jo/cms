@@ -39,6 +39,14 @@ const ScheduleModal = ({ studentData, onSave, onClose }) => {
     });
   };
 
+  // 모달 외부 클릭 처리
+  const handleBackdropClick = (e) => {
+    // 클릭한 요소가 backdrop인 경우에만 모달 닫기
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   const timeOptions = [
     { value: '', label: '시간을 선택해주세요', disabled: true },
     { value: '09:00:00', label: '09:00' },
@@ -53,8 +61,18 @@ const ScheduleModal = ({ studentData, onSave, onClose }) => {
   ];
 
   return (
-    <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1" aria-hidden="false">
-      <div className="modal-dialog">
+    <div
+      className="modal fade show"
+      style={{ 
+        display: 'block',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', // backdrop 색상 명시적 설정
+        zIndex: 1050 // Bootstrap 모달 기본 z-index
+      }}
+      tabIndex="-1"
+      aria-hidden="false"
+      onClick={handleBackdropClick} // 수정된 핸들러 사용
+    >
+      <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">상담 일정 등록</h5>
@@ -201,9 +219,6 @@ const ScheduleModal = ({ studentData, onSave, onClose }) => {
           </div>
         </div>
       </div>
-      
-      {/* Modal backdrop */}
-      <div className="modal-backdrop fade show" onClick={onClose}></div>
     </div>
   );
 };
