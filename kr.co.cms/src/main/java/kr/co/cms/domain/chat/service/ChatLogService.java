@@ -17,24 +17,17 @@ public class ChatLogService {
     private final ChatLogRepository chatLogRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
-    public void processMessage(ChatMessageDto message) {
-        // 현재 시각 기준 시간 생성
-        LocalDateTime now = LocalDateTime.now();
+    public void processMessage(ChatMessageDto dto) {
+        ChatLog log = ChatLog.builder()
+            .roomId(dto.getRoomId())
+            .senderId(dto.getSenderId())
+            .senderName(dto.getSenderName())
+            .senderRole(dto.getSenderRole())  // 추가 필요
+            .message(dto.getContent())
+            .sentAt(LocalDateTime.now())
+            .build();
 
-        // 1. MongoDB 저장
-        ChatLog chatLog = ChatLog.builder()
-                .roomId(message.getRoomId())
-                .sender(message.getSender())
-                .message(message.getMessage())
-                .sentAt(now)
-                .build();
-        chatLogRepository.save(chatLog);
-
-        // 2. 메시지 DTO에도 sentAt 세팅
-        message.setSentAt(now);
-
-        // 3. WebSocket 전송 → 방 별로 전송
-        messagingTemplate.convertAndSend("/topic/chat/room/" + message.getRoomId(), message);
+        chatLogRepository.save(log);
     }
 }
 

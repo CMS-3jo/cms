@@ -4,15 +4,22 @@ import { useEffect, useRef } from 'react';
 
 export default function useChatSocket(roomId, onMessageReceived, onDisconnect, onConnect) {
   const clientRef = useRef(null);
-
+  const token = localStorage.getItem('authToken');
+  
   useEffect(() => {
 	if (!roomId || clientRef.current) {
 	    console.warn('🟡 이미 연결 중이거나 roomId 없음');
 	    return;
 	  }
-    const socket = new SockJS('http://localhost:8082/gs-websocket');
+	  const socket = new SockJS('http://localhost:8082/gs-websocket', null, {
+	    withCredentials: true // ← 이거 추가
+	  });
     const client = new Client({
       webSocketFactory: () => socket,
+	  connectHeaders: {
+	    roomId: roomId,
+		Authorization: `Bearer ${token}`
+	  },
       onConnect: () => {
         console.log('🔌 WebSocket connected to room:', roomId);
 

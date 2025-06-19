@@ -1,8 +1,10 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import useChatSocket from '../../hooks/useChatSocket.jsx';
+import { useAuth } from '../../hooks/useAuth.jsx';
 
 const ChatModal = ({ roomId, onClose }) => {
-  const userId = '테스트유저';
+  const { user } = useAuth();
+  const userId = user?.id
   const [message, setMessage] = useState('');
   const [chatLog, setChatLog] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -83,13 +85,14 @@ const ChatModal = ({ roomId, onClose }) => {
   const handleSend = () => {
     if (message.trim()) {
       const msg = {
-        sender: userId,
-        message,
         roomId,
+        senderId: user.id,           // 로그인된 사용자 ID
+        senderName: user.name,       // 사용자 이름
+        senderRole: user.role,       // ROLE_STUDENT or ROLE_COUNSELOR
+        content: message             // 메시지 내용
       };
       sendMessage(msg);
       setMessage('');
-      // 메시지 전송 후 맨 아래로 스크롤
       setTimeout(() => scrollToBottom(true), 100);
     }
   };
@@ -115,12 +118,12 @@ const ChatModal = ({ roomId, onClose }) => {
               )}
 
               {chatLog.map((msg, idx) => {
-                const isMine = msg.sender === userId;
+                const isMine = msg.senderId === userId;
 
-                const currentTime = formatTime(msg.sentAt);
+                const currentTime = formatTime(msg.timestamp || msg.sentAt);
                 const next = chatLog[idx + 1];
                 const isLastOfTimeGroup =
-                  !next || formatTime(next.sentAt) !== currentTime || next.sender !== msg.sender;
+                  !next || formatTime(next.sentAt) !== currentTime || next.sender !== msg.senderName;
 
                 return (
                   <div
@@ -135,7 +138,7 @@ const ChatModal = ({ roomId, onClose }) => {
                       {!isMine && <div className="sender-name">{msg.sender}</div>}
                       <div className="message-text">{msg.message}</div>
                     </div>
-
+					
                     {isLastOfTimeGroup && (
                       <div
                         className="timestamp"
