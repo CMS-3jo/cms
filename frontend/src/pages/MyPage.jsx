@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom'; // 추가
 import PublicHeader from '../components/layout/PublicHeader';
 import Footer from '../components/layout/Footer';
 import '../../public/css/MyPage.css';
@@ -12,6 +13,7 @@ const MyPage = () => {
   const [error, setError] = useState('');
   
   const { user, apiCall, checkCurrentUser } = useAuth();
+  const navigate = useNavigate(); // 추가
 
   // 사용자 프로필 정보 조회
   useEffect(() => {
@@ -79,6 +81,8 @@ const MyPage = () => {
     setActiveModal(null);
     setDetailContent('');
   };
+
+
 
   const openDetailModal = (activity) => {
     setDetailContent(`
@@ -286,19 +290,36 @@ const MyPage = () => {
               <p>상담 기록 및 내용 확인</p>
               <div className="menu-arrow">→</div>
             </div>
+</div>
 
+                {userProfile.userType === 'STUDENT' && userProfile.gradeYear && (
+                          
+                  
+                  <div className="menu-cards-grid">
             <div 
               className="menu-card"
-              onClick={() => openModal('test-records')}
-            >
+              onClick={() => navigate('/cca/result')}
+              >
               <div className="menu-icon">📊</div>
               <h3>나의 검사기록</h3>
               <p>심리검사 결과 및 점수 확인</p>
               <div className="menu-arrow">→</div>
             </div>
-          </div>
 
-          {/* 모달 */}
+            <div 
+              className="menu-card"
+              onClick={() => navigate('/noncur')}
+              >
+              <div className="menu-icon">🎓</div>
+              <h3>나의 비교과</h3>
+              <p>비교과 활동 확인</p>
+              <div className="menu-arrow">→</div>
+            </div>
+
+          </div>
+            )}
+
+          {/* 모달 - my-activities 관련 코드는 제거하거나 남겨둘 수 있음 */}
           <div 
             className={`modal ${activeModal ? 'show-modal' : ''}`}
             onClick={(event) => event.stopPropagation()}
@@ -308,7 +329,6 @@ const MyPage = () => {
                 <h2>
                   {activeModal === 'personal-info' && '👤 개인정보'}
                   {activeModal === 'my-activities' && '💬 나의 상담활동'}
-                  {activeModal === 'test-records' && '📊 나의 검사기록'}
                   {activeModal === 'detail' && '📋 상담내용 상세보기'}
                 </h2>
                 <button 

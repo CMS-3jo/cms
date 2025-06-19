@@ -41,7 +41,7 @@ public class OAuthController {
     @GetMapping("/{provider}/url")
     public ResponseEntity<?> getOAuthUrl(@PathVariable("provider") String provider) {
         try {
-            log.info("OAuth URL 요청: provider = {}", provider);
+//            log.info("OAuth URL 요청: provider = {}", provider);
             
             String authUrl = oAuthService.generateAuthUrl(provider.toUpperCase());
             
@@ -49,11 +49,11 @@ public class OAuthController {
             response.put("provider", provider.toUpperCase());
             response.put("authUrl", authUrl);
             
-            log.info("OAuth URL 생성 성공: provider = {}, url = {}", provider, authUrl);
+//            log.info("OAuth URL 생성 성공: provider = {}, url = {}", provider, authUrl);
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("OAuth URL 생성 실패: provider = {}, error = {}", provider, e.getMessage(), e);
+//            log.error("OAuth URL 생성 실패: provider = {}, error = {}", provider, e.getMessage(), e);
             return ResponseEntity.badRequest().body("OAuth URL 생성 실패: " + e.getMessage());
         }
     }
@@ -68,7 +68,7 @@ public class OAuthController {
             HttpServletResponse response
     ) {
         try {
-            log.info("OAuth 콜백 처리: provider = {}, code = {}", provider, code);
+//            log.info("OAuth 콜백 처리: provider = {}, code = {}", provider, code);
             
             // OAuth 처리 및 JWT 토큰 생성
             LoginResponse loginResponse = oAuthService.processOAuthCallback(provider.toUpperCase(), code);
@@ -81,7 +81,7 @@ public class OAuthController {
                 accessCookie.setPath("/");
                 accessCookie.setMaxAge(24 * 60 * 60); // 24시간
                 response.addCookie(accessCookie);
-                log.info("Access Token을 HttpOnly Cookie로 설정: provider = {}", provider);
+//                log.info("Access Token을 HttpOnly Cookie로 설정: provider = {}", provider);
             }
             
             // Refresh Token을 HttpOnly Cookie로 설정 
@@ -92,7 +92,7 @@ public class OAuthController {
                 refreshCookie.setPath("/");
                 refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
                 response.addCookie(refreshCookie);
-                log.info("Refresh Token을 HttpOnly Cookie로 설정: provider = {}", provider);
+//                log.info("Refresh Token을 HttpOnly Cookie로 설정: provider = {}", provider);
             }
             
             // 사용자 정보를 세션에 저장하여 팝업에서 조회할 수 있도록 함
@@ -106,7 +106,7 @@ public class OAuthController {
             response.sendRedirect("http://localhost:5173/auth/callback?success=true");
             
         } catch (Exception e) {
-            log.error("OAuth 콜백 처리 실패: provider = {}, error = {}", provider, e.getMessage(), e);
+//            log.error("OAuth 콜백 처리 실패: provider = {}, error = {}", provider, e.getMessage(), e);
             
             // 에러 정보를 세션에 저장
             request.getSession().setAttribute("oauthSuccess", false);
@@ -116,7 +116,7 @@ public class OAuthController {
                 // 모든 OAuth 제공자를 팝업 콜백 페이지로 에러 리디렉션 
                 response.sendRedirect("http://localhost:5173/auth/callback?success=false");
             } catch (IOException ioException) {
-                log.error("리다이렉트 실패: {}", ioException.getMessage());
+//                log.error("리다이렉트 실패: {}", ioException.getMessage());
             }
         }
     }
@@ -162,57 +162,9 @@ public class OAuthController {
             }
             
         } catch (Exception e) {
-            log.error("OAuth 결과 조회 실패: {}", e.getMessage(), e);
+//            log.error("OAuth 결과 조회 실패: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body("OAuth 결과 조회 실패: " + e.getMessage());
         }
     }
-    
-    // 수동 콜백 처리 (AJAX 방식)
-    @PostMapping("/{provider}/callback")
-    public ResponseEntity<?> handleOAuthCallbackAjax(
-            @PathVariable("provider") String provider,
-            @RequestParam("code") String code,
-            HttpServletResponse response
-    ) {
-        try {
-            log.info("OAuth AJAX 콜백 처리: provider = {}, code = {}", provider, code);
-            
-            LoginResponse loginResponse = oAuthService.processOAuthCallback(provider.toUpperCase(), code);
-            
-            // Access Token을 HttpOnly Cookie로 설정
-            if (loginResponse.getAccessToken() != null) {
-                Cookie accessCookie = new Cookie("accessToken", loginResponse.getAccessToken());
-                accessCookie.setHttpOnly(true);
-                accessCookie.setSecure(false);
-                accessCookie.setPath("/");
-                accessCookie.setMaxAge(24 * 60 * 60); // 24시간
-                response.addCookie(accessCookie);
-            }
-            
-            // Refresh Token을 HttpOnly Cookie로 설정
-            if (loginResponse.getRefreshToken() != null) {
-                Cookie refreshCookie = new Cookie("refreshToken", loginResponse.getRefreshToken());
-                refreshCookie.setHttpOnly(true);
-                refreshCookie.setSecure(false);
-                refreshCookie.setPath("/");
-                refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
-                response.addCookie(refreshCookie);
-            }
-            
-            // 응답에서는 토큰들 제거하고 로그인 성공 정보만 반환
-            Map<String, Object> responseData = new HashMap<>();
-            responseData.put("success", true);
-            responseData.put("userId", loginResponse.getUserId());
-            responseData.put("role", loginResponse.getRole());
-            responseData.put("name", loginResponse.getName());
-            responseData.put("identifierNo", loginResponse.getIdentifierNo());
-            responseData.put("message", loginResponse.getMessage());
-            
-            return ResponseEntity.ok(responseData);
-            
-        } catch (Exception e) {
-            log.error("OAuth AJAX 콜백 처리 실패: provider = {}, error = {}", provider, e.getMessage(), e);
-            return ResponseEntity.badRequest().body("OAuth 로그인 실패: " + e.getMessage());
-        }
-    }
+
 }
