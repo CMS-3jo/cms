@@ -93,10 +93,9 @@ const Header = () => {
             <img alt="메뉴" src="/header-menu.svg" style={{ cursor: 'pointer' }} />
           </div>
           
-          <div 
-            className="shownav" 
-            id="shownav_menu" 
-            style={{ display: showMobileMenu ? 'block' : 'none' }}
+          <div
+            className={`shownav ${showMobileMenu ? 'show' : ''}`}
+            id="shownav_menu"
           >
             <ul className="nav nav-underline">
               {mobileMenuItems.map((item, index) => (

@@ -2,6 +2,8 @@
             margin: 0;
             font-family: Arial, sans-serif;
             line-height: 1.6;
+            background: linear-gradient(135deg,#dde6f7,#f5f9ff);
+            background-attachment: fixed;
         }
 
         .logo img {
@@ -45,7 +47,7 @@
         .news-item tr {cursor : pointer; border : 0;}
         
         .idx-cardarea {display : flex; justify-content:space-between; margin : 30px 0 30px 0; padding: 3%;}
-        .idx-cardarea > div {width : 25%; background-color : #ddd;  margin : 0 5px; border-radius : 15px; transition : 0.2s;}
+         .idx-cardarea > div {width : 25%; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border : 1px solid var(--glass-border); margin : 0 5px; border-radius : 15px; transition : 0.2s;}
         .idx-cardarea > div:hover {transform : translateY(-20px)}
         .idx-cardarea > div > a {color : #000; display : block; height : 100%; padding : 40px 20px 80px 20px; position : relative;}
         .idx-cardarea > div > a:hover {text-decoration : none;}
@@ -60,10 +62,16 @@
         .idx-cardarea > div > a img {max-width : 40px;}
         }
         
-        .container {
-        	justify-content: center;
-    		display: flex; /* Flexbox 사용 */
-    		flex-direction : column;
-    		align-items: center; /* 수직 정렬 */
-    		padding : 20px 0;
-		}
+ .container {
+                justify-content: center;
+                display: flex; /* Flexbox 사용 */
+                flex-direction : column;
+                align-items: center; /* 수직 정렬 */
+                padding : 20px 0;
+                background: var(--glass-bg);
+                border-radius : 16px;
+                border : 1px solid var(--glass-border);
+                backdrop-filter : var(--glass-blur);
+                -webkit-backdrop-filter : var(--glass-blur);
+                box-shadow : 0 8px 32px rgba(0,0,0,0.1);
+                }

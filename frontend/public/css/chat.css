@@ -86,7 +86,9 @@ border-top : var(--bs-modal-footer-border-width) solid var(--bs-modal-footer-bor
 .modal.chat .modal-body .chat-text #sendBtn {display : none}
 
 .modal.chat .modal-header {background-color : #004080; color : #fff;}
-.modal.chat .modal-header button {filter: invert(1) brightness(1);}
+.modal.chat .modal-header button {
+  /* filter: invert(1) brightness(1); */
+}
 
 .modal.chat #startBtn {width : 100%;}
 .modal.chat:not(.chatroom) .modal-footer input[type="button"] {width : 100%;}
