@@ -36,19 +36,19 @@ const PublicHeader = () => {
           </a>
           <ul className="nav nav-underline" id="major_menu">
             <li className="nav-item">
-              <a className="nav-link">상담센터 소개</a>
+             <a className="nav-link" href="/center-intro">상담센터 소개</a>
             </li>
             <li className="nav-item">
-              <a className="nav-link">심리상담</a>
+                  <a className="nav-link" href="/cnsl/psychological">심리상담</a>
             </li>
             <li className="nav-item">
-              <a className="nav-link">학업상담</a>
+               <a className="nav-link" href="/cnsl/academic">학업상담</a>
             </li>
             <li className="nav-item">
-              <a className="nav-link">자가 진단</a>
+               <a className="nav-link" href="/self-diagnosis">자가 진단</a>
             </li>
             <li className="nav-item">
-              <a className="nav-link">자료실</a>
+              <a className="nav-link" href="/diagnosis-data">자료실</a>
             </li>
           </ul>
         </nav>
@@ -89,19 +89,19 @@ const PublicHeader = () => {
             </div>
             <ul className="nav nav-underline" id="navmajor_menu">
               <li className="nav-item">
-                <a className="nav-link" href="">상담센터 소개</a>
+                <a className="nav-link" href="/center-intro">상담센터 소개</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="">심리상담</a>
+                  <a className="nav-link" href="/cnsl/psychological">심리상담</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="">학업상담</a>
+                  <a className="nav-link" href="/cnsl/academic">학업상담</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="">자가 진단</a>
+                <a className="nav-link" href="/self-diagnosis">자가 진단</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="">자료실</a>
+                      <a className="nav-link" href="/diagnosis-data">자료실</a>
               </li>
             </ul>
           </div>
