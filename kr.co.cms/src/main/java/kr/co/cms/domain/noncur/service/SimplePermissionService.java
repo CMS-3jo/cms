@@ -17,9 +17,6 @@ public class SimplePermissionService {
     private final NoncurApplicationRepository applicationRepository;
     private final EmplInfoRepository emplInfoRepository;
     
-    /**
-     * 생성자 주입
-     */
     public SimplePermissionService(NoncurRepository programRepository, 
                                   NoncurApplicationRepository applicationRepository,
                                   EmplInfoRepository emplInfoRepository) {
@@ -28,9 +25,8 @@ public class SimplePermissionService {
         this.emplInfoRepository = emplInfoRepository;
     }
     
-    /**
-     * 프로그램 관리 권한 체크 (강화)
-     */
+
+    //프로그램 관리 권한 체크
     public boolean hasPermissionForProgram(String userId, String prgId) {
         try {
             // 1. 시스템 관리자 체크
@@ -69,9 +65,8 @@ public class SimplePermissionService {
         }
     }
     
-    /**
-     * 신청 관리 권한 체크 (강화)
-     */
+
+    //신청자 관리 권한 체크 (강화)
     public boolean hasApplicationPermission(String userId, String aplyId) {
         try {
             // 신청 정보로부터 프로그램 ID를 가져와서 권한 확인
@@ -88,9 +83,7 @@ public class SimplePermissionService {
         }
     }
     
-    /**
-     * 부서 권한 체크 (강화)
-     */
+    //부서 권한 체크
     public boolean hasPermissionForDepartment(String userId, String deptCd) {
         try {
             // 1. 시스템 관리자 체크
@@ -112,9 +105,7 @@ public class SimplePermissionService {
         }
     }
     
-    /**
-     * 사용자의 부서 코드 조회
-     */
+    //사용자의 부서 코드 조회
     public String getUserDepartment(String userId) {
         try {
             EmplInfo emplInfo = emplInfoRepository.findByUserId(userId).orElse(null);
@@ -125,9 +116,8 @@ public class SimplePermissionService {
         }
     }
     
-    /**
-     * 사용자 정보 조회
-     */
+
+     //사용자 정보 조회
     public EmplInfo getUserInfo(String userId) {
         try {
             return emplInfoRepository.findByUserId(userId).orElse(null);
@@ -137,9 +127,8 @@ public class SimplePermissionService {
         }
     }
     
-    /**
-     * 프로그램 존재 여부 확인
-     */
+
+    //프로그램 존재 여부 확인
     public boolean programExists(String prgId) {
         try {
             return programRepository.existsById(prgId);
@@ -149,9 +138,8 @@ public class SimplePermissionService {
         }
     }
     
-    /**
-     * 신청 존재 여부 확인
-     */
+
+    //신청 존재 여부 확인
     public boolean applicationExists(String aplyId) {
         try {
             return applicationRepository.existsById(aplyId);
@@ -161,9 +149,8 @@ public class SimplePermissionService {
         }
     }
     
-    /**
-     * 시스템 관리자 여부 확인
-     */
+
+     //시스템 관리자 여부 확인
     private boolean isSystemAdmin(String userId) {
         // TODO: 실제 시스템 관리자 체크 로직
         // 예: USER_ACCOUNT 테이블의 ROLE이 'ADMIN'인지 확인
@@ -187,9 +174,8 @@ public class SimplePermissionService {
         return false; // 기본적으로 일반 사용자로 처리
     }
     
-    /**
-     * 사용자의 권한 레벨 확인 (확장 가능)
-     */
+
+     //사용자의 권한 레벨 확인
     public String getUserPermissionLevel(String userId) {
         if (isSystemAdmin(userId)) {
             return "SYSTEM_ADMIN";

@@ -91,9 +91,19 @@ function App() {
               path="/center-intro/location"
               element={<CenterIntroPage activeTab="location" />}
             />
+
+
+            {/* 비교과 프로그램*/}
+            {/* 비교과 페이지 */}
             <Route path="/noncur" element={<NoncurricularListPage />} />
             <Route path="/noncur/:prgId" element={<NoncurricularViewPage />} />
             <Route path="/noncur/register" element={<NoncurricularRegisterPage />} />
+            {/* 비교과 관리자 페이지 */}
+            <Route path="/admin/noncur" element={<NoncurAdminPage />} />
+            <Route path="/admin/noncur/program/:prgId" element={<NoncurAdminPage />} />
+
+
+
 
             {/* 심리상담 관련 페이지들 */}
             <Route
@@ -132,8 +142,7 @@ function App() {
 
             {/* 관리자 페이지들 */}
             <Route path="/admin/counseling" element={<CounselingListPage />} />
-            <Route
-              path="/admin/counseling/:id"
+            <Route path="/admin/counseling/:id"
               element={<CounselingDetailPage />}
             />
             <Route
@@ -148,11 +157,6 @@ function App() {
               path="/admin/calendar/weekly"
               element={<WeeklyCalendarPage />}
             />
-            {/* 비교과 프로그램 관리 */}
-            <Route path="/admin/noncur" element={<NoncurAdminPage />} />
-      
-            {/* 프로그램별 상세 관리 */}
-            <Route path="/admin/noncur/program/:prgId" element={<NoncurAdminPage />} />
           </Routes>
 
           
