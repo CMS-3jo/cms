@@ -2,6 +2,56 @@
 
 .noncur-select {}
 
+/* 클릭 가능한 아이템 스타일 */
+.noncur-item.clickable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.noncur-item.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid #007bff;
+}
+
+.noncur-item.clickable:hover .noncur-title {
+    color: #007bff;
+}
+
+.noncur-item.clickable:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 공유 버튼이 카드 클릭을 방해하지 않도록 */
+.noncur-share {
+    position: relative;
+    z-index: 10;
+}
+
+/* 호버 시 이미지 효과 */
+.noncur-item.clickable:hover .noncur-image {
+    transform: scale(1.05);
+    transition: transform 0.3s ease;
+}
+
+/* 접근성을 위한 포커스 스타일 */
+.noncur-item.clickable:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* 카드 내용 영역에 포인터 커서 */
+.noncur-item.clickable .bottomWrap {
+    cursor: pointer;
+}
+
+.noncur-item.clickable .topWrap .noncur-image {
+    cursor: pointer;
+}
+
+
 .noncur-list {
     border-radius: 5px;
     display: grid;

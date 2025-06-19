@@ -35,7 +35,7 @@ const CounselingDetailPage = () => {
         
         <section className="contents">
           <h4 className="board_title">
-            <b>{counselingDetail?.name || '홍길동'}</b> 학생의 상담 신청 내역
+            <b>{counselingDetail?.stdNm || '홍길동'}</b> 학생의 상담 신청 내역
           </h4>
           
           <CounselingDetailForm 

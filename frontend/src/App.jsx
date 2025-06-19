@@ -31,6 +31,8 @@ import AcademicConsultingPage from "./pages/AcademicConsultingPage";
 import PeerCounselingPage from "./pages/PeerCounselingPage";
 import NoncurricularViewPage from "./pages/NoncurricularViewPage.jsx";
 import NoncurricularRegisterPage from "./pages/NoncurricularRegisterPage.jsx";
+
+// 핵심역량 관련 페이지들
 import CCARegPage from "./pages/CCA_RegPage.jsx";
 import CCAViewPage from "./pages/CCA_ListPage.jsx";
 import CCASurveyPage from "./pages/CCA_SurveyPage.jsx";
@@ -38,27 +40,34 @@ import CCAAnalysisPage from "./pages/CCA_AnalysisPage.jsx";
 import CCAResultPage from "./pages/CCA_ResultPage.jsx";
 import ChatModalRoute from "./pages/ChatModalRoute.jsx";
 
+//공지사항 관련 페이지
+import NoticeListPage from "./pages/NoticeListPage.jsx";
+import NoticeDetailPage from "./pages/NoticeDetailPage.jsx";
+import NoticeWritePage from "./pages/NoticeWritePage.jsx";
+import NoticeEditPage from "./pages/NoticeEditPage.jsx";
+
 //로그인 페이지
 import LoginPage from "./pages/LoginPage";
 import OAuthCallbackPage from './pages/OAuthCallbackPage.jsx';
 
+
 function App() {
   return (
     <AuthProvider>
-      <Router future={{ 
+      <Router future={{
         v7_startTransition: true,
-        v7_relativeSplatPath: true 
+        v7_relativeSplatPath: true
       }}>
         <div className="App">
           <Routes>
             {/* 메인 페이지 - 루트 경로 */}
             <Route path="/" element={<MainHomePage />} />
             <Route path="/home" element={<MainHomePage />} />
-            
+
             {/* 로그인 페이지 */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/callback" element={<OAuthCallbackPage />} />
-            
+
             {/* 퍼블릭 페이지들 */}
             <Route path="/cnsl/apply/:parentCd" element={<CounselingApplyPage />} />
             <Route path="/self-diagnosis" element={<SelfDiagnosisPage />} />
@@ -81,9 +90,9 @@ function App() {
               path="/center-intro/location"
               element={<CenterIntroPage activeTab="location" />}
             />
-            <Route path="/noncur/list" element={<NoncurricularListPage />} />
-            <Route path="/noncur/view" element={<NoncurricularViewPage />} />
-            <Route path="/noncur/reg" element={<NoncurricularRegisterPage />} />
+            <Route path="/noncur" element={<NoncurricularListPage />} />
+            <Route path="/noncur/:prgId" element={<NoncurricularViewPage />} />
+            <Route path="/noncur/register" element={<NoncurricularRegisterPage />} />
 
             {/* 심리상담 관련 페이지들 */}
             <Route
@@ -107,6 +116,12 @@ function App() {
             {/* 상담사용 페이지 */}
             <Route path="/cca/register" element={<CCARegPage />} />
             <Route path="/cca/analysis" element={<CCAAnalysisPage />} />
+
+            {/* 공지사항 */}
+            <Route path="/notices" element={<NoticeListPage />} />
+            <Route path="/notices/new" element={<NoticeWritePage />} />
+            <Route path="/notices/:id/edit" element={<NoticeEditPage />} />
+            <Route path="/notices/:id" element={<NoticeDetailPage />} />
 
             {/* 기타상담 */}
             <Route path="/peer" element={<PeerCounselingPage />} />

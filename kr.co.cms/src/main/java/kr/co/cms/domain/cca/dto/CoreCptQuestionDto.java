@@ -11,4 +11,5 @@ public class CoreCptQuestionDto {
     private String qstId;
     private String qstCont;
     private Integer qstOrd;
+    private String competency;
 }

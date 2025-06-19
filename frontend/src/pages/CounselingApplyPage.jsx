@@ -17,7 +17,7 @@ const CounselingApplyPage = () => {
   const [formData, setFormData] = useState({
 	parentCategory: parentCd,     // 대분류 코드
 	typeCd: '',                   // 소분류 코드
-	statCd: 'REQUESTED',
+	statCd: '15',
 	applyMethod: '대면',
 	applyDate: '',
 	applyTime: '',
@@ -28,10 +28,7 @@ const CounselingApplyPage = () => {
   useEffect(() => {
     counselingApi.getCodes('CNSL_TYPE_CD')
       .then((data) => {
-		console.log("parentCd 원형:", parentCd, typeof parentCd);
-        console.log("API 응답:", data);
         const filtered = data.filter((c) => c.desc === parentCd);
-        console.log("필터링 결과:", filtered);
         setSubTypes(filtered);
       })
       .catch((err) => {

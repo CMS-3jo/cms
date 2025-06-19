@@ -5,7 +5,8 @@ import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import kr.co.cms.domain.cca.dto.CcaStudentResultDto;
+import kr.co.cms.domain.cca.dto.CcaScoreSummaryDto;
 import kr.co.cms.domain.cca.dto.CcaCompScoreDto;
 import kr.co.cms.domain.cca.dto.CoreCptEvalRequestDto;
 import kr.co.cms.domain.cca.service.CcaScoreService;
@@ -42,5 +43,32 @@ public class CoreCptEvalController {
 
         List<CcaCompScoreDto> scores = scoreService.calculateScores(stdNo, cciId);
         return ResponseEntity.ok(scores);
+    }
+    /**
+     * 학생 점수와 평균, 추천 정보를 포함하여 반환
+     * GET /api/core-cpt/{cciId}/summary?stdNo=학번
+     */
+    @GetMapping(value = "/{cciId}/summary", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CcaScoreSummaryDto> getScoreSummary(
+            @PathVariable("cciId") String cciId,
+            @RequestParam("stdNo") String stdNo) {
+        CcaScoreSummaryDto dto = scoreService.calculateScoreSummary(stdNo, cciId);
+        return ResponseEntity.ok(dto);
+    }
+    /**
+     * 핵심역량 설문 응시 학생 목록 조회
+     * GET /api/core-cpt/{cciId}/students?deptCd=학과코드
+     */
+    @GetMapping(value = "/{cciId}/students", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<CcaStudentResultDto>> getStudents(
+            @PathVariable("cciId") String cciId,
+            @RequestParam(value = "deptCd", required = false) String deptCd) {
+        List<CcaStudentResultDto> list = scoreService.getLatestResultsForCci(cciId);
+        if (deptCd != null && !deptCd.isBlank()) {
+            list = list.stream()
+                       .filter(dto -> deptCd.equals(dto.getDeptCd()))
+                       .toList();
+        }
+        return ResponseEntity.ok(list);
     }
 }

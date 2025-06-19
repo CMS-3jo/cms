@@ -1,15 +1,20 @@
 //비교과 리스트 페이지
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
+import StudentNoncurMyPageModal from './StudentNoncurMyPageModal'; // 실제 경로로 수정
+
 import '/public/css/NoncurricularList.css';
 
 const NoncurricularListPage = () => {
+    const navigate = useNavigate(); // 이 줄 추가
     const [programs, setPrograms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [debouncedSearchParams, setDebouncedSearchParams] = useState(null); // 디바운싱용 상태 추가
+    const [debouncedSearchParams, setDebouncedSearchParams] = useState(null);
+    const [showMyPageModal, setShowMyPageModal] = useState(false); // 마이페이지 모달 상태 추가
     
     // 페이지네이션 상태 추가
     const [pagination, setPagination] = useState({
@@ -32,6 +37,10 @@ const NoncurricularListPage = () => {
         sortBy: 'regDt',
         sortDir: 'desc'
     });
+
+    const handleProgramClick = (prgId) => {
+             navigate(`/noncur/${prgId}`);
+}   ;
 
     // 디바운싱: 검색어 변경 후 500ms 대기
     useEffect(() => {
@@ -85,9 +94,23 @@ const NoncurricularListPage = () => {
                 console.log('배열 형태 응답 감지 - 페이지네이션 정보 없음');
                 setPrograms(data);
             } else {
-                // 혹시 다른 구조인 경우
-                console.log('알 수 없는 응답 구조:', data);
-                setPrograms(data || []);
+            
+                if (data.programs) {
+                    setPrograms(data.programs);
+                    setPagination({
+                        totalElements: data.totalElements || 0,
+                        totalPages: data.totalPages || 1,
+                        currentPage: data.currentPage || 0,
+                        size: data.size || 8,
+                        hasNext: data.hasNext || false,
+                        hasPrevious: data.hasPrevious || false,
+                        isFirst: data.isFirst !== false,
+                        isLast: data.isLast !== false
+                    });
+                } else {
+                    console.log('알 수 없는 응답 구조:', data);
+                    setPrograms(data || []);
+                }
             }
 
         } catch (err) {
@@ -204,12 +227,15 @@ const NoncurricularListPage = () => {
     };
 
     // 공유 기능
-    const handleShare = (program) => {
+  const handleShare = (e, program) => { 
+    e.stopPropagation(); 
+
         if (navigator.share) {
             navigator.share({
                 title: program.prgNm,
                 text: program.prgDesc,
-                url: window.location.href
+                url: `${window.location.origin}/noncur/${program.prgId}`
+
             });
         } else {
             // fallback: 클립보드에 복사
@@ -303,7 +329,38 @@ const NoncurricularListPage = () => {
                 <Sidebar />
                 <div className="noncur-list-page">
                     <h4>비교과 프로그램</h4>
-                    
+                                     {/* 마이페이지 버튼 */}
+                    <button
+                        onClick={() => setShowMyPageModal(true)}
+                        style={{
+                            backgroundColor: '#28a745',
+                            color: 'white',
+                            border: 'none',
+                            padding: '12px 20px',
+                            borderRadius: '6px',
+                            fontSize: '1rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'all 0.3s',
+                            boxShadow: '0 2px 4px rgba(40,167,69,0.2)'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#218838';
+                            e.target.style.transform = 'translateY(-1px)';
+                            e.target.style.boxShadow = '0 4px 8px rgba(40,167,69,0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = '#28a745';
+                            e.target.style.transform = 'translateY(0)';
+                            e.target.style.boxShadow = '0 2px 4px rgba(40,167,69,0.2)';
+                        }}
+                    >
+                        🎓 내 비교과 활동
+                    </button>
+
                     {/* 검색 및 필터 */}
                     <div className="filter-section">
                         <div className="search-wrapper">
@@ -351,7 +408,12 @@ const NoncurricularListPage = () => {
                             <div className="no-programs">등록된 프로그램이 없습니다.</div>
                         ) : (
                             programs.map((program) => (
-                                <div key={program.prgId} className='noncur-item'>
+                                <div 
+                                        key={program.prgId} 
+                                        className='noncur-item clickable'
+                                        onClick={() => handleProgramClick(program.prgId)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                     <div className='topWrap'>
                                         <img 
                                             src="/images/default-program.jpg"
@@ -372,7 +434,7 @@ const NoncurricularListPage = () => {
                                             <button 
                                                 type='button' 
                                                 className='noncur-share'
-                                                onClick={() => handleShare(program)}
+                                                onClick={(e) => handleShare(e, program)}
                                             >
                                                 <span className="material-symbols-outlined">share</span>
                                             </button>
@@ -402,8 +464,17 @@ const NoncurricularListPage = () => {
                             {renderPaginationButtons()}
                         </div>
                     )}
-                </div>
+
+                   {/* 마이페이지 모달 */}
+                    <StudentNoncurMyPageModal 
+                    isOpen={showMyPageModal}
+                    onClose={() => setShowMyPageModal(false)}
+                    /> 
             </div>
+            </div>
+
+
+
             <Footer />
         </>
     );

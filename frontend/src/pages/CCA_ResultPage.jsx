@@ -1,23 +1,49 @@
 // CCAResultPage.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import '../../public/css/NoncurricularList.css';
+import { useAuth } from '../hooks/useAuth';
 
 import {
     Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Tooltip
 } from 'recharts';
 
 const CCAResultPage = () => {
-    const data = [
-        { subject: '의사소통', score: 85 },
-        { subject: '문제해결', score: 78 },
-        { subject: '자기관리', score: 92 },
-        { subject: '대인관계', score: 80 },
-        { subject: '글로벌역량', score: 74 },
-        { subject: '직업윤리 및 책임역량', score: 88 }
-    ];
+    const { user, apiCall } = useAuth();
+    const [data, setData] = useState([]);
+ const [summary, setSummary] = useState({ strengths: [], weaknesses: [], recommendations: [], latestDate: null });
+
+    useEffect(() => {
+        if (!user) return;
+        const load = async () => {
+            try {
+                const listRes = await apiCall('http://localhost:8082/api/core-cpt/list');
+                const list = await listRes.json();
+                if (!Array.isArray(list) || list.length === 0) return;
+                const cciId = list[0].cciId;
+                const res = await apiCall(`http://localhost:8082/api/core-cpt/${cciId}/summary?stdNo=${user.identifierNo}`);
+                if (!res.ok) return;
+                const dto = await res.json();
+                const map = {};
+                dto.studentScores.forEach(s => {
+                    map[s.competency] = { subject: s.competency, me: s.score };
+                });
+                dto.deptAvgScores.forEach(s => {
+                    map[s.competency] = { ...(map[s.competency] || { subject: s.competency }), dept: s.score };
+                });
+                dto.overallAvgScores.forEach(s => {
+                    map[s.competency] = { ...(map[s.competency] || { subject: s.competency }), all: s.score };
+                });
+                setData(Object.values(map));
+                setSummary({ strengths: dto.strengths, weaknesses: dto.weaknesses, recommendations: dto.recommendations, latestDate: dto.latestAnswerDate });
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        load();
+    }, [user, apiCall]);
 
     return (
         <>
@@ -29,7 +55,7 @@ const CCAResultPage = () => {
                     <h4>내 핵심역량 결과</h4>
 
                     <div className="result-meta">
-                        <p>최근 응시일자: 2025.06.12</p>
+                         <p>최근 응시일자: {summary.latestDate ? new Date(summary.latestDate).toLocaleDateString() : '-'}</p>
                     </div>
 
                     {/* 육각형 그래프 */}
@@ -51,12 +77,28 @@ const CCAResultPage = () => {
                                 axisLine={false}
                             />
                             <Radar
-                                name="핵심역량 점수"
-                                dataKey="score"
+                                name="내 점수"
+                                dataKey="me"
                                 stroke="#5c67f2"
                                 strokeWidth={3}
                                 fill="#5c67f2"
-                                fillOpacity={0.5}
+                                fillOpacity={0.4}
+                            />
+                            <Radar
+                                name="학과 평균"
+                                dataKey="dept"
+                                stroke="#82ca9d"
+                                strokeWidth={2}
+                                fill="#82ca9d"
+                                fillOpacity={0.3}
+                            />
+                            <Radar
+                                name="전체 평균"
+                                dataKey="all"
+                                stroke="#ffc658"
+                                strokeWidth={2}
+                                fill="#ffc658"
+                                fillOpacity={0.3}
                             />
                             <Tooltip
                                 contentStyle={{
@@ -71,16 +113,16 @@ const CCAResultPage = () => {
                         </RadarChart>
 
                         <div className='core-competency-result'>
-                        <h5>종합 결과</h5>
-                        <p>부족한 부분 : 글로벌역량, 문제해결</p>
-                        <p>강점 부분 : 자기관리, 직업윤리 및 책임역량</p>
+                            <h5>종합 결과</h5>
+                            <p>부족한 부분 : {summary.weaknesses.join(', ') || '-'}</p>
+                            <p>강점 부분 : {summary.strengths.join(', ') || '-'}</p>
 
-                        <h5>개선이 필요한 부분</h5>
-                        <p>비교과 추천 : 문제해결 워크숍, 글로벌 역량 강화 프로그램</p>
-                    </div>
+                            <h5>개선이 필요한 부분</h5>
+                            <p>비교과 추천 : {summary.recommendations.join(', ') || '-'}</p>
+                        </div>
                     </div>
 
-                    
+
 
                 </div>
             </div>

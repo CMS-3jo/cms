@@ -20,24 +20,22 @@ const CCASurveyPage = () => {
   const stdNo = user ? user.identifierNo : '';
 
   useEffect(() => {
-    // 4. apiCall 함수를 사용하여 인증이 필요한 API를 안전하게 호출합니다.
-    // 토큰이 만료되었을 경우 자동으로 재발급을 시도합니다.
-    // 또한, 사용자 정보(user)가 로드된 후에 데이터를 불러오도록 조건을 추가합니다.
-    if (user) {
-      apiCall(`http://localhost:8082/api/core-cpt/${cciId}/questions`)
-        .then(async res => {
-          if (!res.ok) {
-            const errText = await res.text();
-            throw new Error(`HTTP ${res.status}: ${errText}`);
-          }
-          return res.json();
-        })
-        .then(data => setQuestions(data))
-        .catch(err => {
-          console.error('문항 조회 실패:', err.message);
-        });
-    }
-  }, [cciId, user, apiCall]); // useEffect 의존성 배열에 user와 apiCall을 추가합니다.
+       // 4. apiCall 함수를 사용하여 문항을 조회합니다. 로그인하지 않아도
+    // 조회가 가능하므로 user 여부와 관계없이 호출합니다.
+    apiCall(`http://localhost:8082/api/core-cpt/${cciId}/questions`)
+      .then(async res => {
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
+        }
+        return res.json();
+      })
+      .then(data => setQuestions(data))
+      .catch(err => {
+        console.error('문항 조회 실패:', err.message);
+      });
+  }, [cciId, apiCall]); // user가 없어도 호출해야 하므로 의존성에서 제거
+  
 
 
   const handleAnswerChange = (qId, score) => {
