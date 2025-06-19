@@ -124,3 +124,15 @@ button:focus-visible {
     color: var(--fg-color);
   }
 }
+
+.header-icons{
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: black;
+  font-size: 25px;
+}
+
+.header-icons:hover{
+  color: #ffffff;
+}

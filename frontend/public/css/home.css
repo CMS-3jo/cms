@@ -31,7 +31,7 @@ header .container_layout {
   padding: 1rem;
 }
 header .nav a { color: #000; }
-header .nav a:hover { text-decoration: underline; }
+
 header .side_area { display: flex; align-items: center; gap: 1rem; }
 header .side_area a { color: #000; }
 

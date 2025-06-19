@@ -62,7 +62,7 @@ const Header = () => {
                 padding: '5px'
               }}
             >
-              <img alt="로그인" src="/basic-login.svg" />
+              <span className="material-symbols-outlined header-icons">login</span>
             </p>
           )}
           
@@ -78,7 +78,9 @@ const Header = () => {
                 padding: '5px'
               }}
             >
-              <img alt="로그아웃" src="/basic-logout.svg" />
+              <span className="material-symbols-outlined header-icons" >
+logout
+</span>
             </p>
           )}
 
@@ -90,7 +92,9 @@ const Header = () => {
           )}
 
           <div className="menu" id="menu_toggle_btn" onClick={toggleMobileMenu}>
-            <img alt="메뉴" src="/header-menu.svg" style={{ cursor: 'pointer' }} />
+            <span className="material-symbols-outlined header-icons">
+logout
+</span>
           </div>
           
           <div
