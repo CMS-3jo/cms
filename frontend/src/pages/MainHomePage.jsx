@@ -12,8 +12,8 @@ const MainHomePage = () => {
   return (
     <div>
       <PublicHeader />
-      
-      <main>
+      {/* style={{ paddingTop: '100px' }} */}
+      <main >
         <div>
           <CarouselBanner />
         </div>

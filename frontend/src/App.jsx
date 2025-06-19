@@ -146,7 +146,7 @@ function App() {
               element={<CounselingDetailPage />}
             />
             <Route
-              path="/admin/counseling/record/:id"
+              path="/admin/counseling/records/write/:id"
               element={<CounselingRecordPage />}
             />
             <Route

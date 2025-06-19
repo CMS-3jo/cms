@@ -56,7 +56,7 @@ const PublicHeader = () => {
               </a>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="/diagnosis-data">
+              <a className="nav-link" href="/resources">
                 자료실
               </a>
             </li>
@@ -83,7 +83,7 @@ const PublicHeader = () => {
           {/* 마이페이지 아이콘 - 로그인 상태일 때 */}
           {isLoggedIn && (
             <a href="/mypage" style={{ cursor: "pointer" }}>
-              <span class="material-symbols-outlined header-icons">
+              <span className="material-symbols-outlined header-icons">
                 account_circle
               </span>
             </a>
@@ -126,12 +126,12 @@ const PublicHeader = () => {
                 </a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/self-diagnosis">
+                <a className="nav-link" href="/diagnosis-data">
                   자가 진단
                 </a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/diagnosis-data">
+                <a className="nav-link" href="/resources">
                   자료실
                 </a>
               </li>

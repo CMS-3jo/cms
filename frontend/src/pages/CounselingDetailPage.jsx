@@ -20,7 +20,7 @@ const CounselingDetailPage = () => {
 
   const handleWriteRecord = () => {
     // 상담일지 작성 페이지로 이동
-    navigate(`/counseling/records/write/${id}`);
+    navigate(`/admin/counseling/records/write/${id}`);
   };
 
   if (loading) return <div>로딩 중...</div>;
