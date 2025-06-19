@@ -18,7 +18,7 @@ body {
   flex-direction: column;
   align-items: stretch;
   font-family: var(--font-base);
-  /* background: linear-gradient(135deg, #74ebd5 0%, #acb6e5 100%); */
+
   background-attachment: fixed;
   color: var(--fg-color);
 }
@@ -61,6 +61,39 @@ button:focus-visible {
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: 0 8px 32px rgba(0,0,0,0.1);
   border-radius: 16px;
+}
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  border-radius: 16px;
+}
+
+.container_layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  background: var(--glass-bg);
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.shownav {
+  display: none;
+}
+.shownav.show {
+  display: block !important;
+}
+
+/* ensure header menu button is always visible */
+.menu img {
+  width: 24px;
+  height: auto;
 }
 
 .dynamic-text {
