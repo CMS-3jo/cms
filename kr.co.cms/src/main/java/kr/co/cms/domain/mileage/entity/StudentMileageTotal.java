@@ -45,5 +45,6 @@ public class StudentMileageTotal {
     public StudentMileageTotal(String stdNo) {
         this.stdNo = stdNo;
         this.totMlgScore = BigDecimal.ZERO;
+        this.lastUpdDt = LocalDateTime.now(); // PrePersist가 안 될 수도 있으니 명시적 설정
     }
 }

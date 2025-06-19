@@ -37,6 +37,7 @@ import CCASurveyPage from "./pages/CCA_SurveyPage.jsx";
 import CCAAnalysisPage from "./pages/CCA_AnalysisPage.jsx";
 import CCAResultPage from "./pages/CCA_ResultPage.jsx";
 import ChatModalRoute from "./pages/ChatModalRoute.jsx";
+import NoncurAdminPage from './pages/NoncurAdminPage';
 
 //로그인 페이지
 import LoginPage from "./pages/LoginPage";
@@ -132,7 +133,14 @@ function App() {
               path="/admin/calendar/weekly"
               element={<WeeklyCalendarPage />}
             />
+            {/* 비교과 프로그램 관리 */}
+            <Route path="/admin/noncur" element={<NoncurAdminPage />} />
+      
+            {/* 프로그램별 상세 관리 */}
+            <Route path="/admin/noncur/program/:prgId" element={<NoncurAdminPage />} />
           </Routes>
+
+          
         </div>
       </Router>
     </AuthProvider>

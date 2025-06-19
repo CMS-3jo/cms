@@ -14,6 +14,7 @@ import kr.co.cms.domain.noncur.dto.NoncurApplicationDTO;
 import kr.co.cms.domain.noncur.dto.NoncurApplicationRequestDTO;
 import kr.co.cms.domain.noncur.entity.NoncurApplication;
 import kr.co.cms.domain.noncur.repository.NoncurApplicationRepository;
+import kr.co.cms.global.util.IdGenerator;
 
 @Service
 @Transactional(readOnly = true)
@@ -35,24 +36,17 @@ public class NoncurApplicationService {
             throw new IllegalStateException("이미 신청한 프로그램입니다.");
         }
         
-        // 신청 ID 생성
-        String aplyId = generateApplicationId();
+        // 신청 ID 생성 - IdGenerator 사용
+        String aplyId = IdGenerator.generate("APLY", applicationRepository);
+        System.out.println("생성된 신청 ID: " + aplyId + " (길이: " + aplyId.length() + ")");
         
-        // 신청 정보 생성 (motivation, expectation 포함)
+        // 신청 정보 생성
         NoncurApplication application = new NoncurApplication(
             aplyId,
             prgId,
             stdNo,
             requestDTO.getAplySelCd() != null ? requestDTO.getAplySelCd() : "01"
         );
-        
-        // 추가 정보 설정 (Entity에 필드가 있다면)
-//        if (requestDTO.getMotivation() != null) {
-//            application.setMotivation(requestDTO.getMotivation());
-//        }
-//        if (requestDTO.getExpectation() != null) {
-//            application.setExpectation(requestDTO.getExpectation());
-//        }
         
         // 저장
         NoncurApplication savedApplication = applicationRepository.save(application);
@@ -146,6 +140,37 @@ public class NoncurApplicationService {
         dto.setAplyDt(application.getAplyDt());
         dto.setAplyStatCd(application.getAplyStatCd());
         dto.setAplyStatNm(NoncurApplicationConstants.getStatusName(application.getAplyStatCd()));
+        return dto;
+    }
+    
+    /**
+     * 학생의 이수완료 프로그램 목록 조회
+     */
+    public List<NoncurApplicationDTO> getStudentCompletedApplications(String stdNo) {
+        List<NoncurApplication> completedApplications = 
+            applicationRepository.findByStdNoAndAplyStatCdOrderByAplyDtDesc(
+                stdNo, 
+                NoncurApplicationConstants.ApplicationStatus.COMPLETED
+            );
+        
+        return completedApplications.stream()
+            .map(this::convertToDetailDTO)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Entity to DetailDTO 변환 (프로그램 정보 포함)
+     */
+    private NoncurApplicationDTO convertToDetailDTO(NoncurApplication application) {
+        NoncurApplicationDTO dto = new NoncurApplicationDTO();
+        dto.setAplyId(application.getAplyId());
+        dto.setPrgId(application.getPrgId());
+        dto.setStdNo(application.getStdNo());
+        dto.setAplySelCd(application.getAplySelCd());
+        dto.setAplyDt(application.getAplyDt());
+        dto.setAplyStatCd(application.getAplyStatCd());
+        dto.setAplyStatNm(NoncurApplicationConstants.getStatusName(application.getAplyStatCd()));
+
         return dto;
     }
 }

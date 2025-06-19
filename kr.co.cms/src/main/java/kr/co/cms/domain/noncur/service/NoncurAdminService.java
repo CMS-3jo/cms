@@ -12,27 +12,49 @@ import org.springframework.data.domain.Sort;
 import kr.co.cms.domain.noncur.dto.*;
 import kr.co.cms.domain.noncur.entity.NoncurApplication;
 import kr.co.cms.domain.noncur.entity.NoncurProgram;
+import kr.co.cms.domain.noncur.entity.NcsCompletionInfo; // 추가
+import kr.co.cms.domain.noncur.repository.NcsCompletionInfoRepository;
 import kr.co.cms.domain.noncur.repository.NoncurApplicationRepository;
 import kr.co.cms.domain.noncur.repository.NoncurRepository;
+import kr.co.cms.global.util.IdGenerator;
 import kr.co.cms.domain.noncur.constants.NoncurApplicationConstants;
 import kr.co.cms.domain.noncur.constants.NoncurConstants;
+import kr.co.cms.domain.dept.dto.DeptInfoDto;
+import kr.co.cms.domain.dept.service.DeptInfoService;
 import kr.co.cms.domain.mileage.dto.MileageAwardRequestDTO;
 import kr.co.cms.domain.mileage.service.MileageService;
+import kr.co.cms.domain.mypage.repository.EmplInfoRepository;
+import kr.co.cms.domain.mypage.entity.EmplInfo;
 
 @Service
 @Transactional(readOnly = true)
 public class NoncurAdminService {
-    
+
     private final NoncurApplicationRepository applicationRepository;
     private final NoncurRepository programRepository;
     private final NoncurApplicationService applicationService;
+    private final SimplePermissionService permissionService;
+    private final EmplInfoRepository emplInfoRepository;
+    private final DeptInfoService deptInfoService;
+    private final NcsCompletionInfoRepository completionInfoRepository;
+    private final MileageService mileageService;
     
     public NoncurAdminService(NoncurApplicationRepository applicationRepository,
                              NoncurRepository programRepository,
-                             NoncurApplicationService applicationService) {
+                             NoncurApplicationService applicationService,
+                             SimplePermissionService permissionService,
+                             EmplInfoRepository emplInfoRepository,
+                             DeptInfoService deptInfoService,
+                             NcsCompletionInfoRepository completionInfoRepository,
+                             MileageService mileageService) {
         this.applicationRepository = applicationRepository;
         this.programRepository = programRepository;
         this.applicationService = applicationService;
+        this.permissionService = permissionService;
+        this.emplInfoRepository = emplInfoRepository;
+        this.deptInfoService = deptInfoService;
+        this.completionInfoRepository = completionInfoRepository;
+        this.mileageService = mileageService;
     }
     
     /**
@@ -87,10 +109,6 @@ public class NoncurAdminService {
         
         // 상태 변경
         application.setAplyStatCd(statusCd);
-        
-        // 거부 사유 저장 (별도 컬럼이 있다면)
-        // application.setRejectReason(rejectReason);
-        
         applicationRepository.save(application);
     }
     
@@ -106,7 +124,6 @@ public class NoncurAdminService {
                 updateApplicationStatus(aplyId, statusCd, null, userId);
                 updatedCount++;
             } catch (Exception e) {
-                // 개별 실패는 무시하고 계속 진행
                 System.err.println("Failed to update application " + aplyId + ": " + e.getMessage());
             }
         }
@@ -124,12 +141,11 @@ public class NoncurAdminService {
         
         program.setPrgStatCd(statusCd);
         program.setUpdUserId(userId);
-        
         programRepository.save(program);
     }
     
     /**
-     * 이수완료 처리 (마일리지 부여 정보 반환)
+     * 이수완료 처리 (마일리지 부여 정보 반환) - IdGenerator 사용
      */
     @Transactional
     public MileageAwardRequestDTO completeApplicationWithMileage(String aplyId, String userId) {
@@ -138,18 +154,48 @@ public class NoncurAdminService {
         
         // 승인 상태인지 확인
         if (!NoncurApplicationConstants.ApplicationStatus.APPROVED.equals(application.getAplyStatCd())) {
-            throw new IllegalStateException("승인된 신청만 이수완료 처리할 수 있습니다.");
+            String errorMsg = String.format(
+                "승인된 신청만 이수완료 처리할 수 있습니다. 현재 상태: %s (%s)", 
+                application.getAplyStatCd(),
+                NoncurApplicationConstants.getStatusName(application.getAplyStatCd())
+            );
+            throw new IllegalStateException(errorMsg);
         }
         
-        // 이수완료로 상태 변경
+        // 이미 이수완료인지 확인
+        if (NoncurApplicationConstants.ApplicationStatus.COMPLETED.equals(application.getAplyStatCd())) {
+            throw new IllegalStateException("이미 이수완료 처리된 신청입니다.");
+        }
+        
+        // 중복 이수완료 체크
+        if (completionInfoRepository.existsByAplyId(aplyId)) {
+            throw new IllegalStateException("이미 이수완료 정보가 등록된 신청입니다.");
+        }
+        
+        // 1. 이수완료 정보 생성 (NCS_CMP_INFO) - IdGenerator 사용
+        String cmpId = IdGenerator.generate("CMP", completionInfoRepository);
+        System.out.println("생성된 이수완료 ID: " + cmpId);
+        
+        NcsCompletionInfo completionInfo = new NcsCompletionInfo(
+            cmpId,
+            aplyId,
+            application.getPrgId(),
+            application.getStdNo()
+        );
+        completionInfoRepository.save(completionInfo);
+        System.out.println("이수완료 정보 DB 저장 완료: " + cmpId);
+        
+        // 2. 신청 상태를 이수완료로 변경
         application.setAplyStatCd(NoncurApplicationConstants.ApplicationStatus.COMPLETED);
         applicationRepository.save(application);
+        System.out.println("신청 상태 변경 완료: " + aplyId);
         
-        // 마일리지 부여 정보 생성
+        // 3. 마일리지 부여 정보 생성
         MileageAwardRequestDTO mileageRequest = new MileageAwardRequestDTO();
         mileageRequest.setPrgId(application.getPrgId());
         mileageRequest.setStdNo(application.getStdNo());
-        mileageRequest.setCmpId(generateCompletionId()); // 이수 ID 생성
+        mileageRequest.setCmpId(cmpId); // 생성된 이수완료 ID 사용
+        mileageRequest.setRegUserId(userId);
         
         return mileageRequest;
     }
@@ -162,19 +208,33 @@ public class NoncurAdminService {
         Map<String, Object> result = new HashMap<>();
         List<MileageAwardRequestDTO> successfulCompletions = new ArrayList<>();
         List<String> failedApplications = new ArrayList<>();
-        
+        int mileageAwardCount = 0;
+
         for (String aplyId : aplyIds) {
             try {
+                // 이수완료 처리
                 MileageAwardRequestDTO mileageRequest = completeApplicationWithMileage(aplyId, userId);
                 successfulCompletions.add(mileageRequest);
+                
+                // 마일리지 부여 시도
+                try {
+                    mileageService.awardMileage(mileageRequest);
+                    mileageAwardCount++;
+                    System.out.println("마일리지 부여 완료: " + aplyId + " -> " + mileageRequest.getStdNo());
+                } catch (Exception mileageError) {
+                    System.err.println("마일리지 부여 실패 (신청 ID: " + aplyId + "): " + mileageError.getMessage());
+                    // 마일리지 부여는 실패해도 이수완료 처리는 유지
+                }
+                
             } catch (Exception e) {
                 failedApplications.add(aplyId);
-                System.err.println("Failed to complete application " + aplyId + ": " + e.getMessage());
+                System.err.println("이수완료 처리 실패 (신청 ID: " + aplyId + "): " + e.getMessage());
             }
         }
         
         result.put("successCount", successfulCompletions.size());
         result.put("failedCount", failedApplications.size());
+        result.put("mileageAwardCount", mileageAwardCount);
         result.put("successfulCompletions", successfulCompletions);
         result.put("failedApplications", failedApplications);
         
@@ -235,77 +295,57 @@ public class NoncurAdminService {
             .collect(Collectors.groupingBy(NoncurApplication::getAplyStatCd, Collectors.counting()));
         statistics.put("applicationsByStatus", applicationsByStatus);
         
-        // 부서별 통계
-        Map<String, Map<String, Object>> departmentStats = new HashMap<>();
-        List<Map<String, String>> departments = getAllDepartments();
-        
-        for (Map<String, String> dept : departments) {
-            String deptCode = dept.get("deptCd");
-            String deptName = dept.get("deptNm");
-            
-            Map<String, Object> deptStat = new HashMap<>();
-            long programCount = allPrograms.stream()
-                .filter(p -> deptCode.equals(p.getPrgDeptCd()))
-                .count();
-            
-            long applicationCount = 0;
-            long completedCount = 0;
-            
-            // 해당 부서 프로그램들의 신청 수 계산
-            List<String> deptProgramIds = allPrograms.stream()
-                .filter(p -> deptCode.equals(p.getPrgDeptCd()))
-                .map(NoncurProgram::getPrgId)
-                .collect(Collectors.toList());
-            
-            for (String prgId : deptProgramIds) {
-                List<NoncurApplication> prgApplications = applicationRepository.findByPrgId(prgId);
-                applicationCount += prgApplications.size();
-                completedCount += prgApplications.stream()
-                    .filter(a -> NoncurApplicationConstants.ApplicationStatus.COMPLETED.equals(a.getAplyStatCd()))
-                    .count();
-            }
-            
-            deptStat.put("programCount", programCount);
-            deptStat.put("applicationCount", applicationCount);
-            deptStat.put("completedCount", completedCount);
-            
-            departmentStats.put(deptName, deptStat);
-        }
-        
-        statistics.put("departmentStats", departmentStats);
-        
         return statistics;
     }
     
+    // ======= 권한 관련 메서드들 =======
+    
     /**
-     * 권한 확인 - 프로그램 관리 권한
+     * 프로그램 관리 권한 확인
      */
     public boolean hasPermission(String userId, String prgId) {
-        // TODO: 실제 권한 체크 로직 구현
-        // 1. 시스템 관리자인지 확인
-        // 2. 해당 프로그램의 부서 관리자인지 확인
-        // 3. 프로그램 담당자인지 확인
-        return true; // 임시로 모든 권한 허용
+        return permissionService.hasPermissionForProgram(userId, prgId);
     }
     
     /**
-     * 권한 확인 - 신청 관리 권한
+     * 신청 관리 권한 확인
      */
     public boolean hasApplicationPermission(String userId, String aplyId) {
-        // 신청 정보로부터 프로그램 ID를 가져와서 권한 확인
         NoncurApplication application = applicationRepository.findById(aplyId).orElse(null);
         if (application == null) return false;
         
-        return hasPermission(userId, application.getPrgId());
+        return permissionService.hasPermissionForProgram(userId, application.getPrgId());
     }
     
     /**
-     * 권한 확인 - 부서 권한
+     * 부서 권한 확인
      */
     public boolean hasDepartmentPermission(String userId, String deptCd) {
-        // TODO: 실제 부서 권한 체크 로직 구현
-        return true; // 임시
+        return permissionService.hasPermissionForDepartment(userId, deptCd);
     }
+    
+    /**
+     * 사용자 부서 조회
+     */
+    public String getUserDepartment(String userId) {
+        return permissionService.getUserDepartment(userId);
+    }
+    
+    /**
+     * 프로그램 존재 여부 확인
+     */
+    public boolean programExists(String prgId) {
+        return programRepository.existsById(prgId);
+    }
+    
+    /**
+     * 신청 정보 조회
+     */
+    public NoncurApplication getApplicationById(String aplyId) {
+        return applicationRepository.findById(aplyId).orElse(null);
+    }
+    
+    // ======= 유틸리티 메서드들 =======
     
     /**
      * 상태 변경 검증
@@ -329,25 +369,6 @@ public class NoncurAdminService {
     }
     
     /**
-     * 이수 ID 생성
-     */
-    private String generateCompletionId() {
-        return "CMP" + System.currentTimeMillis();
-    }
-    
-    /**
-     * 부서 목록 조회 (임시)
-     */
-    private List<Map<String, String>> getAllDepartments() {
-        List<Map<String, String>> departments = new ArrayList<>();
-        departments.add(Map.of("deptCd", "DEPT001", "deptNm", "학생지원팀"));
-        departments.add(Map.of("deptCd", "DEPT002", "deptNm", "교무팀"));
-        departments.add(Map.of("deptCd", "DEPT003", "deptNm", "취업지원센터"));
-        departments.add(Map.of("deptCd", "DEPT004", "deptNm", "SW교육센터"));
-        return departments;
-    }
-    
-    /**
      * Entity to DetailDTO 변환
      */
     private NoncurApplicationDetailDTO convertToDetailDTO(NoncurApplication application) {
@@ -360,10 +381,6 @@ public class NoncurAdminService {
         dto.setAplyStatCd(application.getAplyStatCd());
         dto.setAplyStatNm(NoncurApplicationConstants.getStatusName(application.getAplyStatCd()));
         dto.setAplySelNm(NoncurApplicationConstants.getTypeName(application.getAplySelCd()));
-        
-        // TODO: 학생 정보, 프로그램 정보 조인 조회
-        // dto.setStdNm(studentName);
-        // dto.setPrgNm(programName);
         
         return dto;
     }
@@ -387,8 +404,17 @@ public class NoncurAdminService {
         dto.setPrgStatNm(NoncurConstants.getStatusName(program.getPrgStatCd()));
         
         // 부서명 조회
-        String deptName = programRepository.findDeptNameByCode(program.getPrgDeptCd());
-        dto.setDeptName(deptName);
+        try {
+            List<DeptInfoDto> allDepts = deptInfoService.getAll();
+            String deptName = allDepts.stream()
+                .filter(dept -> dept.getDeptCd().equals(program.getPrgDeptCd()))
+                .map(DeptInfoDto::getDeptNm)
+                .findFirst()
+                .orElse("알 수 없는 부서");
+            dto.setDeptName(deptName);
+        } catch (Exception e) {
+            dto.setDeptName("알 수 없는 부서");
+        }
         
         return dto;
     }

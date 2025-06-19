@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import kr.co.cms.domain.cca.dto.CoreCptInfoDto;
 import kr.co.cms.domain.cca.service.CoreCptInfoService;
+import kr.co.cms.domain.dept.dto.DeptInfoDto;
+import kr.co.cms.domain.dept.service.DeptInfoService;
 import kr.co.cms.domain.noncur.constants.NoncurConstants;
 import kr.co.cms.domain.noncur.dto.NoncurDTO;
 import kr.co.cms.domain.noncur.dto.NoncurDetailDTO;
@@ -34,31 +36,34 @@ public class NoncurService {
     private final NoncurMapRepository noncurMapRepository;
     private final CoreCptInfoService coreCptInfoService;
     private final NoncurApplicationService applicationService; // 신청자 수 조회용
+    private final DeptInfoService deptInfoService;
+
 
     public NoncurService(NoncurRepository noncurRepository, 
-                        NoncurMapRepository noncurMapRepository,
-                        CoreCptInfoService coreCptInfoService,
-                        NoncurApplicationService applicationService) { 
-        this.noncurRepository = noncurRepository;
-        this.noncurMapRepository = noncurMapRepository;
-        this.coreCptInfoService = coreCptInfoService;
-        this.applicationService = applicationService;           
+            NoncurMapRepository noncurMapRepository,
+            CoreCptInfoService coreCptInfoService,
+            NoncurApplicationService applicationService,
+            DeptInfoService deptInfoService) { // 추가!
+				this.noncurRepository = noncurRepository;
+				this.noncurMapRepository = noncurMapRepository;
+				this.coreCptInfoService = coreCptInfoService;
+				this.applicationService = applicationService;
+				this.deptInfoService = deptInfoService; // 추가!
     }
     
-    /**
-     * 실제 DB에서 모든 부서 목록 조회
-     */
+    // 실제 DB에서 모든 부서 목록 조회
+
     public List<Map<String, String>> getAllDepartments() {
         try {
-            // Repository의 네이티브 쿼리 사용
-            List<Object[]> results = noncurRepository.findAllDepartmentsNative();
+            // 기존 부서 서비스 활용
+            List<DeptInfoDto> deptInfoList = deptInfoService.getAll();
             
-            return results.stream()
-                .map(row -> {
-                    Map<String, String> dept = new HashMap<>();
-                    dept.put("deptCd", String.valueOf(row[0]));
-                    dept.put("deptNm", String.valueOf(row[1]));
-                    return dept;
+            return deptInfoList.stream()
+                .map(dept -> {
+                    Map<String, String> deptMap = new HashMap<>();
+                    deptMap.put("deptCd", dept.getDeptCd());
+                    deptMap.put("deptNm", dept.getDeptNm());
+                    return deptMap;
                 })
                 .collect(Collectors.toList());
                 
@@ -66,13 +71,8 @@ public class NoncurService {
             System.err.println("부서 목록 조회 실패: " + e.getMessage());
             e.printStackTrace();
             
-            // DB 조회 실패 시 기본 부서 목록 반환
-            List<Map<String, String>> defaultDepts = new ArrayList<>();
-            defaultDepts.add(createDeptMap("DEPT001", "학생지원팀"));
-            defaultDepts.add(createDeptMap("DEPT002", "교무팀"));
-            defaultDepts.add(createDeptMap("DEPT003", "취업지원센터"));
-            defaultDepts.add(createDeptMap("DEPT004", "SW교육센터"));
-            return defaultDepts;
+            // DB 조회 실패 시 빈 목록 반환
+            return new ArrayList<>();
         }
     }
 
@@ -81,6 +81,20 @@ public class NoncurService {
         dept.put("deptCd", deptCd);
         dept.put("deptNm", deptNm);
         return dept;
+    }
+    
+    public String getDeptNameByCode(String deptCode) {
+        try {
+            List<DeptInfoDto> allDepts = deptInfoService.getAll();
+            return allDepts.stream()
+                .filter(dept -> dept.getDeptCd().equals(deptCode))
+                .map(DeptInfoDto::getDeptNm)
+                .findFirst()
+                .orElse("알 수 없는 부서");
+        } catch (Exception e) {
+            System.err.println("부서명 조회 실패: " + e.getMessage());
+            return "알 수 없는 부서";
+        }
     }
     
     public Map<String, Object> getNoncurProgramsWithPagination(NoncurSearchDTO searchDTO) {
@@ -116,6 +130,8 @@ public class NoncurService {
         
         return response;
     }
+    
+    
 
     public NoncurDetailDTO getNoncurDetail(String prgId) {
         NoncurProgram program = noncurRepository.findById(prgId).orElse(null);
@@ -143,16 +159,14 @@ public class NoncurService {
             detail.setDDay(dDay);
         }
         
-        // 부서명 조회
-        String deptName = noncurRepository.findDeptNameByCode(program.getPrgDeptCd());
+        // 부서명 조회 (DeptInfoService 활용)
+        String deptName = getDeptNameByCode(program.getPrgDeptCd());
         detail.setDeptName(deptName);
         
-        // 마일리지는 별도 API(/api/mileage/program/{prgId})로 조회
-        
-        // 핵심역량 정보 설정 (실제 DB 연동)
+        // 핵심역량 정보 설정
         setupCompetencies(detail, prgId);
         
-        // 추가 정보 설정 (실제 DB 컬럼에서)
+        // 추가 정보 설정
         detail.setLocation(program.getPrgLocation());
         detail.setContactEmail(program.getPrgContactEmail());
         detail.setContactPhone(program.getPrgContactPhone());
@@ -161,7 +175,7 @@ public class NoncurService {
         detail.setGradeInfo(program.getPrgGradeInfo());
         detail.setProgramSchedule(program.getPrgSchedule());
         
-        // 현재 신청자 수 (실제 계산)
+        // 현재 신청자 수
         try {
             long currentApplicants = applicationService.getCurrentApplicantCount(prgId);
             detail.setCurrentApplicants((int) currentApplicants);
@@ -174,6 +188,8 @@ public class NoncurService {
         
         return detail;
     }
+    
+    
     
     public Map<String, Object> getAllCompetencies() {
         try {
@@ -235,6 +251,7 @@ public class NoncurService {
         return dto;
     }
     
+    
     private NoncurDTO convertToDTO(NoncurProgram program) {
         NoncurDTO dto = new NoncurDTO();
         dto.setPrgId(program.getPrgId());
@@ -255,13 +272,12 @@ public class NoncurService {
             dto.setDDay(dDay);
         }
         
-        String deptName = noncurRepository.findDeptNameByCode(program.getPrgDeptCd());
+        // 부서명 조회 (DeptInfoService 활용)
+        String deptName = getDeptNameByCode(program.getPrgDeptCd());
         dto.setDeptName(deptName);
         
         List<String> competencyIds = noncurMapRepository.findCompetencyIdsByProgramId(program.getPrgId());
         dto.setCciIds(competencyIds);
-        
-        // 마일리지는 별도 API로 조회
         
         return dto;
     }
@@ -271,4 +287,5 @@ public class NoncurService {
                (searchDTO.getSearchDeptCode() != null && !searchDTO.getSearchDeptCode().trim().isEmpty()) ||
                (searchDTO.getSearchStatusCode() != null && !searchDTO.getSearchStatusCode().trim().isEmpty());
     }
+
 }

@@ -10,21 +10,26 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
 import kr.co.cms.domain.mileage.dto.MileageAwardRequestDTO;
 import kr.co.cms.domain.mileage.dto.ProgramMileageDTO;
 import kr.co.cms.domain.mileage.dto.StudentMileageDTO;
 import kr.co.cms.domain.mileage.service.MileageService;
+import kr.co.cms.global.util.TokenUtil;
 
 @RestController
 @RequestMapping("/api/mileage")
 public class MileageController {
     
     private final MileageService mileageService;
+    private final TokenUtil tokenUtil; // 추가
     
-    public MileageController(MileageService mileageService) {
+    public MileageController(MileageService mileageService, TokenUtil tokenUtil) {
         this.mileageService = mileageService;
+        this.tokenUtil = tokenUtil; // 추가
     }
     
     /**
@@ -85,6 +90,21 @@ public class MileageController {
             }
             return ResponseEntity.ok(mileage);
         } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    @GetMapping("/my")
+    @ResponseBody
+    public ResponseEntity<StudentMileageDTO> getMyMileage(HttpServletRequest request) {
+        try {
+            // TokenUtil을 사용하여 학번 추출
+            String stdNo = tokenUtil.getIdentifierNoFromRequest(request);
+            
+            StudentMileageDTO mileage = mileageService.getStudentMileage(stdNo);
+            return ResponseEntity.ok(mileage);
+        } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
     }
