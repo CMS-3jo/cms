@@ -16,6 +16,8 @@ public class CounselingDetailDto {
     private String cnslAplyId;
     private String stdNo;
     private String stdNm;
+    private String emplNo;
+    private String emplNm;
     private String typeCd;
     private String statCd;
     private LocalDateTime reqDttm;
