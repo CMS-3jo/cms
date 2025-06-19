@@ -1,54 +1,21 @@
 // src/hooks/useNotices.js
 import { useState, useCallback } from 'react';
-// import { noticeApi } from '../services/api';
-
+import { noticeApi } from '../services/api';
+import { useAuth } from './useAuth';
 export const useNotices = () => {
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // 임시 목 데이터
-  const mockNotices = [
-    {
-      id: 1,
-      title: '2025년 1학기 상담 일정 안내',
-      content: '2025년 1학기 상담 일정을 안내드립니다.',
-      createdDate: '2025-06-01'
-    },
-    {
-      id: 2,
-      title: '여름휴가 기간 상담 운영 안내',
-      content: '여름휴가 기간 중 상담 운영에 대해 안내드립니다.',
-      createdDate: '2025-05-28'
-    },
-    {
-      id: 3,
-      title: '온라인 상담 시스템 업데이트',
-      content: '온라인 상담 시스템이 업데이트되었습니다.',
-      createdDate: '2025-05-25'
-    }
-  ];
+  const { user } = useAuth();
+ 
 
   const fetchNotices = useCallback(async (params = {}) => {
     try {
       setLoading(true);
       setError(null);
 
-      // 임시로 1초 지연 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setNotices(mockNotices);
-
-      // 실제 API 호출 코드 (주석 처리)
-      /*
-      const response = await noticeApi.getNotices(params);
-      
-      if (response.success) {
-        setNotices(response.data.items);
-      } else {
-        setError(new Error(response.message || '공지사항을 불러오는데 실패했습니다.'));
-      }
-      */
+      const items = await noticeApi.getNotices(params);
+      setNotices(Array.isArray(items) ? items : []);
     } catch (err) {
       setError(err);
       console.error('Fetch notices error:', err);
@@ -60,30 +27,58 @@ export const useNotices = () => {
   const createNotice = useCallback(async (noticeData) => {
     try {
       setLoading(true);
-      
-      // 임시로 목 데이터에 추가
-      const newNotice = {
-        id: Date.now(),
-        ...noticeData,
-        createdDate: new Date().toISOString().split('T')[0]
+        const payload = {
+        title: noticeData.title,
+        content: noticeData.content,
+        regUserId: noticeData.regUserId || user?.userId,
       };
-      
-      setNotices(prev => [newNotice, ...prev]);
+
+      await noticeApi.createNotice(payload);
+      await fetchNotices();
       
       return { success: true };
+    } catch (err) {
+      setError(err);
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchNotices]);
 
-      // 실제 API 호출 코드 (주석 처리)
-      /*
-      const response = await noticeApi.createNotice(noticeData);
-      
-      if (response.success) {
-        await fetchNotices();
-        return { success: true };
-      } else {
-        setError(new Error(response.message || '공지사항 등록에 실패했습니다.'));
-        return { success: false, error: response.message };
+  const getNoticeById = useCallback(
+    async (id) => {
+      const existing = notices.find((n) => n.noticeId === id || n.id === Number(id));
+      if (existing) return existing;
+      try {
+        setLoading(true);
+        const data = await noticeApi.getNoticeDetail(id);
+        return data;
+      } catch (err) {
+        setError(err);
+        return null;
+      } finally {
+        setLoading(false);
       }
-      */
+    },
+    [notices]
+  );
+
+  const updateNotice = useCallback(async (id, noticeData) => {
+    try {
+      setLoading(true);
+     
+     const payload = {
+        title: noticeData.title,
+        content: noticeData.content,
+      };
+
+      await noticeApi.updateNotice(id, payload);
+      setNotices((prev) =>
+        prev.map((n) =>
+          n.noticeId === id || n.id === Number(id) ? { ...n, ...payload } : n
+        )
+      );
+      return { success: true };
     } catch (err) {
       setError(err);
       return { success: false, error: err.message };
@@ -97,6 +92,8 @@ export const useNotices = () => {
     loading,
     error,
     fetchNotices,
-    createNotice
+    createNotice,
+    updateNotice,
+    getNoticeById
   };
 };

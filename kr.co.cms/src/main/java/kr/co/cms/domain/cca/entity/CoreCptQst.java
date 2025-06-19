@@ -21,7 +21,12 @@ public class CoreCptQst {
 
     @Column(name = "QST_CONT", length = 500)
     private String qstCont;
-
+    /**
+     * 문항별 핵심역량 코드
+     */
+    @Column(name = "CATEGORY_CD", length = 20, nullable = false)
+    private String categoryCd;
+    
     @Column(name = "QST_ORD")
     private Integer qstOrd;
 

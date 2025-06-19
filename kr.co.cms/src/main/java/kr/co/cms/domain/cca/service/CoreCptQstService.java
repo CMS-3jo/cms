@@ -24,6 +24,7 @@ public class CoreCptQstService {
                 CoreCptQuestionDto dto = new CoreCptQuestionDto();
                 dto.setQstId(entity.getQstId());
                 dto.setQstCont(entity.getQstCont());
+                dto.setCompetency(entity.getCategoryCd());
                 dto.setQstOrd(entity.getQstOrd());
                 return dto;
             })
