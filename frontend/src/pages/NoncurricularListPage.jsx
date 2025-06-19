@@ -67,7 +67,7 @@ const NoncurricularListPage = () => {
         };
         return statusMap[statusCode] || { text: '알수없음', class: 'status-ended' };
     };
-    
+
     //================================================================
     // 데이터 로딩 (Side Effects)
     //================================================================
@@ -81,7 +81,7 @@ const NoncurricularListPage = () => {
         const fetchPrograms = async () => {
             setLoading(true);
             setError(null);
-            
+
             const apiParams = { ...searchParams, keyword: debouncedKeyword };
             const queryParams = new URLSearchParams();
 
@@ -90,15 +90,14 @@ const NoncurricularListPage = () => {
                     queryParams.append(key, value);
                 }
             });
-            
+
             try {
                 const response = await fetch(`/api/noncur?${queryParams}`);
                 if (!response.ok) throw new Error('데이터를 불러오는데 실패했습니다.');
-                
+
                 const data = await response.json();
-                
-                // ✅✅✅ 최종 버그 수정 ✅✅✅
-                // 프로그램 목록이 'content'가 아닌 'programs'라는 키로 오고 있었습니다.
+
+                // 프로그램 목록이 키 : programs
                 const programList = data.programs || [];
                 setPrograms(programList);
 
@@ -121,7 +120,7 @@ const NoncurricularListPage = () => {
                 } else {
                     setProgramMileages({});
                 }
-                
+
             } catch (err) {
                 setError(err.message);
                 console.error('프로그램 목록 조회 실패: ', err);
@@ -141,7 +140,7 @@ const NoncurricularListPage = () => {
         const buttons = [];
         const { currentPage, totalPages } = pagination;
         if (!totalPages) return null;
-        
+
         const startPage = Math.max(0, currentPage - 2);
         const endPage = Math.min(totalPages - 1, currentPage + 2);
 
@@ -152,7 +151,7 @@ const NoncurricularListPage = () => {
         buttons.push(<button key="next" className="btn btn-outline-primary btn-sm" disabled={pagination.isLast} onClick={() => handlePageChange(currentPage + 1)}>다음</button>);
         return buttons;
     };
-    
+
     return (
         <>
             <Header />
@@ -167,11 +166,13 @@ const NoncurricularListPage = () => {
                         </button>
                     </div>
                     <div className="filter-bar">
-                        <div className="search-group">
-                            <i className="bi bi-search"></i>
-                            <input type="text" name="keyword" placeholder="프로그램명으로 검색" value={searchParams.keyword} onChange={handleFilterChange} className="search-input" />
-                        </div>
-                        <select name="searchStatusCode" className="status-filter" value={searchParams.searchStatusCode} onChange={handleFilterChange}>
+                        {/* 1. 상태 선택창을 가장 왼쪽으로 이동 */}
+                        <select
+                            name="searchStatusCode"
+                            className="status-filter"
+                            value={searchParams.searchStatusCode}
+                            onChange={handleFilterChange}
+                        >
                             <option value="">전체 상태</option>
                             <option value="01">모집중</option>
                             <option value="02">마감임박</option>
@@ -179,6 +180,21 @@ const NoncurricularListPage = () => {
                             <option value="04">운영중</option>
                             <option value="05">종료</option>
                         </select>
+
+                        {/* 2. 검색창을 중간으로 이동 (내부 돋보기 아이콘 제거) */}
+                        <input
+                            type="text"
+                            name="keyword"
+                            placeholder="프로그램명으로 검색"
+                            value={searchParams.keyword}
+                            onChange={handleFilterChange}
+                            className="search-input"
+                        />
+
+                        {/* 3. 검색 버튼을 가장 오른쪽에 추가 */}
+                        <button className="search-button">
+                            <i className="bi bi-search"></i>
+                        </button>
                     </div>
                     <div className="result-info">
                         {/* totalElements가 0 이상일 때만 렌더링 */}
@@ -186,11 +202,11 @@ const NoncurricularListPage = () => {
                             <span>총 <strong>{pagination.totalElements}</strong>개의 프로그램</span>
                         }
                     </div>
-                    
+
                     {loading ? (
-                         <div className="loading-container">
+                        <div className="loading-container">
                             <div className="spinner-border text-primary" role="status" />
-                         </div>
+                        </div>
                     ) : error ? (
                         <div className="alert alert-danger text-center" role="alert">
                             <h4 className="alert-heading">오류가 발생했습니다</h4>
@@ -207,7 +223,7 @@ const NoncurricularListPage = () => {
                             {programs.map((program) => {
                                 const statusInfo = getStatusInfo(program.prgStatCd);
                                 // 백엔드에서 dday를 내려주지만, 만약 없다면 프론트에서 계산하도록 fallback 처리
-                                const ddayInfo = program.dday !== undefined ? 
+                                const ddayInfo = program.dday !== undefined ?
                                     (program.dday === 0 ? { text: 'D-DAY', class: 'dday-today' } : { text: `D-${program.dday}`, class: 'dday-urgent' }) :
                                     calculateDDay(program.aplyEndDt);
                                 return (
@@ -238,11 +254,11 @@ const NoncurricularListPage = () => {
                     )}
 
                     {pagination.totalPages > 1 && !loading && (
-                         <div className="pagination-container">
-                             <div className="btn-group" role="group">
+                        <div className="pagination-container">
+                            <div className="btn-group" role="group">
                                 {renderPaginationButtons()}
-                             </div>
-                         </div>
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>
