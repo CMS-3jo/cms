@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect,useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
@@ -7,16 +7,25 @@ import { useNotices } from '../hooks/useNotices';
 
 const NoticeDetailPage = () => {
   const { id } = useParams();
-  const { fetchNotices, getNoticeById, notices } = useNotices();
+ const { fetchNotices, getNoticeById, notices, loading } = useNotices();
   const navigate = useNavigate();
+   const [notice, setNotice] = useState(null);
 
   useEffect(() => {
     if (notices.length === 0) {
       fetchNotices();
     }
-  }, []);
+  }, [fetchNotices, notices.length]);
+useEffect(() => {
+    const loadNotice = async () => {
+      const data = await getNoticeById(id);
+      setNotice(data || null);
+    };
 
-  const notice = getNoticeById(id) || {};
+    if (id) {
+      loadNotice();
+    }
+  }, [id, getNoticeById]);
 
   return (
     <>
@@ -24,33 +33,47 @@ const NoticeDetailPage = () => {
       <div className="container_layout">
         <Sidebar />
         <main style={{ flex: 1, padding: '20px' }}>
-          <h3 style={{ marginBottom: '20px' }}>공지사항 상세</h3>
-          <table className="table">
-            <tbody>
-              <tr>
-                <th style={{ width: '20%' }}>제목</th>
-                <td>{notice.title}</td>
-              </tr>
-                 <tr>
-                <th>작성자</th>
-                <td>{notice.regUserId}</td>
-              </tr>
-              <tr>
-                <th>조회수</th>
-                <td>{notice.viewCnt}</td>
-              </tr>
-              <tr>
-                <th>작성일</th>
-                <td>{notice.regDt}</td>
-                <td>{notice.createdDate}</td>
-              </tr>
-              <tr>
-                <td colSpan="2" dangerouslySetInnerHTML={{ __html: notice.content }} />
-              </tr>
-            </tbody>
-          </table>
-          <button className="btn btn-primary" onClick={() => navigate(`/notices/${id}/edit`)} style={{ marginRight: '10px' }}>수정</button>
-          <button className="btn btn-secondary" onClick={() => navigate('/notices')}>목록</button>
+            <h3 style={{ marginBottom: '20px' }}>공지사항 상세</h3>
+          {loading || !notice ? (
+            <p>로딩 중...</p>
+          ) : (
+            <>
+              <table className="table">
+                <tbody>
+                  <tr>
+                    <th style={{ width: '20%' }}>제목</th>
+                    <td>{notice.title}</td>
+                  </tr>
+                  <tr>
+                    <th>작성자</th>
+                    <td>{notice.regUserId}</td>
+                  </tr>
+                  <tr>
+                    <th>조회수</th>
+                    <td>{notice.viewCnt}</td>
+                  </tr>
+                  <tr>
+                    <th>작성일</th>
+                    <td>{notice.regDt}</td>
+                    <td>{notice.createdDate}</td>
+                  </tr>
+                  <tr>
+                    <td colSpan="2" dangerouslySetInnerHTML={{ __html: notice.content }} />
+                  </tr>
+                </tbody>
+              </table>
+              <button
+                className="btn btn-primary"
+                onClick={() => navigate(`/notices/${id}/edit`)}
+                style={{ marginRight: '10px' }}
+              >
+                수정
+              </button>
+              <button className="btn btn-secondary" onClick={() => navigate('/notices')}>
+                목록
+              </button>
+            </>
+          )}
         </main>
       </div>
       <Footer />

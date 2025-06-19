@@ -19,15 +19,21 @@ const NoticeEditPage = () => {
     if (notices.length === 0) {
       fetchNotices();
     }
-  }, []);
+ }, [fetchNotices, notices.length]);
 
-  useEffect(() => {
-    const notice = getNoticeById(id);
-    if (notice) {
-      setTitle(notice.title);
-      setContent(notice.content);
+ useEffect(() => {
+    const loadNotice = async () => {
+      const data = await getNoticeById(id);
+      if (data) {
+        setTitle(data.title);
+        setContent(data.content);
+      }
+    };
+
+    if (id) {
+      loadNotice();
     }
-  }, [notices, id]);
+  }, [id, getNoticeById, notices]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
