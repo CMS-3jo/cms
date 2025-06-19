@@ -111,6 +111,8 @@ public class CounselingCustomRepositoryImpl implements CounselingCustomRepositor
 			  a.CNSL_APLY_ID AS cnslAplyId,
 			  a.STD_NO AS stdNo,
 			  s.STD_NM AS stdNm,
+			  a.EMPL_NO AS EmplNo,
+			  e.EMPL_NM AS emplNm,
 			  a.TYPE_CD AS typeCd,
 			  a.STAT_CD AS statCd,
 			  a.REQ_DTTM AS reqDttm,
@@ -122,6 +124,7 @@ public class CounselingCustomRepositoryImpl implements CounselingCustomRepositor
 			FROM CNSL_APLY a
 			JOIN STD_INFO s ON a.STD_NO = s.STD_NO
 			LEFT JOIN DEPT_INFO d ON s.DEPT_CD = d.DEPT_CD
+			LEFT JOIN EMPL_INFO e ON a.EMPL_NO = e.EMPL_NO
 			WHERE a.CNSL_APLY_ID = :id
         """;
 
@@ -134,6 +137,8 @@ public class CounselingCustomRepositoryImpl implements CounselingCustomRepositor
             .cnslAplyId(t.get("cnslAplyId", String.class))
             .stdNo(t.get("stdNo", String.class))
             .stdNm(t.get("stdNm", String.class))
+            .emplNo(t.get("emplNo", String.class))
+            .emplNm(t.get("emplNm", String.class))
             .typeCd(convertType(t.get("typeCd", String.class)))
             .statCd(convertStatus(t.get("statCd", String.class)))
             .reqDttm(Optional.ofNullable(t.get("reqDttm", Timestamp.class))
