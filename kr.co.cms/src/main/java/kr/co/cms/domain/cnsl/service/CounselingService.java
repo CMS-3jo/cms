@@ -3,6 +3,7 @@ package kr.co.cms.domain.cnsl.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -48,6 +49,10 @@ public class CounselingService {
     
     public Page<CounselingListResponse> getCounselingList(CounselingSearchCondition condition, Pageable pageable) {
         return counselingRepository.findCounselingList(condition, pageable);
+    }
+    
+    public List<String> getReservedTimes(String date) {
+        return counselingApplyRepository.findReservedTimesByDate(date);
     }
     
     @Transactional
