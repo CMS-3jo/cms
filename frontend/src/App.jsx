@@ -31,6 +31,8 @@ import AcademicConsultingPage from "./pages/AcademicConsultingPage";
 import PeerCounselingPage from "./pages/PeerCounselingPage";
 import NoncurricularViewPage from "./pages/NoncurricularViewPage.jsx";
 import NoncurricularRegisterPage from "./pages/NoncurricularRegisterPage.jsx";
+import CounselorChatListPage from './pages/CounselorChatList';
+
 
 // 핵심역량 관련 페이지들
 import CCARegPage from "./pages/CCA_RegPage.jsx";
@@ -128,6 +130,7 @@ function App() {
 
             {/* 채팅 */}
             <Route path="/user/chatbot" element={<ChatModalRoute />} />
+			<Route path="/counselor/chat/list" element={<CounselorChatListPage />} />
 
             {/* 관리자 페이지들 */}
             <Route path="/admin/counseling" element={<CounselingListPage />} />
