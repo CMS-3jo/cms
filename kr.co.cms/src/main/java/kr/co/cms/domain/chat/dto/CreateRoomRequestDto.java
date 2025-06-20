@@ -1,12 +1,12 @@
 package kr.co.cms.domain.chat.dto;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
-@Setter
-@NoArgsConstructor
+@Data
 public class CreateRoomRequestDto {
-	private String customerName;
+    private String studentId;
+    private String customerName;
 }
