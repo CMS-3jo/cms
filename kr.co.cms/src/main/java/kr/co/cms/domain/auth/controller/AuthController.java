@@ -1,20 +1,16 @@
 package kr.co.cms.domain.auth.controller;
 
+import kr.co.cms.domain.auth.dto.CreateRegisteredUserRequest;
+import kr.co.cms.domain.auth.dto.CreateUserResponse;
 import kr.co.cms.domain.auth.dto.LoginRequest;
 import kr.co.cms.domain.auth.dto.LoginResponse;
 import kr.co.cms.domain.auth.dto.RefreshRequest;
-import kr.co.cms.domain.auth.dto.CreateUserRequest;
-import kr.co.cms.domain.auth.dto.UpdateUserRequest;
-import kr.co.cms.domain.auth.dto.UserResponse;
 import kr.co.cms.domain.auth.service.AuthService;
-import kr.co.cms.domain.auth.entity.User;
-import kr.co.cms.domain.auth.repository.UserRepository;
 import kr.co.cms.global.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.Cookie;
@@ -22,9 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -34,8 +28,6 @@ import java.util.stream.Collectors;
 public class AuthController {
     
     private final AuthService authService;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     
     @PostMapping("/login")
@@ -223,102 +215,27 @@ public class AuthController {
         }
     }
     
-    // 사용자 생성
-    @PostMapping("/users")
-    public ResponseEntity<?> createUser(@RequestBody CreateUserRequest request) {
+    // 등록된 사용자 생성 (학생, 상담사, 교수, 관리자)
+    @PostMapping("/users/registered")
+    public ResponseEntity<?> createRegisteredUser(@RequestBody CreateRegisteredUserRequest request) {
         try {
-            // 중복 체크
-            if (userRepository.findByUserId(request.getUserId()) != null) {
-                return ResponseEntity.badRequest().body("이미 존재하는 사용자 ID입니다");
-            }
+            log.info("사용자 생성 요청: userId = {}, roleType = {}", request.getUserId(), request.getRoleType());
             
-            // 사용자 생성
-            User user = new User();
-            user.setUserId(request.getUserId());
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
-            user.setStatus(request.getAccountStatus() != null ? request.getAccountStatus() : "ACTIVE");
+            CreateUserResponse response = authService.createRegisteredUser(request);
             
-            userRepository.save(user);
-            
-            UserResponse response = new UserResponse(user.getUserId(), user.getStatus());
+            log.info("사용자 생성 응답: success = {}, userId = {}", response.isSuccess(), response.getUserId());
             return ResponseEntity.ok(response);
+            
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("사용자 생성 실패: " + e.getMessage());
-        }
-    }
-    
-    // 사용자 수정
-    @PutMapping("/users/{userId}")
-    public ResponseEntity<?> updateUser(@PathVariable String userId, @RequestBody UpdateUserRequest request) {
-        try {
-            User user = userRepository.findByUserId(userId);
-            if (user == null) {
-                return ResponseEntity.badRequest().body("사용자를 찾을 수 없습니다");
-            }
+            log.error("사용자 생성 실패: userId = {}, error = {}", 
+                    request != null ? request.getUserId() : "null", e.getMessage());
             
-            // 비밀번호 변경 (입력된 경우만)
-            if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
-                user.setPassword(passwordEncoder.encode(request.getPassword()));
-            }
-            
-            // 상태 변경
-            if (request.getAccountStatus() != null) {
-                user.setStatus(request.getAccountStatus());
-            }
-            
-            userRepository.save(user);
-            
-            UserResponse response = new UserResponse(user.getUserId(), user.getStatus());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("사용자 수정 실패: " + e.getMessage());
-        }
-    }
-    
-    // 사용자 조회
-    @GetMapping("/users/{userId}")
-    public ResponseEntity<?> getUser(@PathVariable String userId) {
-        try {
-            User user = userRepository.findByUserId(userId);
-            if (user == null) {
-                return ResponseEntity.badRequest().body("사용자를 찾을 수 없습니다");
-            }
-            
-            UserResponse response = new UserResponse(user.getUserId(), user.getStatus());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("사용자 조회 실패: " + e.getMessage());
-        }
-    }
-    
-    // 전체 사용자 목록
-    @GetMapping("/users")
-    public ResponseEntity<?> getAllUsers() {
-        try {
-            List<User> users = userRepository.findAll();
-            List<UserResponse> response = users.stream()
-                .map(user -> new UserResponse(user.getUserId(), user.getStatus()))
-                .collect(Collectors.toList());
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("사용자 목록 조회 실패: " + e.getMessage());
-        }
-    }
-    
-    // 사용자 삭제
-    @DeleteMapping("/users/{userId}")
-    public ResponseEntity<?> deleteUser(@PathVariable String userId) {
-        try {
-            User user = userRepository.findByUserId(userId);
-            if (user == null) {
-                return ResponseEntity.badRequest().body("사용자를 찾을 수 없습니다");
-            }
-            
-            userRepository.delete(user);
-            return ResponseEntity.ok("사용자 삭제 성공: " + userId);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("사용자 삭제 실패: " + e.getMessage());
+            CreateUserResponse errorResponse = CreateUserResponse.builder()
+                    .success(false)
+                    .message("사용자 생성 실패: " + e.getMessage())
+                    .build();
+                    
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 }

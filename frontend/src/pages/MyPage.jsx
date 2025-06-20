@@ -11,6 +11,28 @@ const MyPage = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  
+  // 사용자 추가 폼 상태
+  const [userForm, setUserForm] = useState({
+    userId: "",
+    password: "",
+    roleType: "STUDENT",
+    name: "",
+    deptCode: "",
+    phoneNumber: "",
+    email: "",
+    postalCode: "",
+    address: "",
+    detailAddress: "",
+    studentNo: "",
+    gradeYear: 1,
+    enterDate: "",
+    employeeNo: "",
+    statusCode: "ACTIVE"
+  });
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitSuccess, setSubmitSuccess] = useState("");
 
   const { user, apiCall, checkCurrentUser } = useAuth();
   const navigate = useNavigate();
@@ -73,11 +95,130 @@ const MyPage = () => {
   // 모달 관련 함수들
   const openModal = (modalType) => {
     setActiveModal(modalType);
+    if (modalType === "add-user") {
+      // 사용자 추가 모달 열 때 폼 초기화
+      resetUserForm();
+    }
   };
 
   const closeModal = () => {
     setActiveModal(null);
     setDetailContent("");
+    setSubmitError("");
+    setSubmitSuccess("");
+  };
+
+  // 사용자 추가 폼 초기화
+  const resetUserForm = () => {
+    setUserForm({
+      userId: "",
+      password: "",
+      roleType: "STUDENT",
+      name: "",
+      deptCode: "",
+      phoneNumber: "",
+      email: "",
+      postalCode: "",
+      address: "",
+      detailAddress: "",
+      studentNo: "",
+      gradeYear: 1,
+      enterDate: "",
+      employeeNo: "",
+      statusCode: "ACTIVE"
+    });
+    setSubmitError("");
+    setSubmitSuccess("");
+  };
+
+  // 폼 입력 핸들러
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setUserForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // 역할 변경 시 필드 초기화
+  const handleRoleChange = (e) => {
+    const newRole = e.target.value;
+    setUserForm(prev => ({
+      ...prev,
+      roleType: newRole,
+      studentNo: "",
+      gradeYear: 1,
+      enterDate: "",
+      employeeNo: ""
+    }));
+  };
+
+  // 사용자 추가 제출
+  const handleSubmitUser = async (e) => {
+    e.preventDefault();
+    setSubmitLoading(true);
+    setSubmitError("");
+    setSubmitSuccess("");
+
+    try {
+      // 역할별 필수 필드 검증
+      if (userForm.roleType === "STUDENT" && !userForm.studentNo) {
+        throw new Error("학번은 필수입니다.");
+      }
+      if (userForm.roleType !== "STUDENT" && !userForm.employeeNo) {
+        throw new Error("사번은 필수입니다.");
+      }
+
+      const requestData = {
+        userId: userForm.userId,
+        password: userForm.password,
+        roleType: userForm.roleType,
+        name: userForm.name,
+        deptCode: userForm.deptCode,
+        phoneNumber: userForm.phoneNumber,
+        email: userForm.email,
+        postalCode: userForm.postalCode,
+        address: userForm.address,
+        detailAddress: userForm.detailAddress,
+        statusCode: userForm.statusCode
+      };
+
+      // 역할별 필드 추가
+      if (userForm.roleType === "STUDENT") {
+        requestData.studentNo = userForm.studentNo;
+        requestData.gradeYear = parseInt(userForm.gradeYear);
+        if (userForm.enterDate) {
+          requestData.enterDate = userForm.enterDate + "T00:00:00";
+        }
+      } else {
+        requestData.employeeNo = userForm.employeeNo;
+      }
+
+      const response = await apiCall(
+        "http://localhost:8082/api/auth/users/registered",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setSubmitSuccess(`${getUserTypeLabel(userForm.roleType)} "${result.name}" 생성이 완료되었습니다.`);
+        resetUserForm();
+      } else {
+        setSubmitError(result.message || "사용자 생성에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error("사용자 생성 실패:", err);
+      setSubmitError(err.message || "사용자 생성에 실패했습니다.");
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -221,6 +362,19 @@ const MyPage = () => {
               <div className="menu-arrow">→</div>
             </div>
 
+            {/* 관리자 전용 - 사용자 추가 카드 */}
+            {userProfile.userType === "ADMIN" && (
+              <div
+                className="menu-card admin-card"
+                onClick={() => openModal("add-user")}
+              >
+                <div className="menu-icon">➕</div>
+                <h3>사용자 추가</h3>
+                <p>학생, 교수, 상담사, 관리자 계정 생성</p>
+                <div className="menu-arrow">→</div>
+              </div>
+            )}
+
             {/* 상담 내용 카드 */}
             {(userProfile.userType === "STUDENT" ||
               userProfile.userType === "PROFESSOR" ||
@@ -266,6 +420,7 @@ const MyPage = () => {
               <div className="modal-header-new">
                 <h2>
                   {activeModal === "personal-info" && "👤 개인정보"}
+                  {activeModal === "add-user" && "➕ 사용자 추가"}
                   {activeModal === "detail" && "📋 상담내용 상세보기"}
                 </h2>
                 <button
@@ -393,6 +548,259 @@ const MyPage = () => {
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {activeModal === "add-user" && (
+                  <div className="user-form-container">
+                    {submitSuccess && (
+                      <div className="alert alert-success" role="alert">
+                        {submitSuccess}
+                      </div>
+                    )}
+                    
+                    {submitError && (
+                      <div className="alert alert-danger" role="alert">
+                        {submitError}
+                      </div>
+                    )}
+
+                    <form onSubmit={handleSubmitUser} className="user-form">
+                      {/* 기본 계정 정보 */}
+                      <div className="form-section">
+                        <h4>기본 계정 정보</h4>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="userId">사용자 ID <span className="required">*</span></label>
+                            <input
+                              type="text"
+                              id="userId"
+                              name="userId"
+                              value={userForm.userId}
+                              onChange={handleFormChange}
+                              required
+                              className="form-control"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="password">비밀번호 <span className="required">*</span></label>
+                            <input
+                              type="password"
+                              id="password"
+                              name="password"
+                              value={userForm.password}
+                              onChange={handleFormChange}
+                              required
+                              className="form-control"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="roleType">역할 <span className="required">*</span></label>
+                            <select
+                              id="roleType"
+                              name="roleType"
+                              value={userForm.roleType}
+                              onChange={handleRoleChange}
+                              required
+                              className="form-control"
+                            >
+                              <option value="STUDENT">학생</option>
+                              <option value="PROFESSOR">교수</option>
+                              <option value="COUNSELOR">상담사</option>
+                              <option value="ADMIN">관리자</option>
+                            </select>
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="name">이름 <span className="required">*</span></label>
+                            <input
+                              type="text"
+                              id="name"
+                              name="name"
+                              value={userForm.name}
+                              onChange={handleFormChange}
+                              required
+                              className="form-control"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 역할별 필수 정보 */}
+                      <div className="form-section">
+                        <h4>역할별 정보</h4>
+                        {userForm.roleType === "STUDENT" ? (
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label htmlFor="studentNo">학번 <span className="required">*</span></label>
+                              <input
+                                type="text"
+                                id="studentNo"
+                                name="studentNo"
+                                value={userForm.studentNo}
+                                onChange={handleFormChange}
+                                required
+                                className="form-control"
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label htmlFor="gradeYear">학년</label>
+                              <select
+                                id="gradeYear"
+                                name="gradeYear"
+                                value={userForm.gradeYear}
+                                onChange={handleFormChange}
+                                className="form-control"
+                              >
+                                <option value={1}>1학년</option>
+                                <option value={2}>2학년</option>
+                                <option value={3}>3학년</option>
+                                <option value={4}>4학년</option>
+                              </select>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label htmlFor="employeeNo">사번 <span className="required">*</span></label>
+                              <input
+                                type="text"
+                                id="employeeNo"
+                                name="employeeNo"
+                                value={userForm.employeeNo}
+                                onChange={handleFormChange}
+                                required
+                                className="form-control"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {userForm.roleType === "STUDENT" && (
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label htmlFor="enterDate">입학일</label>
+                              <input
+                                type="date"
+                                id="enterDate"
+                                name="enterDate"
+                                value={userForm.enterDate}
+                                onChange={handleFormChange}
+                                className="form-control"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="deptCode">학과코드 <span className="required">*</span></label>
+                            <input
+                              type="text"
+                              id="deptCode"
+                              name="deptCode"
+                              value={userForm.deptCode}
+                              onChange={handleFormChange}
+                              required
+                              className="form-control"
+                              placeholder="예: COMP001"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 연락처 정보 */}
+                      <div className="form-section">
+                        <h4>연락처 정보</h4>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="email">이메일</label>
+                            <input
+                              type="email"
+                              id="email"
+                              name="email"
+                              value={userForm.email}
+                              onChange={handleFormChange}
+                              className="form-control"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="phoneNumber">전화번호</label>
+                            <input
+                              type="tel"
+                              id="phoneNumber"
+                              name="phoneNumber"
+                              value={userForm.phoneNumber}
+                              onChange={handleFormChange}
+                              className="form-control"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="postalCode">우편번호</label>
+                            <input
+                              type="text"
+                              id="postalCode"
+                              name="postalCode"
+                              value={userForm.postalCode}
+                              onChange={handleFormChange}
+                              className="form-control"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-row">
+                          <div className="form-group full-width">
+                            <label htmlFor="address">주소</label>
+                            <input
+                              type="text"
+                              id="address"
+                              name="address"
+                              value={userForm.address}
+                              onChange={handleFormChange}
+                              className="form-control"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-row">
+                          <div className="form-group full-width">
+                            <label htmlFor="detailAddress">상세주소</label>
+                            <input
+                              type="text"
+                              id="detailAddress"
+                              name="detailAddress"
+                              value={userForm.detailAddress}
+                              onChange={handleFormChange}
+                              className="form-control"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 버튼 */}
+                      <div className="form-actions">
+                        <button
+                          type="button"
+                          onClick={resetUserForm}
+                          className="btn btn-secondary"
+                          disabled={submitLoading}
+                        >
+                          초기화
+                        </button>
+                        <button
+                          type="submit"
+                          className="btn btn-primary"
+                          disabled={submitLoading}
+                        >
+                          {submitLoading ? "생성 중..." : "사용자 생성"}
+                        </button>
+                      </div>
+                    </form>
                   </div>
                 )}
               </div>
