@@ -39,7 +39,9 @@ h1 {
   font-size: 2.5rem;
   line-height: 1.2;
 }
-
+.header>h4{
+  font-size: 500rm;
+}
 button {
   border-radius: 8px;
   border: 1px solid transparent;
