@@ -22,4 +22,10 @@ public class ChatRoomDto {
     private String assignedCounselorId;
     private boolean active;
     private LocalDateTime createdAt;
+    
+    private String status;
+    
+    private String lastMessage;           
+    private LocalDateTime lastMessageTime;
+    private int unreadCount;  
 }

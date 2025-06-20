@@ -25,7 +25,7 @@ export default function useChatSocket(roomId, onMessageReceived, onDisconnect, o
 
         if (onConnect) onConnect(); // ✅ 여기에 호출 추가
 
-        client.subscribe(`/topic/chat/room/${roomId}`, (message) => {
+        client.subscribe(`/topic/chat/${roomId}`, (message) => {
           const payload = JSON.parse(message.body);
           onMessageReceived(payload);
         });

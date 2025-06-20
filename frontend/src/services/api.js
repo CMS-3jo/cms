@@ -168,6 +168,24 @@ export const counselingApi = {
 	  apiService.get('/counseling/reserved-times', { date }),
 };
 
+// --- 채팅방 관련 API ---
+export const chatApi = {
+  // 전체 채팅방 목록 (상담사용)
+  getAllRooms: () => apiService.get('/api/chat/rooms'),
+
+  // 상담사 미배정 방만 조회
+  getUnassignedRooms: () => apiService.get('/api/chat/rooms/unassigned'),
+
+  // 채팅방 생성 (학생용)
+  createRoom: (data) => apiService.post('/chat/rooms', data),
+
+  // 상담사가 특정 방에 배정
+  assignCounselor: (roomId, counselorId) =>
+    apiService.patch(`/chat/rooms/${roomId}/assign`, {
+      assignedCounselorId: counselorId,
+    }),
+};
+
 // 인증 관련 API
 export const authApi = {
 	login: (credentials) =>
