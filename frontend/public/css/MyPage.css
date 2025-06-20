@@ -1,36 +1,20 @@
-/* /Users/nayeong/Documents/projects/cms/d_cms/frontend/public/css/MyPage.css */
-
-.mypage-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  line-height: 1.6;
-  margin: 0;
-  padding: 0;
-  background-color: #f4f4f4;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100vh;
+/* /frontend/public/css/MyPage.css */
+body{
+  height: 900px !important;
+}
+main{
+  padding: 100px 100px 0 100px;
+  
 }
 
-.mypage-container {
-  max-width: 1200px;
-  margin: 40px auto;
-  padding: 20px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  box-sizing: border-box;
-  position: relative;
-  z-index: 1;
-
-  width: 100% !important;
-  margin: 100px auto !important;
-  padding-left: 20px !important;
-  min-height: calc(100vh - 52px - 18vh - 144px);
+/* 개인정보 모달 때문에 엄마 키움 */
+main>.container_layout{
+height: 800px;
 }
 
 .container_layout .side_navbar {
   display: none !important;
+  
 }
 
 .mypage-container.container_layout {
@@ -82,17 +66,19 @@
   top: 0;
   width: 100%;
   height: 100%;
-  overflow: auto;
+  overflow: hidden;
   background-color: rgba(0, 0, 0, 0.5);
 }
 
+
 .modal.show-modal {
   display: block;
+  
 }
 
 .modal-content {
   background-color: #fff;
-  margin: 50px auto;
+
   padding: 20px;
   border-radius: 8px;
   width: auto;
@@ -353,9 +339,11 @@
   max-width: 900px;
   max-height: 90vh;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-  margin: 50px auto;
+  margin: 5vh auto;
+  display: flex;
+  flex-direction: column;
 }
+
 
 .modal-header-new {
   background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
@@ -393,8 +381,8 @@
 
 .modal-body-new {
   padding: 30px;
-  max-height: calc(90vh - 100px);
   overflow-y: auto;
+  flex: 1;
 }
 
 /* 개인정보 모달 전용 스타일 개선 */
@@ -402,9 +390,9 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-  max-height: 70vh;
-  overflow-y: auto;
   padding: 4px;
+  max-height: none !important;
+  overflow: visible !important;
 }
 
 .info-card {
@@ -560,9 +548,11 @@
   }
   
   .info-cards {
-    gap: 16px;
-    max-height: 60vh;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 }
 
 @media (max-width: 480px) {
