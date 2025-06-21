@@ -31,33 +31,65 @@ import kr.co.cms.domain.noncur.repository.NoncurRepository;
 @Service
 @Transactional(readOnly = true)
 public class NoncurService {
-    
+
     private final NoncurRepository noncurRepository;
     private final NoncurMapRepository noncurMapRepository;
     private final CoreCptInfoService coreCptInfoService;
     private final NoncurApplicationService applicationService; // 신청자 수 조회용
     private final DeptInfoService deptInfoService;
+    private final NoncurCodeService noncurCodeService; // 공통코드 서비스 추가
 
-
-    public NoncurService(NoncurRepository noncurRepository, 
-            NoncurMapRepository noncurMapRepository,
-            CoreCptInfoService coreCptInfoService,
-            NoncurApplicationService applicationService,
-            DeptInfoService deptInfoService) { // 추가!
-				this.noncurRepository = noncurRepository;
-				this.noncurMapRepository = noncurMapRepository;
-				this.coreCptInfoService = coreCptInfoService;
-				this.applicationService = applicationService;
-				this.deptInfoService = deptInfoService; // 추가!
+    public NoncurService(NoncurRepository noncurRepository,
+                        NoncurMapRepository noncurMapRepository,
+                        CoreCptInfoService coreCptInfoService,
+                        NoncurApplicationService applicationService,
+                        DeptInfoService deptInfoService,
+                        NoncurCodeService noncurCodeService) {
+        this.noncurRepository = noncurRepository;
+        this.noncurMapRepository = noncurMapRepository;
+        this.coreCptInfoService = coreCptInfoService;
+        this.applicationService = applicationService;
+        this.deptInfoService = deptInfoService;
+        this.noncurCodeService = noncurCodeService;
     }
-    
-    // 실제 DB에서 모든 부서 목록 조회
 
+    /**
+     * 개선된 D-Day 계산 메서드
+     */
+    private long calculateDDay(NoncurProgram program) {
+        if (program.getPrgStDt() == null) return 0;
+        
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime programStart = program.getPrgStDt();
+        
+        // 모집 종료일 = 프로그램 시작일 - 1일
+        LocalDateTime recruitmentEnd = programStart.minusDays(1);
+        
+        // 프로그램 상태에 따른 D-Day 계산
+        String statusCode = program.getPrgStatCd();
+        
+        if (NoncurConstants.ProgramStatus.COMPLETED.equals(statusCode)) {
+            return -999; // 종료된 프로그램
+        }
+        
+        if (NoncurConstants.ProgramStatus.IN_PROGRESS.equals(statusCode)) {
+            return -888; // 운영중인 프로그램
+        }
+        
+        if (NoncurConstants.ProgramStatus.RECRUITMENT_CLOSED.equals(statusCode)) {
+            return -777; // 모집완료된 프로그램
+        }
+        
+        // 모집중이거나 마감임박인 경우 모집 종료일까지의 일수 계산
+        return ChronoUnit.DAYS.between(now.toLocalDate(), recruitmentEnd.toLocalDate());
+    }
+
+    // 실제 DB에서 모든 부서 목록 조회
     public List<Map<String, String>> getAllDepartments() {
         try {
             // 기존 부서 서비스 활용
             List<DeptInfoDto> deptInfoList = deptInfoService.getAll();
-            
+
             return deptInfoList.stream()
                 .map(dept -> {
                     Map<String, String> deptMap = new HashMap<>();
@@ -66,11 +98,11 @@ public class NoncurService {
                     return deptMap;
                 })
                 .collect(Collectors.toList());
-                
+
         } catch (Exception e) {
             System.err.println("부서 목록 조회 실패: " + e.getMessage());
             e.printStackTrace();
-            
+
             // DB 조회 실패 시 빈 목록 반환
             return new ArrayList<>();
         }
@@ -82,7 +114,7 @@ public class NoncurService {
         dept.put("deptNm", deptNm);
         return dept;
     }
-    
+
     public String getDeptNameByCode(String deptCode) {
         try {
             List<DeptInfoDto> allDepts = deptInfoService.getAll();
@@ -96,11 +128,13 @@ public class NoncurService {
             return "알 수 없는 부서";
         }
     }
-    
+
     public Map<String, Object> getNoncurProgramsWithPagination(NoncurSearchDTO searchDTO) {
-        Sort sort = Sort.by(Sort.Direction.fromString(searchDTO.getSortDir()), searchDTO.getSortBy());
-        Pageable pageable = PageRequest.of(searchDTO.getPage(), searchDTO.getSize(), sort);
-        
+        Sort sort = Sort.by(Sort.Direction.fromString(searchDTO.getSortDir()),
+                           searchDTO.getSortBy());
+        Pageable pageable = PageRequest.of(searchDTO.getPage(),
+                                         searchDTO.getSize(), sort);
+
         Page<NoncurProgram> programPage;
         if (hasSearchConditions(searchDTO)) {
             programPage = noncurRepository.findBySearchConditions(
@@ -112,11 +146,11 @@ public class NoncurService {
         } else {
             programPage = noncurRepository.findAllByOrderByRegDtDesc(pageable);
         }
-        
+
         List<NoncurDTO> programs = programPage.getContent().stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("programs", programs);
         response.put("totalElements", programPage.getTotalElements());
@@ -127,18 +161,16 @@ public class NoncurService {
         response.put("hasPrevious", programPage.hasPrevious());
         response.put("isFirst", programPage.isFirst());
         response.put("isLast", programPage.isLast());
-        
+
         return response;
     }
-    
-    
 
     public NoncurDetailDTO getNoncurDetail(String prgId) {
         NoncurProgram program = noncurRepository.findById(prgId).orElse(null);
         if (program == null) {
             return null;
         }
-        
+
         NoncurDetailDTO detail = new NoncurDetailDTO();
         detail.setPrgId(program.getPrgId());
         detail.setPrgNm(program.getPrgNm());
@@ -151,21 +183,20 @@ public class NoncurService {
         detail.setRegDt(program.getRegDt());
         detail.setUpdDt(program.getUpdDt());
         detail.setPrgStatCd(program.getPrgStatCd());
-        detail.setPrgStatNm(NoncurConstants.getStatusName(program.getPrgStatCd()));
         
-        // D-day 계산
-        if (program.getPrgStDt() != null) {
-            long dDay = ChronoUnit.DAYS.between(LocalDateTime.now(), program.getPrgStDt());
-            detail.setDDay(dDay);
-        }
-        
+        // 공통코드를 통한 상태명 조회
+        detail.setPrgStatNm(noncurCodeService.getProgramStatusName(program.getPrgStatCd()));
+
+        // 개선된 D-day 계산
+        detail.setDDay(calculateDDay(program));
+
         // 부서명 조회 (DeptInfoService 활용)
         String deptName = getDeptNameByCode(program.getPrgDeptCd());
         detail.setDeptName(deptName);
-        
+
         // 핵심역량 정보 설정
         setupCompetencies(detail, prgId);
-        
+
         // 추가 정보 설정
         detail.setLocation(program.getPrgLocation());
         detail.setContactEmail(program.getPrgContactEmail());
@@ -174,7 +205,7 @@ public class NoncurService {
         detail.setDepartmentInfo(program.getPrgDeptInfo());
         detail.setGradeInfo(program.getPrgGradeInfo());
         detail.setProgramSchedule(program.getPrgSchedule());
-        
+
         // 현재 신청자 수
         try {
             long currentApplicants = applicationService.getCurrentApplicantCount(prgId);
@@ -182,15 +213,13 @@ public class NoncurService {
         } catch (Exception e) {
             detail.setCurrentApplicants(0);
         }
-        
+
         // 첨부파일은 구현되지 않았으면 빈 리스트
         detail.setAttachments(new ArrayList<>());
-        
+
         return detail;
     }
-    
-    
-    
+
     public Map<String, Object> getAllCompetencies() {
         try {
             List<CoreCptInfoDto> competencies = coreCptInfoService.getAll();
@@ -203,7 +232,7 @@ public class NoncurService {
             return response;
         }
     }
-    
+
     /**
      * 핵심역량 설정 (실제 DB 연동)
      */
@@ -211,34 +240,37 @@ public class NoncurService {
         try {
             // 실제 DB에서 모든 핵심역량 조회
             List<CoreCptInfoDto> allCoreCompetencies = coreCptInfoService.getAll();
-            
+
             // 실제 DB에서 매핑된 핵심역량 ID들 조회
-            List<String> programCompetencyIds = noncurMapRepository.findCompetencyIdsByProgramId(prgId);
-            
+            List<String> programCompetencyIds =
+                noncurMapRepository.findCompetencyIdsByProgramId(prgId);
+
             // DTO 변환
-            List<NoncurDetailDTO.CompetencyDTO> allCompetencies = allCoreCompetencies.stream()
-                .map(this::convertToCompetencyDTO)
-                .collect(Collectors.toList());
-            
+            List<NoncurDetailDTO.CompetencyDTO> allCompetencies =
+                allCoreCompetencies.stream()
+                    .map(this::convertToCompetencyDTO)
+                    .collect(Collectors.toList());
+
             // 선택 상태 설정
-            allCompetencies.forEach(comp -> 
+            allCompetencies.forEach(comp ->
                 comp.setSelected(programCompetencyIds.contains(comp.getCciId()))
             );
-            
-            List<NoncurDetailDTO.CompetencyDTO> selectedCompetencies = allCompetencies.stream()
-                .filter(NoncurDetailDTO.CompetencyDTO::isSelected)
-                .collect(Collectors.toList());
-            
+
+            List<NoncurDetailDTO.CompetencyDTO> selectedCompetencies =
+                allCompetencies.stream()
+                    .filter(NoncurDetailDTO.CompetencyDTO::isSelected)
+                    .collect(Collectors.toList());
+
             detail.setCompetencies(selectedCompetencies);
             detail.setAllCompetencies(allCompetencies);
-            
+
         } catch (Exception e) {
             // 오류 시 빈 리스트로 처리
             detail.setCompetencies(new ArrayList<>());
             detail.setAllCompetencies(new ArrayList<>());
         }
     }
-    
+
     /**
      * CoreCptInfoDto를 CompetencyDTO로 변환
      */
@@ -250,8 +282,10 @@ public class NoncurService {
         dto.setSelected(false);
         return dto;
     }
-    
-    
+
+    /**
+     * DTO 변환 시 공통코드 활용
+     */
     private NoncurDTO convertToDTO(NoncurProgram program) {
         NoncurDTO dto = new NoncurDTO();
         dto.setPrgId(program.getPrgId());
@@ -265,27 +299,27 @@ public class NoncurService {
         dto.setRegDt(program.getRegDt());
         dto.setUpdDt(program.getUpdDt());
         dto.setPrgStatCd(program.getPrgStatCd());
-        dto.setPrgStatNm(NoncurConstants.getStatusName(program.getPrgStatCd()));
         
-        if (program.getPrgStDt() != null) {
-            long dDay = ChronoUnit.DAYS.between(LocalDateTime.now(), program.getPrgStDt());
-            dto.setDDay(dDay);
-        }
-        
+        // 공통코드를 통한 상태명 조회
+        dto.setPrgStatNm(noncurCodeService.getProgramStatusName(program.getPrgStatCd()));
+
+        // 개선된 D-Day 계산
+        dto.setDDay(calculateDDay(program));
+
         // 부서명 조회 (DeptInfoService 활용)
         String deptName = getDeptNameByCode(program.getPrgDeptCd());
         dto.setDeptName(deptName);
-        
-        List<String> competencyIds = noncurMapRepository.findCompetencyIdsByProgramId(program.getPrgId());
+
+        List<String> competencyIds =
+            noncurMapRepository.findCompetencyIdsByProgramId(program.getPrgId());
         dto.setCciIds(competencyIds);
-        
+
         return dto;
     }
-    
+
     private boolean hasSearchConditions(NoncurSearchDTO searchDTO) {
         return (searchDTO.getKeyword() != null && !searchDTO.getKeyword().trim().isEmpty()) ||
                (searchDTO.getSearchDeptCode() != null && !searchDTO.getSearchDeptCode().trim().isEmpty()) ||
                (searchDTO.getSearchStatusCode() != null && !searchDTO.getSearchStatusCode().trim().isEmpty());
     }
-
 }
