@@ -1,6 +1,7 @@
 package kr.co.cms.domain.noncur.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import kr.co.cms.domain.noncur.dto.NoncurSearchDTO;
@@ -25,6 +26,9 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.multipart.MultipartFile;
+import kr.co.cms.global.file.service.FileService; 
+import kr.co.cms.global.file.dto.FileInfoDTO; 
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -42,12 +46,15 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class NoncurController {
 
+    private final FileService fileService;
+
     private final NoncurService service;
     private final NoncurApplicationService applicationService;
     private final NoncurRegisterService registerService;
     private final JwtUtil jwtUtil;
     private final TokenUtil tokenUtil;
     private final DeptInfoService deptInfoService;
+
     
     /**
      * 비교과 프로그램 목록 조회 (검색/필터 포함)
@@ -148,6 +155,49 @@ public class NoncurController {
                 .body(Map.of("error", "프로그램 등록 중 오류가 발생했습니다: " + e.getMessage()));
         }
     }
+    
+    
+    /**
+     * 비교과 프로그램 등록 (파일 포함) - 새로 추가
+     */
+    @PostMapping("/register-with-files")
+    @ResponseBody
+    public ResponseEntity<?> registerProgramWithFiles(
+            @RequestPart("program") NoncurRegisterDTO registerDTO,
+            @RequestPart(value = "attachFiles", required = false) List<MultipartFile> attachFiles,
+            @RequestPart(value = "thumbnailFiles", required = false) List<MultipartFile> thumbnailFiles,
+            HttpServletRequest request) {
+        
+        try {
+            String userId = tokenUtil.getUserIdFromRequest(request);
+            registerDTO.setRegUserId(userId);
+            
+            // 1. 프로그램 등록
+            String prgId = registerService.registerProgram(registerDTO);
+            
+            // 2. 첨부파일 업로드
+            if (attachFiles != null && !attachFiles.isEmpty()) {
+                fileService.uploadFiles(attachFiles, "NONCUR", prgId, "ATTACH", userId);
+            }
+            
+            // 3. 썸네일 업로드
+            if (thumbnailFiles != null && !thumbnailFiles.isEmpty()) {
+                fileService.uploadFiles(thumbnailFiles, "NONCUR", prgId, "THUMBNAIL", userId);
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                "message", "프로그램과 파일이 성공적으로 등록되었습니다.",
+                "prgId", prgId
+            ));
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "등록 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+    
+    
     
     /**
      * 기존 비교과 프로그램 정보 수정
