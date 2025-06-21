@@ -10,6 +10,7 @@ import lombok.Data;
 public class CoreCptSurveyDto {
  private String title;       // CCI_NM
  private String ccaId;       // CATEGORY_CD
+ private String cciDesc;     // CCI_DESC
  private String regUserId;   // REG_USER_ID
  private List<QuestionDto> questions;
 

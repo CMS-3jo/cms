@@ -34,7 +34,7 @@ public class CoreCptInfoService {
             .cciId(UUID.randomUUID().toString())
             .cciNm(dto.getTitle())        // DTO 의 title
             .categoryCd(dto.getCcaId())   // DTO 의 ccaId
-            .cciDesc(null)                // DTO 에 description 이 없으므로 필요하다면 DTO 에 추가하거나 null 처리
+            .cciDesc(dto.getCciDesc())    // 설명
             .regUserId(dto.getRegUserId())
             .regDt(LocalDateTime.now())
             .visibleYn("Y")
@@ -85,7 +85,7 @@ public class CoreCptInfoService {
         dto.setTitle(info.getCciNm());
         dto.setCcaId(info.getCategoryCd());
         dto.setRegUserId(info.getRegUserId());
-
+        dto.setCciDesc(info.getCciDesc());
         List<CoreCptQst> qsts = info.getQuestions().stream()
             .sorted(Comparator.comparing(CoreCptQst::getQstOrd))
             .collect(Collectors.toList());
@@ -115,6 +115,7 @@ public class CoreCptInfoService {
         // 1) 설문 정보 업데이트
         info.setCciNm(dto.getTitle());
         info.setCategoryCd(dto.getCcaId());
+        info.setCciDesc(dto.getCciDesc());
         info.setRegUserId(dto.getRegUserId());
         info.setRegDt(LocalDateTime.now());
 

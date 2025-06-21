@@ -117,7 +117,9 @@ const PublicHeader = () => {
           </div>
           <div className={`shownav ${showMobileNav ? "show" : ""}`}>
             <div className="menu" onClick={toggleMobileNav}>
-              <img alt="" src="./images/counselor/header-menu.svg" />
+              <span className="material-symbols-outlined header-icons close">
+                  close
+                </span>
             </div>
             <ul className="nav nav-underline" id="navmajor_menu">
               <li className="nav-item">

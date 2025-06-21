@@ -17,6 +17,7 @@ const CCARegPage = () => {
   const [surveys, setSurveys] = useState([]);
   const [surveyTitle, setSurveyTitle] = useState('');
   const [department, setDepartment] = useState('');
+  const [surveyDesc, setSurveyDesc] = useState('');
   const [questionsByComp, setQuestionsByComp] = useState(
     COMPETENCIES.reduce((acc, comp) => {
       acc[comp] = [{ id: 1, content: '' }];
@@ -31,7 +32,7 @@ const CCARegPage = () => {
       .catch(console.error);
 
     fetch('/api/core-cpt/list')
-      .then(res => res.ok ? res.json() : [])
+      .then(res => (res.ok ? res.json() : []))
       .then(data => setSurveys(Array.isArray(data) ? data : []))
       .catch(() => setSurveys([]));
   }, []);
@@ -65,9 +66,10 @@ const CCARegPage = () => {
       }
     }
 
-     const payload = {
+    const payload = {
       title: surveyTitle,
       ccaId: department,
+      cciDesc: surveyDesc,
       questions: COMPETENCIES.flatMap(comp =>
         questionsByComp[comp].map((q, idx) => ({
           order: idx + 1,
@@ -77,7 +79,7 @@ const CCARegPage = () => {
       ),
       regUserId: 'admin001'
     };
-    
+
     try {
       const res = await fetch(
         isEditing ? `/api/core-cpt/${editId}` : '/api/core-cpt/register',
@@ -116,7 +118,7 @@ const CCARegPage = () => {
 
   const assignQuestions = questions => {
     const byComp = COMPETENCIES.reduce((acc, comp) => { acc[comp] = []; return acc; }, {});
-     questions.forEach(q => {
+    questions.forEach(q => {
       const comp = COMPETENCIES.includes(q.competency) ? q.competency : COMPETENCIES[0];
       byComp[comp].push({ id: q.order, content: q.content });
     });
@@ -129,6 +131,7 @@ const CCARegPage = () => {
       if (!res.ok) throw new Error('조회 실패');
       const data = await res.json();
       setSurveyTitle(data.title);
+      setSurveyDesc(data.cciDesc || '');
       setDepartment(data.ccaId);
       setQuestionsByComp(assignQuestions(data.questions));
       setEditId(cciId);
@@ -144,6 +147,7 @@ const CCARegPage = () => {
     setEditId(null);
     setStep(1);
     setSurveyTitle('');
+    setSurveyDesc('');
     setDepartment('');
     setQuestionsByComp(
       COMPETENCIES.reduce((acc, comp) => {
@@ -156,23 +160,32 @@ const CCARegPage = () => {
   return (
     <>
       <Header />
-      <div className="cca-reg-container">
+      <div className="container_layout">
         <Sidebar />
-        <div className="cca-reg-content">
+        <div className="cca_analy">
           <h3>핵심역량 설문 관리</h3>
 
           <section className="survey-list">
             <h4>설문 리스트</h4>
             <table>
               <thead>
-                <tr><th>제목</th><th>학과</th><th>등록일</th><th>Actions</th></tr>
+                <tr>
+                  <th>제목</th>
+                  <th>설명</th>
+                  <th>학과</th>
+                  <th>등록일</th>
+                  <th>Actions</th>
+                </tr>
               </thead>
               <tbody>
                 {surveys.map(survey => {
-                  const dept = departments.find(d => d.deptCd === survey.ccaId);
+                    const dept = departments.find(
+                    d => d.deptCd === (survey.categoryCd || survey.ccaId)
+                  );
                   return (
                     <tr key={survey.cciId}>
                       <td>{survey.cciNm}</td>
+                       <td>{survey.cciDesc}</td>
                       <td>{dept ? dept.deptNm : ''}</td>
                       <td>{survey.regDt ? new Date(survey.regDt).toLocaleDateString() : ''}</td>
                       <td>
@@ -192,6 +205,15 @@ const CCARegPage = () => {
               <div className="form-group">
                 <label>설문 제목</label>
                 <input type="text" value={surveyTitle} onChange={e => setSurveyTitle(e.target.value)} placeholder="설문 제목을 입력하세요" />
+              </div>
+                  <div className="form-group">
+                <label>설문 설명</label>
+                <textarea
+                  value={surveyDesc}
+                  onChange={e => setSurveyDesc(e.target.value)}
+                  rows="3"
+                  placeholder="설문에 대한 설명을 입력하세요"
+                />
               </div>
               <div className="form-group">
                 <label>학과 선택</label>
