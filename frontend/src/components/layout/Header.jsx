@@ -32,8 +32,8 @@ const Header = () => {
     <header>
       <div className="container_layout">
         <nav className="nav">
-          <a 
-            className="nav-link logo" 
+          <a
+            className="nav-link logo"
             onClick={() => navigate('/')}
             style={{ cursor: 'pointer' }}
           >
@@ -45,10 +45,10 @@ const Header = () => {
         <div className="side_area">
           {/* 로그인 아이콘 - 로그아웃 상태일 때만 표시 */}
           {!loading && !isLoggedIn && (
-            <p 
-              id="login_icon" 
+            <p
+              id="login_icon"
               onClick={handleLoginClick}
-              style={{ 
+              style={{
                 cursor: 'pointer',
                 display: 'block',
                 margin: 0,
@@ -58,13 +58,13 @@ const Header = () => {
               <span className="material-symbols-outlined header-icons">login</span>
             </p>
           )}
-          
+
           {/* 로그아웃 아이콘 - 로그인 상태일 때만 표시 */}
           {!loading && isLoggedIn && (
-            <p 
-              id="logout_icon" 
+            <p
+              id="logout_icon"
               onClick={handleLogout}
-              style={{ 
+              style={{
                 cursor: 'pointer',
                 display: 'block',
                 margin: 0,
@@ -72,8 +72,8 @@ const Header = () => {
               }}
             >
               <span className="material-symbols-outlined header-icons" >
-logout
-</span>
+                logout
+              </span>
             </p>
           )}
 
@@ -86,10 +86,10 @@ logout
 
           <div className="menu" id="menu_toggle_btn" onClick={toggleMobileMenu}>
             <span className="material-symbols-outlined header-icons">
-logout
-</span>
+              menu
+            </span>
           </div>
-          
+
           <div
             className={`shownav ${showMobileMenu ? 'show' : ''}`}
             id="shownav_menu"
