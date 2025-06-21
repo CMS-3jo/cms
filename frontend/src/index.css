@@ -137,8 +137,10 @@ button:focus-visible {
   gap: 1rem;
   color: black;
   font-size: 25px;
+  user-select: none;
 }
 
 .header-icons:hover{
   color: #ffffff;
+  cursor: pointer;
 }
