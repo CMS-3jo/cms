@@ -215,4 +215,32 @@ public class FileService {
         
         return dto;
     }
+    
+    /**
+     * 파일 정보 조회
+     */
+    public FileInfo getFileInfo(Long fileId) {
+        return fileInfoRepository.findByFileIdAndUseYn(fileId, "Y")
+            .orElse(null);
+    }
+
+    /**
+     * 파일 내용 다운로드
+     */
+    public byte[] downloadFileContent(Long fileId) {
+        try {
+            FileInfo fileInfo = getFileInfo(fileId);
+            if (fileInfo == null) {
+                return null;
+            }
+
+            // FTP에서 파일 다운로드
+            return ftpUtil.downloadFile(fileInfo.getFilePath());
+        } catch (Exception e) {
+            log.error("파일 다운로드 실패: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+    
+    
 }
