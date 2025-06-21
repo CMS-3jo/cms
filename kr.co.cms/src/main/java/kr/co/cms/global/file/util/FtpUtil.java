@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+
 
 @Component
 @RequiredArgsConstructor
@@ -190,6 +192,69 @@ public class FtpUtil {
                 if (ftpClient.isConnected()) {
                     ftpClient.logout();
                     ftpClient.disconnect();
+                }
+            } catch (IOException e) {
+                log.error("FTP 연결 해제 중 오류: {}", e.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * FTP 파일 다운로드
+     */
+    public byte[] downloadFile(String remotePath) {
+        FTPClient ftpClient = new FTPClient();
+        try {
+            log.info("FTP 다운로드 시작 - 경로: {}", remotePath);
+
+            // FTP 서버 연결
+            ftpClient.connect(ftpProperties.getHost(), ftpProperties.getPort());
+            boolean loginSuccess = ftpClient.login(ftpProperties.getUsername(), ftpProperties.getPassword());
+
+            if (!loginSuccess) {
+                log.error("FTP 로그인 실패: {}", ftpClient.getReplyString());
+                return null;
+            }
+
+            ftpClient.enterLocalPassiveMode();
+            ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+            ftpClient.setControlEncoding("UTF-8");
+
+            // 상대 경로로 변환 (앞의 / 제거)
+            String relativePath = remotePath.startsWith("/") ? remotePath.substring(1) : remotePath;
+            log.info("FTP 상대 경로: {}", relativePath);
+
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                InputStream inputStream = ftpClient.retrieveFileStream(relativePath);
+                
+                if (inputStream == null) {
+                    log.error("파일을 찾을 수 없습니다: {}", relativePath);
+                    log.error("FTP 응답: {}", ftpClient.getReplyString());
+                    return null;
+                }
+
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    baos.write(buffer, 0, bytesRead);
+                }
+
+                inputStream.close();
+                ftpClient.completePendingCommand();
+
+                log.info("FTP 다운로드 성공: {} bytes", baos.size());
+                return baos.toByteArray();
+            }
+
+        } catch (IOException e) {
+            log.error("FTP 다운로드 중 오류: {}", e.getMessage(), e);
+            return null;
+        } finally {
+            try {
+                if (ftpClient.isConnected()) {
+                    ftpClient.logout();
+                    ftpClient.disconnect();
+                    log.info("FTP 연결 해제");
                 }
             } catch (IOException e) {
                 log.error("FTP 연결 해제 중 오류: {}", e.getMessage());
