@@ -9,7 +9,7 @@ main{
 
 /* 개인정보 모달 때문에 엄마 키움 */
 main>.container_layout{
-height: 800px;
+/* height: 800px; */
 }
 
 .container_layout .side_navbar {
