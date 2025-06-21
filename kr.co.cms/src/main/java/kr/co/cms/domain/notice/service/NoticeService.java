@@ -11,30 +11,49 @@ import org.springframework.transaction.annotation.Transactional;
 import kr.co.cms.domain.notice.dto.NoticeDto;
 import kr.co.cms.domain.notice.entity.Notice;
 import kr.co.cms.domain.notice.repository.NoticeRepository;
+import kr.co.cms.global.file.constants.FileConstants;
+import kr.co.cms.global.file.dto.FileInfoDTO;
+import kr.co.cms.global.file.service.FileService;
 
 @Service
 @Transactional(readOnly = true)
 public class NoticeService {
 
     private final NoticeRepository repo;
-
-    public NoticeService(NoticeRepository repo) {
+    private final FileService fileService;
+    
+    public NoticeService(NoticeRepository repo, FileService fileService) {
         this.repo = repo;
+        this.fileService = fileService;
     }
 
     public List<NoticeDto> getAll() {
         return repo.findAll(org.springframework.data.domain.Sort.by("regDt").descending())
                    .stream()
-                   .map(NoticeDto::fromEntity)
+                   .map(n -> {
+                       NoticeDto dto = NoticeDto.fromEntity(n);
+                       List<FileInfoDTO> files = fileService.getFileList(
+                               FileConstants.RefType.NOTICE,
+                               n.getNoticeId(),
+                               FileConstants.Category.ATTACH);
+                       dto.setFiles(files);
+                       return dto;
+                   })
                    .collect(Collectors.toList());
     }
     @Transactional
     public NoticeDto get(String noticeId) {
         return repo.findById(noticeId)
-.map(n -> {
-    n.setViewCnt(n.getViewCnt() + 1);
-    return NoticeDto.fromEntity(n);
-})
+        		   .map(n -> {
+                       n.setViewCnt(n.getViewCnt() + 1);
+                       NoticeDto dto = NoticeDto.fromEntity(n);
+                       List<FileInfoDTO> files = fileService.getFileList(
+                               FileConstants.RefType.NOTICE,
+                               n.getNoticeId(),
+                               FileConstants.Category.ATTACH);
+                       dto.setFiles(files);
+                       return dto;
+                   })
                    .orElse(null);
     }
 

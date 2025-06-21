@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Data;
 import kr.co.cms.domain.notice.entity.Notice;
+import kr.co.cms.global.file.dto.FileInfoDTO;
 
 @Data
 public class NoticeDto {
@@ -14,7 +15,7 @@ public class NoticeDto {
     private Integer viewCnt;
     private LocalDateTime regDt;
     private LocalDateTime updDt;
-    private List<String> files;
+    private List<FileInfoDTO> files;
 
     public static NoticeDto fromEntity(Notice entity) {
         NoticeDto dto = new NoticeDto();
