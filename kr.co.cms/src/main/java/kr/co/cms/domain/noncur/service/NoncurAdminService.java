@@ -38,6 +38,8 @@ public class NoncurAdminService {
     private final DeptInfoService deptInfoService;
     private final NcsCompletionInfoRepository completionInfoRepository;
     private final MileageService mileageService;
+    private final NoncurCodeService noncurCodeService; // 공통코드 서비스 추가
+
     
     public NoncurAdminService(NoncurApplicationRepository applicationRepository,
                              NoncurRepository programRepository,
@@ -46,7 +48,9 @@ public class NoncurAdminService {
                              EmplInfoRepository emplInfoRepository,
                              DeptInfoService deptInfoService,
                              NcsCompletionInfoRepository completionInfoRepository,
-                             MileageService mileageService) {
+                             MileageService mileageService,
+                             NoncurCodeService noncurCodeService) {
+
         this.applicationRepository = applicationRepository;
         this.programRepository = programRepository;
         this.applicationService = applicationService;
@@ -55,6 +59,8 @@ public class NoncurAdminService {
         this.deptInfoService = deptInfoService;
         this.completionInfoRepository = completionInfoRepository;
         this.mileageService = mileageService;
+        this.noncurCodeService = noncurCodeService;
+
     }
     
     /**
@@ -401,7 +407,8 @@ public class NoncurAdminService {
         dto.setRegDt(program.getRegDt());
         dto.setUpdDt(program.getUpdDt());
         dto.setPrgStatCd(program.getPrgStatCd());
-        dto.setPrgStatNm(NoncurConstants.getStatusName(program.getPrgStatCd()));
+        dto.setPrgStatNm(noncurCodeService.getProgramStatusName(program.getPrgStatCd()));
+
         
         // 부서명 조회
         try {
