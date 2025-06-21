@@ -32,6 +32,12 @@ useEffect(() => {
     }
   }, [id, getNoticeById]);
 
+  // 날짜 포맷 함수
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    return dateString.replace('T', ' ').split('.')[0];
+  };
+
   return (
     <>
       <Header />
@@ -59,15 +65,16 @@ useEffect(() => {
                   </tr>
                   <tr>
                     <th>작성일</th>
-                    <td>{notice.regDt}</td>
-                    <td>{notice.createdDate}</td>
+                    <td>{formatDate(notice.regDt)}</td>
+                    <td>{formatDate(notice.createdDate)}</td>
                   </tr>
                   <tr>
                     <td colSpan="2" dangerouslySetInnerHTML={{ __html: notice.content }} />
                   </tr>
+                 
                 </tbody>
               </table>
-               {canEdit && (
+              {canEdit && (
                 <button
                   className="btn btn-primary"
                   onClick={() => navigate(`/notices/${id}/edit`)}

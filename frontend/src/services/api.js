@@ -219,4 +219,5 @@ export const noticeApi = {
 		apiService.delete(`/notices/${id}`),
 };
 
+
 export default apiService;

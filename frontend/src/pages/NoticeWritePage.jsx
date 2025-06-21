@@ -16,7 +16,7 @@ const NoticeWritePage = () => {
 const { user } = useAuth();
   const handleSubmit = async (e) => {
     e.preventDefault();
-   const result = await createNotice({ title, content, regUserId: user?.userId });
+  const result = await createNotice({ title, content, regUserId: user?.userId });
     if (result.success) {
       navigate('/notices');
     } else {
