@@ -10,21 +10,26 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
 import kr.co.cms.domain.mileage.dto.MileageAwardRequestDTO;
 import kr.co.cms.domain.mileage.dto.ProgramMileageDTO;
 import kr.co.cms.domain.mileage.dto.StudentMileageDTO;
 import kr.co.cms.domain.mileage.service.MileageService;
+import kr.co.cms.global.util.TokenUtil;
 
 @RestController
 @RequestMapping("/api/mileage")
 public class MileageController {
     
     private final MileageService mileageService;
+    private final TokenUtil tokenUtil; // 추가
     
-    public MileageController(MileageService mileageService) {
+    public MileageController(MileageService mileageService, TokenUtil tokenUtil) {
         this.mileageService = mileageService;
+        this.tokenUtil = tokenUtil; // 추가
     }
     
     /**
@@ -32,7 +37,7 @@ public class MileageController {
      */
     @PostMapping("/program/{prgId}")
     public ResponseEntity<?> setProgramMileage(
-            @PathVariable String prgId,
+            @PathVariable("prgId") String prgId,
             @RequestParam BigDecimal mlgScore,
             @RequestParam String regUserId) {
         try {
@@ -64,7 +69,7 @@ public class MileageController {
      * 학생 마일리지 조회
      */
     @GetMapping("/student/{stdNo}")
-    public ResponseEntity<StudentMileageDTO> getStudentMileage(@PathVariable String stdNo) {
+    public ResponseEntity<StudentMileageDTO> getStudentMileage(@PathVariable("stdNo") String stdNo) {
         try {
             StudentMileageDTO mileage = mileageService.getStudentMileage(stdNo);
             return ResponseEntity.ok(mileage);
@@ -77,7 +82,7 @@ public class MileageController {
      * 프로그램 마일리지 조회
      */
     @GetMapping("/program/{prgId}")
-    public ResponseEntity<ProgramMileageDTO> getProgramMileage(@PathVariable String prgId) {
+    public ResponseEntity<ProgramMileageDTO> getProgramMileage(@PathVariable("prgId") String prgId) {
         try {
             ProgramMileageDTO mileage = mileageService.getProgramMileage(prgId);
             if (mileage == null) {
@@ -85,6 +90,21 @@ public class MileageController {
             }
             return ResponseEntity.ok(mileage);
         } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    @GetMapping("/my")
+    @ResponseBody
+    public ResponseEntity<StudentMileageDTO> getMyMileage(HttpServletRequest request) {
+        try {
+            // TokenUtil을 사용하여 학번 추출
+            String stdNo = tokenUtil.getIdentifierNoFromRequest(request);
+            
+            StudentMileageDTO mileage = mileageService.getStudentMileage(stdNo);
+            return ResponseEntity.ok(mileage);
+        } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
     }

@@ -31,11 +31,104 @@ const NoncurricularRegisterPage = () => {
     const [attachments, setAttachments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [departments, setDepartments] = useState([]);
+    const [attachFiles, setAttachFiles] = useState([]); // 첨부파일
+    const [thumbnailFiles, setThumbnailFiles] = useState([]); // 썸네일 파일
+    const [fileCategories, setFileCategories] = useState([]); // 파일 카테고리 목록
 
     useEffect(() => {
         fetchCompetencies();
         fetchDepartments();
+        fetchFileCategories(); // 파일 카테고리
     }, []);
+
+    // 파일 카테고리 조회
+    const fetchFileCategories = async () => {
+        try {
+            const response = await fetch('/api/common/codes?group=FILE_CATEGORY');
+            if (response.ok) {
+                const data = await response.json();
+                setFileCategories(data || []);
+            }
+        } catch (error) {
+            console.error('파일 카테고리 조회 실패:', error);
+        }
+    };
+
+    // 첨부파일 변경 핸들러
+    const handleAttachFileChange = (event) => {
+        const files = Array.from(event.target.files);
+        setAttachFiles(files);
+    };
+
+    // 썸네일 파일 변경 핸들러
+    const handleThumbnailFileChange = (event) => {
+        const files = Array.from(event.target.files);
+        setThumbnailFiles(files);
+    };
+
+    // 파일 크기 포맷팅
+    const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    // 파일 유효성 검사
+    const validateFiles = (files, type) => {
+        const maxSize = type === 'thumbnail' ? 10 * 1024 * 1024 : 50 * 1024 * 1024; // 썸네일 10MB, 첨부파일 50MB
+        const allowedExtensions = type === 'thumbnail' 
+            ? ['jpg', 'jpeg', 'png', 'gif', 'bmp']
+            : ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'hwp', 'zip', 'rar'];
+
+        for (let file of files) {
+            // 파일 크기 검사
+            if (file.size > maxSize) {
+                alert(`파일 크기가 제한을 초과했습니다: ${file.name} (최대: ${formatFileSize(maxSize)})`);
+                return false;
+            }
+
+            // 확장자 검사
+            const extension = file.name.split('.').pop().toLowerCase();
+            if (!allowedExtensions.includes(extension)) {
+                alert(`허용되지 않은 파일 형식입니다: ${file.name} (허용: ${allowedExtensions.join(', ')})`);
+                return false;
+            }
+        }
+        return true;
+    };
+
+    // 파일만 별도로 업로드하는 함수 (필요시)
+    const uploadFilesOnly = async (prgId, files, category) => {
+        const formData = new FormData();
+        
+        files.forEach(file => {
+            formData.append('files', file);
+        });
+        
+        formData.append('refType', 'NONCUR');
+        formData.append('refId', prgId);
+        formData.append('category', category);
+
+        try {
+            const response = await fetch('/api/files/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('파일 업로드 성공:', result);
+                return result;
+            } else {
+                throw new Error('파일 업로드 실패');
+            }
+        } catch (error) {
+            console.error('파일 업로드 오류:', error);
+            throw error;
+        }
+    };
 
     const fetchCompetencies = async () => {
         try {
@@ -50,14 +143,24 @@ const NoncurricularRegisterPage = () => {
     };
 
     const fetchDepartments = async () => {
-   try {
-        const response = await fetch('/api/noncur/departments');
-        if (response.ok) {
-            const departments = await response.json();
-            setDepartments(departments);
-        } else {
-            console.error('부서 목록 조회 실패');
-            // 실패 시 기본값 설정
+        try {
+            const response = await fetch('/api/noncur/departments');
+            if (response.ok) {
+                const departments = await response.json();
+                setDepartments(departments);
+            } else {
+                console.error('부서 목록 조회 실패');
+                // 실패 시 기본값 설정
+                setDepartments([
+                    { deptCd: 'S_BUSINESS', deptNm: '경영학과' },
+                    { deptCd: 'S_CHEM', deptNm: '토목공학과' },
+                    { deptCd: 'S_COMPUTER', deptNm: '컴퓨터공학과' },
+                    { deptCd: 'S_ELEC', deptNm: '전자공학과' }
+                ]);
+            }
+        } catch (error) {
+            console.error('부서 목록 조회 오류:', error);
+            // 오류 시 기본값 설정
             setDepartments([
                 { deptCd: 'S_BUSINESS', deptNm: '경영학과' },
                 { deptCd: 'S_CHEM', deptNm: '토목공학과' },
@@ -65,16 +168,6 @@ const NoncurricularRegisterPage = () => {
                 { deptCd: 'S_ELEC', deptNm: '전자공학과' }
             ]);
         }
-    } catch (error) {
-        console.error('부서 목록 조회 오류:', error);
-        // 오류 시 기본값 설정
-        setDepartments([
-                { deptCd: 'S_BUSINESS', deptNm: '경영학과' },
-                { deptCd: 'S_CHEM', deptNm: '토목공학과' },
-                { deptCd: 'S_COMPUTER', deptNm: '컴퓨터공학과' },
-                { deptCd: 'S_ELEC', deptNm: '전자공학과' }
-        ]);
-    }
     };
 
     const handleInputChange = (e) => {
@@ -146,75 +239,151 @@ const NoncurricularRegisterPage = () => {
         return 'PRG' + new Date().getTime().toString().slice(-10);
     };
 
+    // 현재 로그인한 사용자 ID 가져오기
+    const getCurrentUserId = async () => {
+        try {
+            const response = await fetch('/api/auth/me', {
+                method: 'GET',
+                credentials: 'include' // 쿠키 포함
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                return data.userId;
+            } else {
+                throw new Error('사용자 인증 실패');
+            }
+        } catch (error) {
+            console.error('사용자 ID 조회 실패:', error);
+            throw error;
+        }
+    };
+
+    // 통합된 handleSubmit 함수 (파일 첨부 선택적)
     const handleSubmit = async () => {
+        if (loading) return;
+
+        // 폼 유효성 검사
         if (!validateForm()) return;
 
-        setLoading(true);
-
         try {
+            setLoading(true);
+
+            // 현재 로그인한 사용자 ID 가져오기
+            const currentUserId = await getCurrentUserId();
+
+            // 파일 유효성 검사 (파일이 있는 경우에만)
+            if (attachFiles.length > 0 && !validateFiles(attachFiles, 'attach')) {
+                return;
+            }
+            if (thumbnailFiles.length > 0 && !validateFiles(thumbnailFiles, 'thumbnail')) {
+                return;
+            }
+
             const prgId = generateProgramId();
-            
-            // 1. 프로그램 기본 정보 등록
-            const programData = {
-                prgId,
-                ...formData,
-                prgStDt: formData.prgStDt ? formData.prgStDt.toISOString() : null,
-                prgEndDt: formData.prgEndDt ? formData.prgEndDt.toISOString() : null,
-                regUserId: 'ADMIN001' // 실제로는 로그인한 사용자 ID
-            };
 
-            const registerResponse = await fetch('/api/noncur/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(programData)
-            });
+            // 파일이 있는 경우 FormData 사용, 없는 경우 JSON 사용
+            const hasFiles = attachFiles.length > 0 || thumbnailFiles.length > 0;
 
-            if (!registerResponse.ok) {
-                throw new Error('프로그램 등록에 실패했습니다.');
-            }
+            if (hasFiles) {
+                // 파일이 있는 경우: FormData 사용
+                const formDataToSend = new FormData();
 
-            // 2. 마일리지 설정
-            if (formData.mlgScore > 0) {
-                const mileageResponse = await fetch(`/api/mileage/program/${prgId}?mlgScore=${formData.mlgScore}&regUserId=ADMIN001`, {
-                    method: 'POST'
+                // JSON 데이터 추가 (Blob으로 변환)
+                const programData = {
+                    prgId,
+                    ...formData,
+                    prgStDt: formData.prgStDt ? formData.prgStDt.toISOString() : null,
+                    prgEndDt: formData.prgEndDt ? formData.prgEndDt.toISOString() : null,
+                    regUserId: currentUserId // API에서 받아온 사용자 ID
+                };
+                
+                formDataToSend.append('program', new Blob([JSON.stringify(programData)], {
+                    type: 'application/json'
+                }));
+
+                // 첨부파일 추가
+                attachFiles.forEach(file => {
+                    formDataToSend.append('attachFiles', file);
                 });
 
-                if (!mileageResponse.ok) {
-                    console.warn('마일리지 설정에 실패했습니다.');
+                // 썸네일 파일 추가
+                thumbnailFiles.forEach(file => {
+                    formDataToSend.append('thumbnailFiles', file);
+                });
+
+                // API 호출 (파일 포함)
+                const response = await fetch('/api/noncur/register-with-files', {
+                    method: 'POST',
+                    body: formDataToSend,
+                    credentials: 'include' // 쿠키 포함
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('프로그램이 성공적으로 등록되었습니다!');
+                    console.log('등록된 프로그램 ID:', result.prgId);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || '등록에 실패했습니다.');
                 }
-            }
 
-            // 3. 핵심역량 매핑
-            if (formData.selectedCompetencies.length > 0) {
-                const competencyPromises = formData.selectedCompetencies.map(cciId =>
-                    fetch('/api/noncur/competency-mapping', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ prgId, cciId })
-                    })
-                );
+            } else {
+                // 파일이 없는 경우: JSON만 사용
+                const programData = {
+                    prgId,
+                    ...formData,
+                    prgStDt: formData.prgStDt ? formData.prgStDt.toISOString() : null,
+                    prgEndDt: formData.prgEndDt ? formData.prgEndDt.toISOString() : null,
+                    regUserId: currentUserId // API에서 받아온 사용자 ID
+                };
 
-                await Promise.all(competencyPromises);
-            }
-
-            // 4. 첨부파일 업로드 (구현 필요)
-            if (attachments.length > 0) {
-                const formDataObj = new FormData();
-                formDataObj.append('prgId', prgId);
-                attachments.forEach(file => {
-                    formDataObj.append('files', file);
+                // 1. 프로그램 기본 정보 등록
+                const registerResponse = await fetch('/api/noncur/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(programData),
+                    credentials: 'include' // 쿠키 포함
                 });
 
-                // await fetch('/api/noncur/attachments', { method: 'POST', body: formDataObj });
+                if (!registerResponse.ok) {
+                    throw new Error('프로그램 등록에 실패했습니다.');
+                }
+
+                // 2. 마일리지 설정
+                if (formData.mlgScore > 0) {
+                    const mileageResponse = await fetch(`/api/mileage/program/${prgId}?mlgScore=${formData.mlgScore}&regUserId=${currentUserId}`, {
+                        method: 'POST',
+                        credentials: 'include' // 쿠키 포함
+                    });
+
+                    if (!mileageResponse.ok) {
+                        console.warn('마일리지 설정에 실패했습니다.');
+                    }
+                }
+
+                // 3. 핵심역량 매핑
+                if (formData.selectedCompetencies.length > 0) {
+                    const competencyPromises = formData.selectedCompetencies.map(cciId =>
+                        fetch('/api/noncur/competency-mapping', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ prgId, cciId }),
+                            credentials: 'include' // 쿠키 포함
+                        })
+                    );
+
+                    await Promise.all(competencyPromises);
+                }
+
+                alert('프로그램이 성공적으로 등록되었습니다.');
             }
 
-            alert('프로그램이 성공적으로 등록되었습니다.');
-            
-            // 폼 초기화
+            // 성공 후 폼 초기화
             setFormData({
                 prgNm: '',
                 prgDesc: '',
@@ -234,9 +403,14 @@ const NoncurricularRegisterPage = () => {
                 selectedCompetencies: []
             });
             setAttachments([]);
+            setAttachFiles([]);
+            setThumbnailFiles([]);
+
+            // 성공 후 페이지 이동 (필요시)
+            // navigate('/noncur/list');
 
         } catch (error) {
-            console.error('등록 실패:', error);
+            console.error('등록 중 오류:', error);
             alert('프로그램 등록 중 오류가 발생했습니다: ' + error.message);
         } finally {
             setLoading(false);
@@ -485,19 +659,46 @@ const NoncurricularRegisterPage = () => {
                             </div>
                         </div>
 
-                        {/* 첨부파일 */}
+                       {/* 첨부파일 섹션 */}
                         <div className={styles.section}>
-                            <h4 className={styles.sectionTitle}>📎 첨부파일</h4>
-                            
+                            <h4 className={styles.sectionTitle}>📎 첨부파일 (선택사항)</h4>
                             <input
                                 type="file"
                                 multiple
-                                onChange={handleFileChange}
+                                onChange={handleAttachFileChange}
                                 className={styles.input}
+                                accept=".jpg,.jpeg,.png,.gif,.bmp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.hwp,.zip,.rar"
                             />
-                            {attachments.length > 0 && (
+                            {attachFiles.length > 0 && (
                                 <div className={styles.fileList}>
-                                    선택된 파일: {attachments.map(f => f.name).join(', ')}
+                                    <h5>선택된 첨부파일:</h5>
+                                    {attachFiles.map((file, index) => (
+                                        <div key={index} className={styles.fileItem}>
+                                            📄 {file.name} ({formatFileSize(file.size)})
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 썸네일 파일 섹션 */}
+                        <div className={styles.section}>
+                            <h4 className={styles.sectionTitle}>🖼️ 썸네일 이미지 (선택사항)</h4>
+                            <input
+                                type="file"
+                                multiple
+                                onChange={handleThumbnailFileChange}
+                                className={styles.input}
+                                accept="image/*"
+                            />
+                            {thumbnailFiles.length > 0 && (
+                                <div className={styles.fileList}>
+                                    <h5>선택된 썸네일:</h5>
+                                    {thumbnailFiles.map((file, index) => (
+                                        <div key={index} className={styles.fileItem}>
+                                            🖼️ {file.name} ({formatFileSize(file.size)})
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>

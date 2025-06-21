@@ -41,6 +41,7 @@ import CCASurveyPage from "./pages/CCA_SurveyPage.jsx";
 import CCAAnalysisPage from "./pages/CCA_AnalysisPage.jsx";
 import CCAResultPage from "./pages/CCA_ResultPage.jsx";
 import ChatModalRoute from "./pages/ChatModalRoute.jsx";
+import NoncurAdminPage from './pages/NoncurAdminPage';
 
 //공지사항 관련 페이지
 import NoticeListPage from "./pages/NoticeListPage.jsx";
@@ -92,9 +93,19 @@ function App() {
               path="/center-intro/location"
               element={<CenterIntroPage activeTab="location" />}
             />
+
+
+            {/* 비교과 프로그램*/}
+            {/* 비교과 페이지 */}
             <Route path="/noncur" element={<NoncurricularListPage />} />
             <Route path="/noncur/:prgId" element={<NoncurricularViewPage />} />
             <Route path="/noncur/register" element={<NoncurricularRegisterPage />} />
+            {/* 비교과 관리자 페이지 */}
+            <Route path="/admin/noncur" element={<NoncurAdminPage />} />
+            <Route path="/admin/noncur/program/:prgId" element={<NoncurAdminPage />} />
+
+
+
 
             {/* 심리상담 관련 페이지들 */}
             <Route
@@ -134,8 +145,7 @@ function App() {
 
             {/* 관리자 페이지들 */}
             <Route path="/admin/counseling" element={<CounselingListPage />} />
-            <Route
-              path="/admin/counseling/:id"
+            <Route path="/admin/counseling/:id"
               element={<CounselingDetailPage />}
             />
             <Route
@@ -151,6 +161,8 @@ function App() {
               element={<WeeklyCalendarPage />}
             />
           </Routes>
+
+          
         </div>
       </Router>
     </AuthProvider>

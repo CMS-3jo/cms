@@ -1,6 +1,7 @@
 package kr.co.cms.domain.noncur.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import kr.co.cms.domain.noncur.dto.NoncurSearchDTO;
@@ -10,8 +11,13 @@ import kr.co.cms.domain.noncur.dto.NoncurApplicationDTO;
 import kr.co.cms.domain.noncur.dto.NoncurRegisterDTO;
 import kr.co.cms.domain.noncur.service.NoncurService;
 import kr.co.cms.global.util.JwtUtil;
+import kr.co.cms.global.util.TokenUtil;
 import kr.co.cms.domain.noncur.service.NoncurApplicationService;
 import kr.co.cms.domain.noncur.service.NoncurRegisterService;
+import kr.co.cms.domain.dept.service.DeptInfoService;
+import kr.co.cms.domain.mileage.dto.StudentMileageDTO;
+import kr.co.cms.domain.mileage.service.MileageService;
+import kr.co.cms.domain.dept.dto.DeptInfoDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,34 +26,39 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.multipart.MultipartFile;
+import kr.co.cms.global.file.service.FileService; 
+import kr.co.cms.global.file.dto.FileInfoDTO; 
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 비교과 프로그램 관련 API 컨트롤러
+ */
 @RestController
 @RequestMapping("/api/noncur")
+@RequiredArgsConstructor
 public class NoncurController {
 
-    private final JwtUtil jwtUtil;
+    private final FileService fileService;
+
     private final NoncurService service;
     private final NoncurApplicationService applicationService;
     private final NoncurRegisterService registerService;
+    private final JwtUtil jwtUtil;
+    private final TokenUtil tokenUtil;
+    private final DeptInfoService deptInfoService;
+
     
-    public NoncurController(NoncurService service, 
-                           NoncurApplicationService applicationService,
-                           NoncurRegisterService registerService, JwtUtil jwtUtil) {
-        this.service = service;
-        this.applicationService = applicationService;
-        this.registerService = registerService;
-        this.jwtUtil = jwtUtil;
-    }
-    
-    //리스트
+    /**
+     * 비교과 프로그램 목록 조회 (검색/필터 포함)
+     */
     @GetMapping
     @ResponseBody  
     public ResponseEntity<Map<String, Object>> noncurList(@ModelAttribute NoncurSearchDTO searchDTO){
@@ -60,6 +71,9 @@ public class NoncurController {
         }
     }
     
+    /**
+     * 비교과 프로그램 상세 정보 조회
+     */
     @GetMapping("/{prgId}")
     @ResponseBody
     public ResponseEntity<NoncurDetailDTO> getNoncurDetail(@PathVariable("prgId") String prgId) {
@@ -75,6 +89,9 @@ public class NoncurController {
         }
     }
     
+    /**
+     * 모든 핵심역량 목록 조회
+     */
     @GetMapping("/competencies")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getAllCompetencies() {
@@ -86,32 +103,22 @@ public class NoncurController {
             return ResponseEntity.internalServerError().build();
         }
     }
-   
     
-    //부서목록 조회 api
+    /**
+     * 모든 부서 목록 조회 (기존 부서 서비스 활용)
+     */
     @GetMapping("/departments")
     @ResponseBody
-    public ResponseEntity<List<Map<String, String>>> getAllDepartments() {
+    public ResponseEntity<List<DeptInfoDto>> getAllDepartments() {
         try {
-            List<Map<String, String>> departments = service.getAllDepartments();
+            // 기존 DeptInfoService 활용
+            List<DeptInfoDto> departments = deptInfoService.getAll();
             return ResponseEntity.ok(departments);
         } catch (Exception e) {
             e.printStackTrace();
-            // 오류 발생 시 기본 부서 목록 반환
-            List<Map<String, String>> defaultDepts = Arrays.asList(
-                Map.of("deptCd", "DEPT001", "deptNm", "학생지원팀"),
-                Map.of("deptCd", "DEPT002", "deptNm", "교무팀"),
-                Map.of("deptCd", "DEPT003", "deptNm", "취업지원센터"),
-                Map.of("deptCd", "DEPT004", "deptNm", "SW교육센터")
-            );
-            return ResponseEntity.ok(defaultDepts);
+            return ResponseEntity.internalServerError().build();
         }
     }
-    
-    
-    // ===========================================
-    // 프로그램 등록/수정/삭제 API
-    // ===========================================
     
     /**
      * 프로그램 수정용 데이터 조회
@@ -131,7 +138,7 @@ public class NoncurController {
     }
     
     /**
-     * 프로그램 등록
+     * 새로운 비교과 프로그램 등록
      */
     @PostMapping("/register")
     @ResponseBody
@@ -149,8 +156,51 @@ public class NoncurController {
         }
     }
     
+    
     /**
-     * 프로그램 수정
+     * 비교과 프로그램 등록 (파일 포함) - 새로 추가
+     */
+    @PostMapping("/register-with-files")
+    @ResponseBody
+    public ResponseEntity<?> registerProgramWithFiles(
+            @RequestPart("program") NoncurRegisterDTO registerDTO,
+            @RequestPart(value = "attachFiles", required = false) List<MultipartFile> attachFiles,
+            @RequestPart(value = "thumbnailFiles", required = false) List<MultipartFile> thumbnailFiles,
+            HttpServletRequest request) {
+        
+        try {
+            String userId = tokenUtil.getUserIdFromRequest(request);
+            registerDTO.setRegUserId(userId);
+            
+            // 1. 프로그램 등록
+            String prgId = registerService.registerProgram(registerDTO);
+            
+            // 2. 첨부파일 업로드
+            if (attachFiles != null && !attachFiles.isEmpty()) {
+                fileService.uploadFiles(attachFiles, "NONCUR", prgId, "ATTACH", userId);
+            }
+            
+            // 3. 썸네일 업로드
+            if (thumbnailFiles != null && !thumbnailFiles.isEmpty()) {
+                fileService.uploadFiles(thumbnailFiles, "NONCUR", prgId, "THUMBNAIL", userId);
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                "message", "프로그램과 파일이 성공적으로 등록되었습니다.",
+                "prgId", prgId
+            ));
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "등록 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+    
+    
+    
+    /**
+     * 기존 비교과 프로그램 정보 수정
      */
     @PutMapping("/{prgId}")
     @ResponseBody
@@ -170,7 +220,7 @@ public class NoncurController {
     }
     
     /**
-     * 프로그램 삭제
+     * 비교과 프로그램 삭제
      */
     @DeleteMapping("/{prgId}")
     @ResponseBody
@@ -188,7 +238,7 @@ public class NoncurController {
     }
     
     /**
-     * 핵심역량 매핑 API (개별 관리용)
+     * 프로그램과 핵심역량 매핑 추가
      */
     @PostMapping("/competency-mapping")
     @ResponseBody
@@ -212,10 +262,9 @@ public class NoncurController {
         }
     }
     
-    // ===========================================
-    // 신청 관련 API 
-    // ===========================================
-    
+    /**
+     * 학생이 비교과 프로그램에 신청
+     */
     @PostMapping("/{prgId}/apply")
     @ResponseBody
     public ResponseEntity<?> applyProgram(
@@ -223,42 +272,20 @@ public class NoncurController {
             @Valid @RequestBody NoncurApplicationRequestDTO requestDTO,
             HttpServletRequest request) {
         try {
-            // JWT에서 학번 추출
-            String stdNo = extractStdNoFromToken(request);
-            if (stdNo == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "로그인이 필요합니다."));
-            }
+            // 토큰에서 학번 추출
+            String stdNo = tokenUtil.getIdentifierNoFromRequest(request);
             
-            // 서비스에 필요한 정보 전달
             NoncurApplicationDTO result = applicationService.applyProgram(prgId, stdNo, requestDTO);
             return ResponseEntity.ok(result);
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body(Map.of("error", "신청 처리 중 오류가 발생했습니다."));
         }
     }
     
-    private String extractStdNoFromToken(HttpServletRequest request) {
-        String accessToken = null;
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("accessToken".equals(cookie.getName())) {
-                    accessToken = cookie.getValue();
-                    break;
-                }
-            }
-        }
-        
-        if (accessToken != null && jwtUtil.isValidToken(accessToken)) {
-            return jwtUtil.getIdentifierNo(accessToken); // 학번 추출
-        }
-        return null;
-    }
-    
-    
-    
+    /**
+     * 학생이 비교과 프로그램 신청 취소
+     */
     @DeleteMapping("/{prgId}/apply/{stdNo}")
     @ResponseBody
     public ResponseEntity<?> cancelApplication(
@@ -275,6 +302,9 @@ public class NoncurController {
         }
     }
     
+    /**
+     * 특정 프로그램의 현재 신청자 수 조회
+     */
     @GetMapping("/{prgId}/applicant-count")
     @ResponseBody
     public ResponseEntity<Map<String, Long>> getApplicantCount(@PathVariable("prgId") String prgId) {
@@ -287,6 +317,9 @@ public class NoncurController {
         }
     }
     
+    /**
+     * 특정 학생의 모든 신청 내역 조회
+     */
     @GetMapping("/applications/{stdNo}")
     @ResponseBody
     public ResponseEntity<List<NoncurApplicationDTO>> getStudentApplications(@PathVariable("stdNo") String stdNo) {
@@ -298,4 +331,70 @@ public class NoncurController {
             return ResponseEntity.internalServerError().build();
         }
     }
+    
+
+    /**
+     * 학생의 이수완료 내역 조회
+     */
+    @GetMapping("/completion/student/{stdNo}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getStudentCompletions(@PathVariable("stdNo") String stdNo) {
+        try {
+            List<NoncurApplicationDTO> completedApplications = applicationService.getStudentCompletedApplications(stdNo);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("completedPrograms", completedApplications);
+            response.put("totalCompleted", completedApplications.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "이수완료 내역 조회 중 오류가 발생했습니다."));
+        }
+    }
+
+ // NoncurController에 추가할 메서드들 (마일리지 API 제거)
+
+    /**
+     * 내 신청 내역 조회 (토큰에서 자동으로 학번 추출)
+     */
+    @GetMapping("/applications/my")
+    @ResponseBody
+    public ResponseEntity<List<NoncurApplicationDTO>> getMyApplications(HttpServletRequest request) {
+        try {
+            // TokenUtil을 사용하여 학번 추출
+            String stdNo = tokenUtil.getIdentifierNoFromRequest(request);
+            
+            List<NoncurApplicationDTO> applications = applicationService.getStudentApplications(stdNo);
+            return ResponseEntity.ok(applications);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 내 이수완료 내역 조회 (토큰에서 자동으로 학번 추출)
+     */
+    @GetMapping("/completion/my")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getMyCompletions(HttpServletRequest request) {
+        try {
+            // TokenUtil을 사용하여 학번 추출
+            String stdNo = tokenUtil.getIdentifierNoFromRequest(request);
+            
+            List<NoncurApplicationDTO> completedApplications = applicationService.getStudentCompletedApplications(stdNo);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("completedPrograms", completedApplications);
+            response.put("totalCompleted", completedApplications.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "이수완료 내역 조회 중 오류가 발생했습니다."));
+        }
+    } 
 }

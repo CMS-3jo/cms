@@ -1,390 +1,175 @@
-//비교과 리스트 페이지
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
-import StudentNoncurMyPageModal from './StudentNoncurMyPageModal'; // 실제 경로로 수정
-
+import StudentNoncurMyPageModal from './StudentNoncurMyPageModal';
 import '/public/css/NoncurricularList.css';
 
 const NoncurricularListPage = () => {
-    const navigate = useNavigate(); // 이 줄 추가
+    const navigate = useNavigate();
     const [programs, setPrograms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [debouncedSearchParams, setDebouncedSearchParams] = useState(null);
-    const [showMyPageModal, setShowMyPageModal] = useState(false); // 마이페이지 모달 상태 추가
-    
-    // 페이지네이션 상태 추가
+    const [programMileages, setProgramMileages] = useState({});
+    const [showMyPageModal, setShowMyPageModal] = useState(false);
+
     const [pagination, setPagination] = useState({
-        totalElements: 0,
-        totalPages: 0,
-        currentPage: 0,
-        size: 0,
-        hasNext: false,
-        hasPrevious: false,
-        isFirst: true,
-        isLast: false
+        totalElements: 0, totalPages: 1, currentPage: 0, size: 8,
+        hasNext: false, hasPrevious: false, isFirst: true, isLast: true
     });
-    
+
     const [searchParams, setSearchParams] = useState({
-        keyword: '',
-        searchDeptCode: '',
-        searchStatusCode: '',
-        page: 0,
-        size: 8,
-        sortBy: 'regDt',
-        sortDir: 'desc'
+        keyword: '', searchDeptCode: '', searchStatusCode: '',
+        page: 0, size: 8, sortBy: 'regDt', sortDir: 'desc'
     });
 
-    const handleProgramClick = (prgId) => {
-             navigate(`/noncur/${prgId}`);
-}   ;
+    const [debouncedKeyword, setDebouncedKeyword] = useState(searchParams.keyword);
 
-    // 디바운싱: 검색어 변경 후 500ms 대기
+    //================================================================
+    // 핸들러 및 유틸리티 함수
+    //================================================================
+
+    const handleProgramClick = (prgId) => navigate(`/noncur/${prgId}`);
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 0 && newPage < pagination.totalPages) {
+            setSearchParams(prev => ({ ...prev, page: newPage }));
+        }
+    };
+
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setSearchParams(prev => ({ ...prev, [name]: value, page: 0 }));
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        return new Date(dateString).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '.').replace(/\s/g, '');
+    };
+
+    const calculateDDay = (endDate) => {
+        if (!endDate) return { text: '', class: '' };
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const end = new Date(endDate); end.setHours(0, 0, 0, 0);
+        if (today > end) return { text: '모집마감', class: 'dday-ended' };
+        const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+        if (diffDays === 0) return { text: 'D-DAY', class: 'dday-today' };
+        if (diffDays <= 7) return { text: `D-${diffDays}`, class: 'dday-urgent' };
+        return { text: `D-${diffDays}`, class: 'dday-normal' };
+    };
+
+    const getStatusInfo = (statusCode) => {
+        const statusMap = {
+            '01': { text: '모집중', class: 'status-recruiting' }, '02': { text: '마감임박', class: 'status-urgent' },
+            '03': { text: '모집완료', class: 'status-finished' }, '04': { text: '운영중', class: 'status-ongoing' },
+            '05': { text: '종료', class: 'status-ended' }
+        };
+        return statusMap[statusCode] || { text: '알수없음', class: 'status-ended' };
+    };
+
+    //================================================================
+    // 데이터 로딩 (Side Effects)
+    //================================================================
+
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearchParams(searchParams);
-        }, searchParams.keyword ? 500 : 0); // 키워드가 있을 때만 딜레이
-
+        const timer = setTimeout(() => setDebouncedKeyword(searchParams.keyword), 500);
         return () => clearTimeout(timer);
-    }, [searchParams]);
+    }, [searchParams.keyword]);
 
-    const fetchPrograms = useCallback(async () => {
-        if (!debouncedSearchParams) return; // 디바운싱된 파라미터가 없으면 실행 안함
-        
-        try {
+    useEffect(() => {
+        const fetchPrograms = async () => {
             setLoading(true);
+            setError(null);
+
+            const apiParams = { ...searchParams, keyword: debouncedKeyword };
             const queryParams = new URLSearchParams();
 
-            Object.entries(debouncedSearchParams).forEach(([key, value]) => {
+            Object.entries(apiParams).forEach(([key, value]) => {
                 if (value !== '' && value !== null && value !== undefined) {
                     queryParams.append(key, value);
                 }
             });
-            
-            const response = await fetch(`/api/noncur?${queryParams}`);
 
-            if (!response.ok) {
-                throw new Error('데이터를 불러오는데 실패했습니다.');
-            }
-            
-            const data = await response.json();
-            
-            // 디버깅: 백엔드 응답 확인
-            console.log('백엔드 응답:', data);
-            
-            // 백엔드 응답 구조에 맞게 수정
-            if (data.content && data.pagination) {
-                setPrograms(data.content);
-                console.log('페이지네이션 정보:', data.pagination);
-                setPagination({
-                    totalElements: data.pagination.totalElements,
-                    totalPages: data.pagination.totalPages,
-                    currentPage: data.pagination.page,
-                    size: data.pagination.size,
-                    hasNext: data.pagination.hasNext,
-                    hasPrevious: data.pagination.hasPrevious,
-                    isFirst: data.pagination.isFirst,
-                    isLast: data.pagination.isLast
-                });
-            } else if (Array.isArray(data)) {
-                // 이전 형태: 배열만 오는 경우 (페이지네이션 없음)
-                console.log('배열 형태 응답 감지 - 페이지네이션 정보 없음');
-                setPrograms(data);
-            } else {
-            
-                if (data.programs) {
-                    setPrograms(data.programs);
-                    setPagination({
-                        totalElements: data.totalElements || 0,
-                        totalPages: data.totalPages || 1,
-                        currentPage: data.currentPage || 0,
-                        size: data.size || 8,
-                        hasNext: data.hasNext || false,
-                        hasPrevious: data.hasPrevious || false,
-                        isFirst: data.isFirst !== false,
-                        isLast: data.isLast !== false
+            try {
+                const response = await fetch(`/api/noncur?${queryParams}`);
+                if (!response.ok) throw new Error('데이터를 불러오는데 실패했습니다.');
+
+                const data = await response.json();
+
+                // 프로그램 목록이 키 : programs
+                const programList = data.programs || [];
+                setPrograms(programList);
+
+                // 페이지네이션 정보 설정 (전체 data 객체를 pagination으로 사용)
+                setPagination(data);
+
+                if (programList.length > 0) {
+                    const mileagePromises = programList.map(async (p) => {
+                        try {
+                            const res = await fetch(`/api/mileage/program/${p.prgId}`);
+                            if (res.ok) {
+                                const mData = await res.json();
+                                return { prgId: p.prgId, mileage: mData.mlgScore || 0 };
+                            }
+                        } catch (e) { /* 마일리지 조회 실패는 무시 */ }
+                        return { prgId: p.prgId, mileage: 0 };
                     });
+                    const mileageResults = await Promise.all(mileagePromises);
+                    setProgramMileages(mileageResults.reduce((acc, cur) => ({ ...acc, [cur.prgId]: cur.mileage }), {}));
                 } else {
-                    console.log('알 수 없는 응답 구조:', data);
-                    setPrograms(data || []);
+                    setProgramMileages({});
                 }
+
+            } catch (err) {
+                setError(err.message);
+                console.error('프로그램 목록 조회 실패: ', err);
+            } finally {
+                setLoading(false);
             }
+        };
 
-        } catch (err) {
-            setError(err.message);
-            console.error('프로그램 목록 조회 실패: ', err);
-        } finally {
-            setLoading(false);
-        }
-    }, [debouncedSearchParams]);
-
-    useEffect(() => {
         fetchPrograms();
-    }, [fetchPrograms]);
+    }, [debouncedKeyword, searchParams]);
 
-    // 초기 로딩
-    useEffect(() => {
-        setDebouncedSearchParams(searchParams);
-    }, []); // 컴포넌트 마운트 시 한 번만
+    //================================================================
+    // 렌더링
+    //================================================================
 
-    // 페이지 변경 핸들러
-    const handlePageChange = (newPage) => {
-        if (newPage >= 0 && newPage < pagination.totalPages) {
-            setSearchParams(prev => ({
-                ...prev,
-                page: newPage
-            }));
-        }
-    };
-
-    // 날짜 포맷팅 함수
-    const formatDate = (dateString) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            weekday: 'short'
-        }).replace(/\./g, '.').replace(/\s/g, '');
-    };
-
-    // D-day 계산 함수
-    const calculateDDay = (endDate) => {
-        if (!endDate) return '';
-        const today = new Date();
-        const end = new Date(endDate);
-        const diffTime = end.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays < 0) return '종료';
-        if (diffDays === 0) return 'D-Day';
-        return `D-${diffDays}`;
-    };
-
-    // 상태 텍스트 변환 (백엔드 NoncurConstants와 동일)
-    const getStatusText = (statusCode) => {
-        if (!statusCode) return '알 수 없음';
-        
-        const statusMap = {
-            '01': '모집중',      // RECRUITING
-            '02': '마감임박',    // DEADLINE_SOON
-            '03': '모집완료',    // RECRUITMENT_CLOSED
-            '04': '운영중',      // IN_PROGRESS
-            '05': '종료'        // COMPLETED
-        };
-        return statusMap[statusCode] || '알 수 없음';
-    };
-
-    // 상태별 스타일 클래스
-    const getStatusClass = (statusCode) => {
-        const classMap = {
-            '01': 'status-recruiting',
-            '02': 'status-deadline',
-            '03': 'status-closed',
-            '04': 'status-running',
-            '05': 'status-ended'
-        };
-        return classMap[statusCode] || 'status-default';
-    };
-
-    // 필터 변경 핸들러 (검색어는 즉시 검색하지 않음)
-    const handleFilterChange = (e) => {
-        const { name, value } = e.target;
-        
-        if (name === 'keyword') {
-            // 검색어는 상태만 업데이트, 실제 검색은 Enter나 버튼으로
-            setSearchParams(prev => ({
-                ...prev,
-                [name]: value
-            }));
-        } else {
-            // 필터는 즉시 적용
-            setSearchParams(prev => ({
-                ...prev,
-                [name]: value,
-                page: 0 // 필터 변경시 첫 페이지로
-            }));
-        }
-    };
-
-    // 검색 실행 핸들러
-    const handleSearch = () => {
-        setSearchParams(prev => ({
-            ...prev,
-            page: 0 // 검색시 첫 페이지로
-        }));
-    };
-
-    // Enter 키 핸들러
-    const handleKeyPress = (e) => {
-        if (e.key === 'Enter') {
-            handleSearch();
-        }
-    };
-
-    // 공유 기능
-  const handleShare = (e, program) => { 
-    e.stopPropagation(); 
-
-        if (navigator.share) {
-            navigator.share({
-                title: program.prgNm,
-                text: program.prgDesc,
-                url: `${window.location.origin}/noncur/${program.prgId}`
-
-            });
-        } else {
-            // fallback: 클립보드에 복사
-            navigator.clipboard.writeText(window.location.href);
-            alert('링크가 클립보드에 복사되었습니다.');
-        }
-    };
-
-    // 페이지네이션 버튼 렌더링 함수
     const renderPaginationButtons = () => {
         const buttons = [];
         const { currentPage, totalPages } = pagination;
-        
-        // 이전 버튼
-        buttons.push(
-            <button 
-                key="prev"
-                className="pagination-btn" 
-                disabled={pagination.isFirst}
-                onClick={() => handlePageChange(currentPage - 1)}
-            >
-                이전
-            </button>
-        );
+        if (!totalPages) return null;
 
-        // 페이지 번호 버튼들
         const startPage = Math.max(0, currentPage - 2);
         const endPage = Math.min(totalPages - 1, currentPage + 2);
 
+        buttons.push(<button key="prev" className="btn btn-outline-primary btn-sm" disabled={pagination.isFirst} onClick={() => handlePageChange(currentPage - 1)}>이전</button>);
         for (let i = startPage; i <= endPage; i++) {
-            buttons.push(
-                <button
-                    key={i}
-                    className={`pagination-btn ${i === currentPage ? 'active' : ''}`}
-                    onClick={() => handlePageChange(i)}
-                >
-                    {i + 1}
-                </button>
-            );
+            buttons.push(<button key={i} className={`btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => handlePageChange(i)}>{i + 1}</button>);
         }
-
-        // 다음 버튼
-        buttons.push(
-            <button 
-                key="next"
-                className="pagination-btn" 
-                disabled={pagination.isLast}
-                onClick={() => handlePageChange(currentPage + 1)}
-            >
-                다음
-            </button>
-        );
-
+        buttons.push(<button key="next" className="btn btn-outline-primary btn-sm" disabled={pagination.isLast} onClick={() => handlePageChange(currentPage + 1)}>다음</button>);
         return buttons;
     };
-
-    if (loading) {
-        return (
-            <>
-                <Header />
-                <div className="container_layout">
-                    <Sidebar />
-                    <div className="noncur-list-page">
-                        <div className="loading">로딩 중...</div>
-                    </div>
-                </div>
-                <Footer />
-            </>
-        );
-    }
-
-    if (error) {
-        return (
-            <>
-                <Header />
-                <div className="container_layout">
-                    <Sidebar />
-                    <div className="noncur-list-page">
-                        <div className="error">오류: {error}</div>
-                    </div>
-                </div>
-                <Footer />
-            </>
-        );
-    }
 
     return (
         <>
             <Header />
             <div className="container_layout">
                 <Sidebar />
-                <div className="noncur-list-page">
-                    <h4>비교과 프로그램</h4>
-                                     {/* 마이페이지 버튼 */}
-                    <button
-                        onClick={() => setShowMyPageModal(true)}
-                        style={{
-                            backgroundColor: '#28a745',
-                            color: 'white',
-                            border: 'none',
-                            padding: '12px 20px',
-                            borderRadius: '6px',
-                            fontSize: '1rem',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            transition: 'all 0.3s',
-                            boxShadow: '0 2px 4px rgba(40,167,69,0.2)'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#218838';
-                            e.target.style.transform = 'translateY(-1px)';
-                            e.target.style.boxShadow = '0 4px 8px rgba(40,167,69,0.3)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = '#28a745';
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = '0 2px 4px rgba(40,167,69,0.2)';
-                        }}
-                    >
-                        🎓 내 비교과 활동
-                    </button>
-
-                    {/* 검색 및 필터 */}
-                    <div className="filter-section">
-                        <div className="search-wrapper">
-                            <input
-                                type="text"
-                                name="keyword"
-                                placeholder="프로그램 검색..."
-                                value={searchParams.keyword}
-                                onChange={handleFilterChange}
-                                onKeyPress={handleKeyPress}
-                                className="search-input"
-                            />
-                            <button 
-                                type="button" 
-                                onClick={handleSearch}
-                                className="search-btn"
-                            >
-                                검색
-                            </button>
-                        </div>
-                        <select 
-                            id='program_filter' 
+                <div className="page-container container-fluid">
+                    <div className="page-header">
+                        <h4 className="page-title">비교과 프로그램</h4>
+                        <button onClick={() => setShowMyPageModal(true)} className="my-page-button">
+                            <i className="bi bi-person-check-fill"></i>
+                            <span>내 비교과 활동</span>
+                        </button>
+                    </div>
+                    <div className="filter-bar">
+                        {/* 1. 상태 선택창을 가장 왼쪽으로 이동 */}
+                        <select
                             name="searchStatusCode"
-                            className='noncur-select'
+                            className="status-filter"
                             value={searchParams.searchStatusCode}
                             onChange={handleFilterChange}
                         >
@@ -395,87 +180,90 @@ const NoncurricularListPage = () => {
                             <option value="04">운영중</option>
                             <option value="05">종료</option>
                         </select>
-                    </div>
 
-                    {/* 검색 결과 수 표시 */}
+                        {/* 2. 검색창을 중간으로 이동 (내부 돋보기 아이콘 제거) */}
+                        <input
+                            type="text"
+                            name="keyword"
+                            placeholder="프로그램명으로 검색"
+                            value={searchParams.keyword}
+                            onChange={handleFilterChange}
+                            className="search-input"
+                        />
+
+                        {/* 3. 검색 버튼을 가장 오른쪽에 추가 */}
+                        <button className="search-button">
+                            <i className="bi bi-search"></i>
+                        </button>
+                    </div>
                     <div className="result-info">
-                        총 {pagination.totalElements}개의 프로그램이 있습니다. 
-                        ({pagination.currentPage + 1}/{pagination.totalPages} 페이지)
+                        {/* totalElements가 0 이상일 때만 렌더링 */}
+                        {typeof pagination.totalElements === 'number' &&
+                            <span>총 <strong>{pagination.totalElements}</strong>개의 프로그램</span>
+                        }
                     </div>
 
-                    <div className='noncur-list'>
-                        {programs.length === 0 ? (
-                            <div className="no-programs">등록된 프로그램이 없습니다.</div>
-                        ) : (
-                            programs.map((program) => (
-                                <div 
-                                        key={program.prgId} 
-                                        className='noncur-item clickable'
-                                        onClick={() => handleProgramClick(program.prgId)}
-                                        style={{ cursor: 'pointer' }}
-                                    >
-                                    <div className='topWrap'>
-                                        <img 
-                                            src="/images/default-program.jpg"
-                                            alt={program.prgNm} 
-                                            className='noncur-image'
-                                            onError={(e) => {
-                                                e.target.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDIwMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik05MCA2MEw3MCA4MEg5MEg5MEwxMTAgODBMOTAgNjBaIiBmaWxsPSIjQ0REMUQzIi8+Cjwvc3ZnPg==";
-                                            }}
-                                        />
-                                        <div className='dayWrap'>
-                                            <span className={`noncur-day ${getStatusClass(program.prgStatCd)}`}>
-                                                {calculateDDay(program.prgEndDt)}
-                                                <span className='noncur-point'>
-                                                    <span className="material-symbols-outlined">paid</span>
-                                                    100
+                    {loading ? (
+                        <div className="loading-container">
+                            <div className="spinner-border text-primary" role="status" />
+                        </div>
+                    ) : error ? (
+                        <div className="alert alert-danger text-center" role="alert">
+                            <h4 className="alert-heading">오류가 발생했습니다</h4>
+                            <p>{error}</p>
+                        </div>
+                    ) : programs.length === 0 ? (
+                        <div className="no-results">
+                            <i className="bi bi-emoji-frown"></i>
+                            <h5>결과 없음</h5>
+                            <p>해당 조건의 프로그램이 없습니다.</p>
+                        </div>
+                    ) : (
+                        <div className="program-grid">
+                            {programs.map((program) => {
+                                const statusInfo = getStatusInfo(program.prgStatCd);
+                                // 백엔드에서 dday를 내려주지만, 만약 없다면 프론트에서 계산하도록 fallback 처리
+                                const ddayInfo = program.dday !== undefined ?
+                                    (program.dday === 0 ? { text: 'D-DAY', class: 'dday-today' } : { text: `D-${program.dday}`, class: 'dday-urgent' }) :
+                                    calculateDDay(program.aplyEndDt);
+                                return (
+                                    <div key={program.prgId} className="program-card" onClick={() => handleProgramClick(program.prgId)}>
+                                        <div className="card-image-container">
+                                            <img src={program.thumbFileId || "/images/noncur_default.png"} alt={program.prgNm} className="card-image" onError={(e) => { e.target.src = "/images/default-program.jpg"; }} />
+                                            {ddayInfo.text && <span className={`dday-badge ${ddayInfo.class}`}>{ddayInfo.text}</span>}
+                                        </div>
+                                        <div className="card-body">
+                                            <div className="card-tags">
+                                                <span className={`status-badge ${statusInfo.class}`}>{statusInfo.text}</span>
+                                                <span className="mileage-badge">
+                                                    <i className="bi bi-gem"></i> {programMileages[program.prgId] || 0}
                                                 </span>
-                                            </span>
-                                            <button 
-                                                type='button' 
-                                                className='noncur-share'
-                                                onClick={(e) => handleShare(e, program)}
-                                            >
-                                                <span className="material-symbols-outlined">share</span>
-                                            </button>
+                                            </div>
+                                            <h6 className="card-title">{program.prgNm}</h6>
+                                            {/* deptName이 deptNm으로 올 수도 있으니 둘 다 확인 */}
+                                            <p className="card-dept">{program.deptName || program.deptNm || '운영부서 미지정'}</p>
+                                            <div className="card-footer">
+                                                <span><i className="bi bi-calendar-check"></i> {formatDate(program.prgStDt)} ~ {formatDate(program.prgEndDt)}</span>
+                                                <span><i className="bi bi-people"></i> {program.maxCnt || 'N'}명</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className='bottomWrap'>
-                                        <span className='noncur-title'>{program.prgNm}</span>
-                                        <span className='noncur-subtitle'>
-                                            {program.prgDesc?.substring(0, 50)}
-                                            {program.prgDesc?.length > 50 ? '...' : ''}
-                                        </span>
-                                        <span className='noncur-date'>
-                                            {formatDate(program.prgStDt)} ~ {formatDate(program.prgEndDt)}
-                                        </span>
-                                        <span className='noncur-status'>
-                                            상태: {getStatusText(program.prgStatCd)} | 모집인원: {program.maxCnt}명
-                                        </span>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                    
-                    {/* 동적 페이지네이션 */}
-                    {pagination.totalPages > 1 && (
-                        <div className='pageCircle'>
-                            {renderPaginationButtons()}
+                                );
+                            })}
                         </div>
                     )}
 
-                   {/* 마이페이지 모달 */}
-                    <StudentNoncurMyPageModal 
-                    isOpen={showMyPageModal}
-                    onClose={() => setShowMyPageModal(false)}
-                    /> 
+                    {pagination.totalPages > 1 && !loading && (
+                        <div className="pagination-container">
+                            <div className="btn-group" role="group">
+                                {renderPaginationButtons()}
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
-            </div>
-
-
-
             <Footer />
+            <StudentNoncurMyPageModal isOpen={showMyPageModal} onClose={() => setShowMyPageModal(false)} />
         </>
     );
 };

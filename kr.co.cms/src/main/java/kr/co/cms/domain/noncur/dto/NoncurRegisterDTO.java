@@ -1,5 +1,6 @@
 package kr.co.cms.domain.noncur.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Data;
@@ -44,4 +45,8 @@ public class NoncurRegisterDTO {
     // 관련 데이터
     private List<String> selectedCompetencies; // 선택된 핵심역량 ID들
     private String regUserId;
+    
+    //마일리지
+    @Min(value = 0, message = "마일리지는 0점 이상이어야 합니다.")
+    private BigDecimal mlgScore;
 }

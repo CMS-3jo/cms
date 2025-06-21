@@ -1,0 +1,197 @@
+* [33m5e20f6c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev_mino[m[33m)[m feat : 비교과 관리자 페이지 #24
+* [33mf3be980[m 커밋 메시지
+*   [33m3521873[m Merge branch 'dev_mino' of https://github.com/CMS-3jo/cms into dev_mino
+[32m|[m[33m\[m  
+[32m|[m *   [33m64f37ea[m Merge pull request #40 from CMS-3jo/main
+[32m|[m [34m|[m[35m\[m  
+[32m|[m [34m|[m *   [33mfd934d9[m Merge branch 'dev_mino' into main
+[32m|[m [34m|[m [36m|[m[34m\[m  
+[32m|[m [34m|[m [36m|[m[34m/[m  
+[32m|[m [34m|[m[34m/[m[36m|[m   
+[32m|[m [34m|[m *   [33md1c0458[m Merge pull request #39 from CMS-3jo/dev_minusb
+[32m|[m [34m|[m [1;32m|[m[1;33m\[m  
+[32m|[m [34m|[m [1;32m|[m * [33me296f21[m Feat : 상담 상세 조회 추가#18
+[32m|[m [34m|[m * [1;33m|[m [33m1a003ab[m Fix : 핵심역량 설문제출 버그 픽스 #29
+[32m|[m [34m|[m * [1;33m|[m [33m2d0e2c3[m Fix : 핵심역량 수정 수정 #29
+[32m|[m [34m|[m * [1;33m|[m [33mbc784d3[m Fix 핵심역량 수정기능 수정 #29
+[32m|[m [34m|[m * [1;33m|[m [33md37a749[m Merge pull request #37 from CMS-3jo/dev_minusb
+[32m|[m [34m|[m [1;34m|[m[1;33m\[m[1;33m|[m 
+[32m|[m [34m|[m [1;34m|[m * [33m461134b[m Feat : 상담 신청 리스트 조회 기능추가#18
+[32m|[m [34m|[m * [1;35m|[m [33m2287964[m Merge pull request #36 from CMS-3jo/dev_minusb
+[32m|[m [34m|[m [1;36m|[m[1;35m\[m[1;35m|[m 
+[32m|[m [34m|[m [1;36m|[m * [33me788668[m Feat : 상담 등록 기능 추가#18
+[32m|[m [34m|[m [1;36m|[m *   [33m0205809[m Merge branch 'main' of https://github.com/CMS-3jo/cms into dev_minusb
+[32m|[m [34m|[m [1;36m|[m [32m|[m[33m\[m  
+[32m|[m [34m|[m [1;36m|[m * [33m|[m [33mad88cce[m Chore : application.yml untrack#1
+[32m|[m [34m|[m [1;36m|[m * [33m|[m [33m7be4b28[m Feat : 상담 등록 api 추가#18
+[32m|[m [34m|[m * [33m|[m [33m|[m [33m22b36cc[m Fix : 핵심역량 리스트 수정 #31
+[32m|[m [34m|[m * [33m|[m [33m|[m   [33mbe907be[m Merge branch 'main' of https://github.com/CMS-3jo/cms.git into main
+[32m|[m [34m|[m [34m|[m[33m\[m [33m\[m [33m\[m  
+[32m|[m [34m|[m [34m|[m [33m|[m [33m|[m[33m/[m  
+[32m|[m [34m|[m [34m|[m [33m|[m[33m/[m[33m|[m   
+[32m|[m [34m|[m [34m|[m * [33m|[m   [33mdd41a22[m Merge pull request #34 from CMS-3jo/dev_koo
+[32m|[m [34m|[m [34m|[m [36m|[m[1;31m\[m [33m\[m  
+[32m|[m [34m|[m [34m|[m [36m|[m * [33m\[m   [33mc9ca32b[m Merge branch 'main' of https://github.com/CMS-3jo/cms.git into dev_koo
+[32m|[m [34m|[m [34m|[m [36m|[m [1;32m|[m[36m\[m [33m\[m  
+[32m|[m [34m|[m [34m|[m [36m|[m [1;32m|[m[36m/[m [33m/[m  
+[32m|[m [34m|[m [34m|[m [36m|[m[36m/[m[1;32m|[m [33m|[m   
+[32m|[m [34m|[m [34m|[m [36m|[m * [33m|[m [33mf88e3b8[m Feat : 마이페이지 사용자 정보 출력 #21
+[32m|[m [34m|[m [34m|[m [36m|[m * [33m|[m [33ma4b84f5[m Design : 마이페이지 수정 #21
+[32m|[m [34m|[m [34m|[m [36m|[m * [33m|[m [33m99ed04d[m Design : 마이페이지 수정 #21
+[32m|[m [34m|[m * [36m|[m [1;33m|[m [33m|[m [33mbea77a9[m Fix 핵심역량 리스트 출력 수정중 #31
+[32m|[m [34m|[m * [36m|[m [1;33m|[m [33m|[m [33mb583f64[m Fix : 학과 API 재업로드.. #31
+[32m|[m [34m|[m [36m|[m[36m/[m [1;33m/[m [33m/[m  
+* [34m|[m [36m/[m [1;33m/[m [33m/[m [33me748298[m TEST
+[34m|[m[34m/[m [36m/[m [1;33m/[m [33m/[m  
+* [36m|[m [1;33m|[m [33m|[m [33me601c66[m Design : 비교과 페이지 디자인 #24
+* [36m|[m [1;33m|[m [33m|[m [33m54b40ab[m Feat : 비교과 CRUD, 마일리지 #24 #38
+* [36m|[m [1;33m|[m [33m|[m [33m7e6792f[m Merge pull request #33 from CMS-3jo/main
+[1;34m|[m[36m\[m[36m|[m [1;33m|[m [33m|[m 
+[1;34m|[m * [1;33m|[m [33m|[m [33m09160af[m Merge pull request #32 from CMS-3jo/dev_koo
+[1;34m|[m [1;36m|[m[1;33m\[m[1;33m|[m [33m|[m 
+[1;34m|[m [1;36m|[m * [33m|[m   [33m24d2208[m Merge branch 'main' of https://github.com/CMS-3jo/cms.git into dev_koo
+[1;34m|[m [1;36m|[m [32m|[m[1;36m\[m [33m\[m  
+[1;34m|[m [1;36m|[m [32m|[m[1;36m/[m [33m/[m  
+[1;34m|[m [1;36m|[m[1;36m/[m[32m|[m [33m|[m   
+[1;34m|[m * [32m|[m [33m|[m [33m5f57edb[m Feat : 핵심역량 기본 API 연결 #29
+[1;34m|[m * [32m|[m [33m|[m [33ma9cfb96[m Delete : YML삭제 #1
+[1;34m|[m [33m|[m [32m|[m[33m/[m  
+[1;34m|[m [33m|[m[33m/[m[32m|[m   
+[1;34m|[m * [32m|[m   [33m9a18eb1[m Merge pull request #28 from CMS-3jo/dev_koo
+[1;34m|[m [34m|[m[35m\[m [32m\[m  
+[1;34m|[m [34m|[m [35m|[m * [33m1d800c7[m Fix : 주석 정리 #15
+[1;34m|[m [34m|[m [35m|[m * [33m9a0eb8b[m Fix : 일반로그인 토큰 모두 쿠키에 저장 #15
+[1;34m|[m [34m|[m [35m|[m[35m/[m  
+[1;34m|[m [34m|[m *   [33made79b9[m Merge branch 'main' of https://github.com/CMS-3jo/cms.git into dev_koo
+[1;34m|[m [34m|[m [36m|[m[34m\[m  
+[1;34m|[m [34m|[m [36m|[m[34m/[m  
+[1;34m|[m [34m|[m[34m/[m[36m|[m   
+[1;34m|[m * [36m|[m   [33m1d11003[m Merge pull request #27 from CMS-3jo/dev_mino
+[1;34m|[m [1;32m|[m[1;34m\[m [36m\[m  
+[1;34m|[m [1;32m|[m[1;34m/[m [36m/[m  
+[1;34m|[m[1;34m/[m[1;32m|[m [36m|[m   
+* [1;32m|[m [36m|[m [33mc32d049[m Update application.yml
+* [1;32m|[m [36m|[m [33ma157d65[m Feat : 비교과 리스트 출력 #24
+* [1;32m|[m [36m|[m [33mec4fffd[m Merge pull request #23 from CMS-3jo/main
+[1;34m|[m[1;32m\[m[1;32m|[m [36m|[m 
+[1;34m|[m * [36m|[m   [33m45f0b4e[m Merge pull request #22 from CMS-3jo/dev_koo
+[1;34m|[m [1;36m|[m[31m\[m [36m\[m  
+* [1;36m|[m [31m\[m [36m\[m   [33m05813ff[m Merge pull request #14 from CMS-3jo/main
+[32m|[m[33m\[m [1;36m\[m [31m\[m [36m\[m  
+* [33m|[m [1;36m|[m [31m|[m [36m|[m [33mfa3509c[m Update build.gradle
+* [33m|[m [1;36m|[m [31m|[m [36m|[m [33mdb6d309[m Test : 비교과 #1
+* [33m|[m [1;36m|[m [31m|[m [36m|[m   [33m58d7686[m Merge pull request #7 from CMS-3jo/main
+[34m|[m[35m\[m [33m\[m [1;36m\[m [31m\[m [36m\[m  
+[34m|[m [35m|[m [33m|[m [1;36m|[m [31m|[m * [33m1149044[m Feat : 소셜 로그인 구현 #15
+[34m|[m [35m|[m [33m|[m [1;36m|[m [31m|[m[31m/[m  
+[34m|[m [35m|[m [33m|[m [1;36m|[m *   [33mfd884e9[m Merge branch 'main' of https://github.com/CMS-3jo/cms.git into dev_koo
+[34m|[m [35m|[m [33m|[m [1;36m|[m [36m|[m[1;36m\[m  
+[34m|[m [35m|[m [33m|[m [1;36m|[m [36m|[m[1;36m/[m  
+[34m|[m [35m|[m [33m|[m [1;36m|[m[1;36m/[m[36m|[m   
+[34m|[m [35m|[m [33m|[m * [36m|[m   [33m66e14ce[m Merge pull request #20 from CMS-3jo/dev_minusb
+[34m|[m [35m|[m [33m|[m [1;32m|[m[1;33m\[m [36m\[m  
+[34m|[m [35m|[m [33m|[m [1;32m|[m * [36m|[m [33m656d658[m Feat : 상담 경로 수정 및 ckeditor 추가, 상담코드 api 구축#18
+[34m|[m [35m|[m [33m|[m [1;32m|[m [1;33m|[m * [33m91b9fc5[m Design : 마이페이지 수정 #21
+[34m|[m [35m|[m [33m|[m [1;32m|[m [1;33m|[m *   [33m7942215[m Merge branch 'main' of https://github.com/CMS-3jo/cms.git into dev_koo
+[34m|[m [35m|[m [33m|[m [1;32m|[m [1;33m|[m [1;34m|[m[1;32m\[m  
+[34m|[m [35m|[m [33m|[m [1;32m|[m [1;33m|[m[1;32m_[m[1;34m|[m[1;32m/[m  
+[34m|[m [35m|[m [33m|[m [1;32m|[m[1;32m/[m[1;33m|[m [1;34m|[m   
+[34m|[m [35m|[m [33m|[m * [1;33m|[m [1;34m|[m [33m3d65068[m Merge pull request #19 from CMS-3jo/dev_minusb
+[34m|[m [35m|[m [33m|[m [1;36m|[m[1;33m\[m[1;33m|[m [1;34m|[m 
+[34m|[m [35m|[m [33m|[m [1;36m|[m * [1;34m|[m [33mcae55da[m Feat : 상담 20% 구현#18
+[34m|[m [35m|[m [33m|[m [1;36m|[m [31m|[m *   [33m271a98c[m Merge branch 'main' of https://github.com/CMS-3jo/cms.git into dev_koo
+[34m|[m [35m|[m [33m|[m [1;36m|[m [31m|[m [32m|[m[1;36m\[m  
+[34m|[m [35m|[m [33m|[m [1;36m|[m [31m|[m[1;36m_[m[32m|[m[1;36m/[m  
+[34m|[m [35m|[m [33m|[m [1;36m|[m[1;36m/[m[31m|[m [32m|[m   
+[34m|[m [35m|[m [33m|[m * [31m|[m [32m|[m [33m128e921[m Merge pull request #17 from CMS-3jo/dev_koo
+[34m|[m [35m|[m [33m|[m [34m|[m[31m\[m[31m|[m [32m|[m 
+[34m|[m [35m|[m [33m|[m [34m|[m [31m|[m * [33m8cabacf[m Feat : 토큰에 학번, 이름 추가 #15
+[34m|[m [35m|[m [33m|[m [34m|[m [31m|[m[31m/[m  
+[34m|[m [35m|[m [33m|[m [34m|[m * [33md1eaaa0[m Fix : 리프레시토큰 쿠키에 저장 #15
+[34m|[m [35m|[m [33m|[m [34m|[m[34m/[m  
+[34m|[m [35m|[m [33m|[m * [33m1f1345c[m Chore : boot 버전 변경 #1
+[34m|[m [35m|[m [33m|[m * [33m4c1548b[m Merge pull request #16 from CMS-3jo/dev_koo
+[34m|[m [35m|[m [33m|[m[33m/[m[1;31m|[m 
+[34m|[m [35m|[m [33m|[m * [33mc9632e0[m Feat : 로그인 api 연동 #15
+[34m|[m [35m|[m [33m|[m * [33m2267204[m Feat : 로그인 #15
+[34m|[m [35m|[m [33m|[m[33m/[m  
+[34m|[m [35m|[m *   [33m120af45[m Merge pull request #13 from CMS-3jo/dev_koo
+[34m|[m [35m|[m [1;32m|[m[1;33m\[m  
+[34m|[m [35m|[m [1;32m|[m * [33m0e9850d[m Design : 로그인 퍼블리싱 완료 #1
+[34m|[m [35m|[m [1;32m|[m[1;32m/[m  
+[34m|[m [35m|[m *   [33m6b44d0b[m Design : 핵심역량 퍼블리싱 완료 #1
+[34m|[m [35m|[m [1;34m|[m[1;35m\[m  
+[34m|[m [35m|[m [1;34m|[m *   [33m96813ed[m Merge pull request #12 from CMS-3jo/dev_minusb
+[34m|[m [35m|[m [1;34m|[m [1;36m|[m[31m\[m  
+[34m|[m [35m|[m [1;34m|[m [1;36m|[m * [33m14bde07[m Feat : 실시간 채팅 스크롤 기능 추가#9
+[34m|[m [35m|[m [1;34m|[m * [31m|[m [33mc4219af[m Merge pull request #10 from CMS-3jo/dev_minusb
+[34m|[m [35m|[m [1;34m|[m [32m|[m[31m\[m[31m|[m 
+[34m|[m [35m|[m [1;34m|[m [32m|[m * [33m1046681[m Feat : 실시간 채팅 기능 일부 구현#9
+[34m|[m [35m|[m [1;34m|[m [32m|[m *   [33m4ae9ef0[m Merge branch 'main' of https://github.com/CMS-3jo/cms into dev_minusb
+[34m|[m [35m|[m [1;34m|[m [32m|[m [34m|[m[32m\[m  
+[34m|[m [35m|[m [1;34m|[m [32m|[m [34m|[m[32m/[m  
+[34m|[m [35m|[m [1;34m|[m [32m|[m[32m/[m[34m|[m   
+[34m|[m [35m|[m [1;34m|[m [32m|[m * [33m49efb08[m Chore: StompJs 추가#1
+[34m|[m [35m|[m [1;34m|[m [32m|[m * [33m982eb8f[m Chore: WebSocket 세팅#1
+[34m|[m [35m|[m [1;34m|[m [32m|[m * [33m51a2639[m Chore: WebSocket 의존성 추가#1
+[34m|[m [35m|[m * [32m|[m [35m|[m [33m7f4488b[m Design : 핵심영량 퍼블리싱 끝.. #1
+[34m|[m [35m|[m [32m|[m[32m/[m [35m/[m  
+[34m|[m [35m|[m * [35m/[m [33mcd106e9[m Merge pull request #8 from CMS-3jo/dev_minusb
+[34m|[m [35m|[m[35m/[m[35m|[m [35m|[m 
+[34m|[m [35m|[m [35m|[m[35m/[m  
+[34m|[m [35m|[m * [33m579cb21[m Design: 채팅방 UI 추가#4
+[34m|[m * [1;31m|[m [33m4c3790e[m Merge pull request #6 from CMS-3jo/dev_minusb
+[34m|[m [1;32m|[m[1;31m\[m[1;31m|[m 
+[34m|[m [1;32m|[m * [33mb46d0ac[m Chore: application.yml 추가#1
+[34m|[m [1;32m|[m * [33m316ce43[m Chore: MongoDB 의존성 추가#1
+[34m|[m [1;32m|[m[1;32m/[m  
+[34m|[m * [33m834828d[m Design : 비교과 등록, 뷰 완료 #1
+[34m|[m *   [33m8befc33[m Merge pull request #5 from CMS-3jo/dev_mino
+[34m|[m [1;34m|[m[34m\[m  
+[34m|[m [1;34m|[m[34m/[m  
+[34m|[m[34m/[m[1;34m|[m   
+* [1;34m|[m [33m8ed0dbb[m Merge branch 'main' into dev_mino
+[1;36m|[m[1;34m\[m[1;34m|[m 
+[1;36m|[m * [33m0d08c84[m Design : 비교과 리스트 animation 변경 #1
+[1;36m|[m * [33m2dddb34[m Design 비교과 리스트#1
+[1;36m|[m *   [33m350127b[m Fix 머지 컨플릭트 오류 수정
+[1;36m|[m [32m|[m[33m\[m  
+[1;36m|[m * [33m|[m [33m42edc40[m Update issue templates
+[1;36m|[m * [33m|[m   [33m329a6dc[m Merge pull request #3 from CMS-3jo/dev_koo
+[1;36m|[m [34m|[m[35m\[m [33m\[m  
+[1;36m|[m [34m|[m * [33m|[m [33m4db470e[m Remove : globalinit #1
+[1;36m|[m [34m|[m[34m/[m [33m/[m  
+[1;36m|[m * [33m|[m [33mca90b6e[m Remove : .settings directory
+[1;36m|[m * [33m|[m [33mbcf7485[m Remove : .project
+[1;36m|[m * [33m|[m [33m414d8fe[m Chore : .gitignore 수정
+[1;36m|[m * [33m|[m   [33m377b3b4[m Merge pull request #2 from CMS-3jo/dev_koo
+[1;36m|[m [36m|[m[1;31m\[m [33m\[m  
+[1;36m|[m [36m|[m * [33m\[m   [33m56bd930[m Chore : JPA 설정3 #1
+[1;36m|[m [36m|[m [1;32m|[m[36m\[m [33m\[m  
+[1;36m|[m [36m|[m [1;32m|[m[36m/[m [33m/[m  
+[1;36m|[m [36m|[m[36m/[m[1;32m|[m [33m|[m   
+[1;36m|[m * [1;32m|[m [33m|[m [33m77579bc[m Chore : JPA 설정 #1
+[1;36m|[m [1;33m|[m * [33m|[m [33m83a5c74[m Chore : JPA 설정2 #1
+[1;36m|[m [1;33m|[m * [33m|[m [33mca9eb26[m Chore : JPA 설정 #1
+[1;36m|[m [1;33m|[m  [33m/[m  
+* [1;33m|[m [33m/[m [33ma28f6fe[m [Design/#4] - React 변환
+[33m|[m [1;33m|[m[33m/[m  
+[33m|[m[33m/[m[1;33m|[m   
+* [1;33m|[m [33m6babfd2[m frontend - 상담
+[1;33m|[m[1;33m/[m  
+* [33m479bb78[m Chore : 기타 설정, API 테스트 #1
+* [33ma565835[m Chore 메타데이터 삭제
+* [33me4aacea[m Chore ignore파일 업데이트
+*   [33mc621595[m Merge branch 'main' of https://github.com/CMS-3jo/cms
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m62b9e70[m Delete settings.gradle
+[1;34m|[m * [33m8c8bddc[m Delete gradlew.bat
+[1;34m|[m * [33m4bb917f[m Delete gradlew
+[1;34m|[m * [33m0010d25[m Delete build.gradle
+[1;34m|[m * [33md87cd22[m Delete .gitignore
+[1;34m|[m * [33m1662e63[m Delete .gitattributes
+[1;34m|[m * [33m6c08dce[m Delete src directory
+[1;34m|[m * [33m3ae5c66[m Delete gradle/wrapper directory
+[1;34m|[m * [33m9d9e862[m Chore : STS 초기 세팅 업로드 #1
+[1;34m|[m * [33m768560d[m Create test
+* [33meade465[m Chore : fe, be 초기 세팅 #1
