@@ -1,12 +1,15 @@
 // src/components/layout/Header.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth'
+import { useUserProfile } from '../../hooks/useUserProfile';
 
 const Header = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { isLoggedIn, logout, loading } = useAuth();
+  const profile = useUserProfile();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleMobileMenu = () => {
     setShowMobileMenu(!showMobileMenu);
@@ -20,13 +23,31 @@ const Header = () => {
     navigate('/');
   };
 
-  const mobileMenuItems = [
+   let mobileMenuItems = [
     { label: '월간', path: '/monthly' },
     { label: '주간', path: '/weekly' },
     { label: '상담 신청 리스트', path: '/counseling/applications' },
     { label: '상담 일지 리스트', path: '/counseling/records' },
     { label: '공지사항', path: '/notices' }
   ];
+
+  const isCcaRoute = location.pathname.startsWith('/cca');
+
+  if (isCcaRoute) {
+    const deptCd = profile?.deptCode;
+    if (deptCd && deptCd.startsWith('S_')) {
+      mobileMenuItems = [
+        { label: '설문 리스트 보기', path: '/cca/list' },
+        { label: '설문 결과 보기', path: '/cca/result' }
+      ];
+    } else if (deptCd) {
+      mobileMenuItems = [
+         { label: '설문 리스트 보기', path: '/cca/list' },
+        { label: '핵심역량 등록', path: '/cca/register' },
+        { label: '핵심역량 분석', path: '/cca/analysis' }
+      ];
+    }
+  }
 
   return (
     <header>

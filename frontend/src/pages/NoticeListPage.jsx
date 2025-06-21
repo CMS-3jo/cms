@@ -4,10 +4,14 @@ import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import { useNotices } from '../hooks/useNotices';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 const NoticeListPage = () => {
   const { notices, fetchNotices, loading } = useNotices();
   const navigate = useNavigate();
+ const profile = useUserProfile();
+
+  const canWrite = profile?.deptCode && !profile.deptCode.startsWith('S_');
 
   useEffect(() => {
     fetchNotices();
@@ -28,9 +32,7 @@ const NoticeListPage = () => {
         <Sidebar />
         <main style={{ flex: 1, padding: '20px' }}>
           <h3 style={{ marginBottom: '20px' }}>공지사항</h3>
-          <button className="btn btn-primary" onClick={handleCreate} style={{ marginBottom: '10px' }}>
-            글쓰기
-          </button>
+  
           {loading ? (
             <p>로딩 중...</p>
           ) : (
@@ -58,6 +60,15 @@ const NoticeListPage = () => {
             </table>
           )}
         </main>
+               {canWrite && (
+            <button
+              className="btn btn-primary"
+              onClick={handleCreate}
+              style={{ marginBottom: '10px' }}
+            >
+              글쓰기
+            </button>
+          )}
       </div>
       <Footer />
     </>

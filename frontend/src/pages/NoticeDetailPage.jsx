@@ -1,15 +1,20 @@
-import React, { useEffect,useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import { useNotices } from '../hooks/useNotices';
+import { useUserProfile } from '../hooks/useUserProfile';
+
 
 const NoticeDetailPage = () => {
   const { id } = useParams();
  const { fetchNotices, getNoticeById, notices, loading } = useNotices();
   const navigate = useNavigate();
-   const [notice, setNotice] = useState(null);
+  const [notice, setNotice] = useState(null);
+  const profile = useUserProfile();
+  const canEdit = profile?.deptCode && !profile.deptCode.startsWith('S_');
+
 
   useEffect(() => {
     if (notices.length === 0) {
@@ -62,13 +67,15 @@ useEffect(() => {
                   </tr>
                 </tbody>
               </table>
-              <button
-                className="btn btn-primary"
-                onClick={() => navigate(`/notices/${id}/edit`)}
-                style={{ marginRight: '10px' }}
-              >
-                수정
-              </button>
+               {canEdit && (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => navigate(`/notices/${id}/edit`)}
+                  style={{ marginRight: '10px' }}
+                >
+                  수정
+                </button>
+              )}
               <button className="btn btn-secondary" onClick={() => navigate('/notices')}>
                 목록
               </button>

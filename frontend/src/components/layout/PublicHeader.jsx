@@ -60,6 +60,16 @@ const PublicHeader = () => {
                 자료실
               </a>
             </li>
+                        <li className="nav-item">
+              <a className="nav-link" href="/notices">
+                공지사항
+              </a>
+            </li>
+                        <li className="nav-item">
+              <a className="nav-link" href="/cca/list">
+                핵심역량
+              </a>
+            </li>
           </ul>
         </nav>
 
