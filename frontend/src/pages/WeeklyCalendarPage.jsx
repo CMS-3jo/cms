@@ -7,11 +7,14 @@ import Footer from '../components/layout/Footer';
 import WeeklyCalendarComponent from '../components/calendar/WeeklyCalendarComponent';
 import CalendarEventModal from '../components/calendar/CalendarEventModal';
 import { useWeeklyCalendar } from '../hooks/useWeeklyCalendar';
+import { useAuth } from '../hooks/useAuth';
 
 const WeeklyCalendarPage = () => {
   const navigate = useNavigate();
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const { user } = useAuth();
+  const counselorId = user?.emplNo;
   
   const {
     currentDate,
@@ -20,7 +23,8 @@ const WeeklyCalendarPage = () => {
     loading,
     error,
     moveWeek,
-    updateEvent
+    updateEvent,
+    weekInfo
   } = useWeeklyCalendar();
 
   const handleEventClick = (appointment) => {
@@ -46,14 +50,14 @@ const WeeklyCalendarPage = () => {
 
   const handleViewSwitch = (viewType) => {
     if (viewType === 'monthly') {
-      navigate('/counseling/monthly');
+      navigate('/admin/calendar/monthly');
     }
-    // weekly는 현재 페이지이므로 아무것도 하지 않음
   };
 
   if (error) {
     return <div>오류가 발생했습니다: {error.message}</div>;
   }
+
 
   return (
     <>
@@ -71,6 +75,8 @@ const WeeklyCalendarPage = () => {
             onEventClick={handleEventClick}
             onMoveWeek={moveWeek}
             onViewSwitch={handleViewSwitch}
+            counselorId={counselorId}
+            weekInfo={weekInfo}
           />
         </div>
       </div>

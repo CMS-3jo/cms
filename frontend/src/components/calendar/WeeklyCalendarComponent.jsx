@@ -8,49 +8,54 @@ const WeeklyCalendarComponent = ({
   loading, 
   onEventClick, 
   onMoveWeek, 
-  onViewSwitch 
+  onViewSwitch,
+  weekInfo // 추가된 prop
 }) => {
   
-  const getFirstDayOfWeek = (date, weekOffset) => {
-    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-    const dayOfWeek = firstDayOfMonth.getDay();
-    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const firstMonday = new Date(firstDayOfMonth);
-    firstMonday.setDate(firstDayOfMonth.getDate() + diff);
-
-    const firstDayOfWeek = new Date(firstMonday.setDate(firstMonday.getDate() + (weekOffset * 7)));
-    const utcOffset = firstDayOfWeek.getTimezoneOffset() * 60000;
-    return new Date(firstDayOfWeek.getTime() + utcOffset);
+  // 주의 시작일을 계산하는 함수 (useWeeklyCalendar와 동일한 로직)
+  const getWeekStart = (date) => {
+    const start = new Date(date);
+    start.setDate(date.getDate() - date.getDay()); // 해당 주의 일요일
+    start.setHours(0, 0, 0, 0);
+    return start;
   };
 
-  const getWeekNumber = (date) => {
-    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-    const daysFromStart = Math.floor((date - firstDayOfMonth) / (24 * 60 * 60 * 1000));
-    return Math.ceil((daysFromStart + firstDayOfMonth.getDay() + 1) / 7);
+  // 주간 제목 생성
+  const getWeekTitle = () => {
+    const weekStart = getWeekStart(currentDate);
+    const month = weekStart.getMonth() + 1;
+    const startDate = weekStart.getDate();
+    const endDate = new Date(weekStart);
+    endDate.setDate(weekStart.getDate() + 6);
+    
+    // 같은 달인지 확인
+    const isSameMonth = weekStart.getMonth() === endDate.getMonth();
+    
+    if (isSameMonth) {
+      return `${month}월 ${Math.ceil(startDate / 7)}째 주`;
+    } else {
+      return `${month}월 ${Math.ceil(startDate / 7)}째 주`;
+    }
   };
 
   const renderWeeklyCalendar = () => {
-    const firstDayOfWeek = getFirstDayOfWeek(currentDate, currentWeek);
+    const weekStart = getWeekStart(currentDate);
     const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
     
-    // 헤더 생성
+    // 헤더 생성 (월-금만)
     const dayHeaders = ['시간'];
     const dateArray = [];
     
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(firstDayOfWeek);
-      date.setDate(date.getDate() + i);
-      const dayOfWeek = date.getDay();
-      
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        continue; // 토요일과 일요일은 제외
-      }
+    // 월요일부터 금요일까지만 표시 (일요일=0, 월요일=1, ..., 금요일=5)
+    for (let i = 1; i <= 5; i++) {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + i);
       
       const month = date.getMonth() + 1;
       const day = date.getDate();
       const dateStr = date.toISOString().split('T')[0];
       
-      dayHeaders.push(`${month}/${day}(${daysOfWeek[dayOfWeek]})`);
+      dayHeaders.push(`${month}/${day}(${daysOfWeek[i]})`);
       dateArray.push(dateStr);
     }
 
@@ -75,8 +80,8 @@ const WeeklyCalendarComponent = ({
               onClick={() => onEventClick(appointment)}
             >
               <div className="student_info">
-                <span>{appointment.name}</span>
-                <span>{appointment.studentNo}</span>
+                <span>{appointment.studentName || appointment.name}</span>
+                <span>{appointment.studentId || appointment.studentNo}</span>
               </div>
             </td>
           );
@@ -101,13 +106,6 @@ const WeeklyCalendarComponent = ({
     }
 
     return { dayHeaders, rows };
-  };
-
-  const getWeekTitle = () => {
-    const firstDayOfWeek = getFirstDayOfWeek(currentDate, currentWeek);
-    const monthName = firstDayOfWeek.toLocaleString('default', { month: 'long' });
-    const weekNumber = getWeekNumber(firstDayOfWeek);
-    return `${monthName} ${weekNumber}째 주`;
   };
 
   if (loading) {

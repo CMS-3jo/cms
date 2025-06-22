@@ -45,9 +45,8 @@ const MonthlyCalendarPage = () => {
 
   const handleViewSwitch = (viewType) => {
     if (viewType === 'weekly') {
-      navigate('/counseling/weekly');
+      navigate('/admin/calendar/weekly');
     }
-    // monthly는 현재 페이지이므로 아무것도 하지 않음
   };
 
   if (error) {
