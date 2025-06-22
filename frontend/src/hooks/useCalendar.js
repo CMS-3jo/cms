@@ -1,106 +1,58 @@
-// src/hooks/useCalendar.js
+import { calendarApi } from '../services/api';
+import { useAuth } from './useAuth'; // 로그인 상담사 ID 얻기
 import { useState, useCallback, useEffect } from 'react';
-// import { calendarApi } from '../services/api';
 
 export const useCalendar = () => {
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 5, 1)); // 2025년 6월
-  const [calendarData, setCalendarData] = useState(null);
+  const { user } = useAuth(); // 로그인한 상담사 정보
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [calendarData, setCalendarData] = useState({ events: [] });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // 임시 목 데이터 (원본과 동일하게 모든 날짜에 이벤트 추가)
-  const mockCalendarData = {
-    events: Array.from({ length: 30 }, (_, i) => ({
-      id: i + 1,
-      date: `2025-06-${String(i + 1).padStart(2, '0')}`,
-      time: '10:00',
-      studentName: '홍길동',
-      studentId: '2306081223',
-      department: '컴퓨터과학과',
-      phone: '01012345678',
-      category: '심리상담',
-      method: '대면',
-      counselingId: i + 1
-    }))
-  };
-
   const fetchCalendarData = useCallback(async (date) => {
+    if (!user?.identifierNo) return;
     try {
       setLoading(true);
       setError(null);
 
-      // 임시로 1초 지연 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setCalendarData(mockCalendarData);
+	  const year = date.getFullYear();
+	  const month = date.getMonth();
 
-      // 실제 API 호출 코드 (주석 처리)
-      /*
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      
-      const response = await calendarApi.getCalendarData(year, month);
-      
-      if (response.success) {
-        setCalendarData(response.data);
-      } else {
-        setError(new Error(response.message || '캘린더 데이터를 불러오는데 실패했습니다.'));
-      }
-      */
+	  const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+	  const lastDay = new Date(year, month + 1, 0).getDate(); // 30, 31 등 구해짐
+	  const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+      const data = await calendarApi.getCalendarEvents(user.identifierNo, startDate, endDate);
+
+      // 데이터 가공 (LocalDateTime → date + time 분리)
+      const events = data.map(item => {
+        const dt = new Date(item.cnslDt);
+        return {
+			date: dt.toISOString().split('T')[0],
+		    time: dt.toTimeString().slice(0, 5),
+		    studentName: item.studentName ?? item.studentNo ?? '(이름없음)',
+		    assignedCounselorId: item.counselorId,
+		    counselingId: item.cnslAplyId
+        };
+      });
+
+      setCalendarData({ events });
+	  console.log('[Calendar Events]', events);
     } catch (err) {
       setError(err);
       console.error('Fetch calendar data error:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
-
+  }, [user]);
   const changeMonth = useCallback((newDate) => {
     setCurrentDate(newDate);
     fetchCalendarData(newDate);
   }, [fetchCalendarData]);
 
-  const updateEvent = useCallback(async (eventId, eventData) => {
-    try {
-      setLoading(true);
-      
-      // 임시로 목 데이터 업데이트
-      setCalendarData(prev => ({
-        ...prev,
-        events: prev.events.map(event => 
-          event.id === eventId ? { ...event, ...eventData } : event
-        )
-      }));
-      
-      console.log('Updated event:', { eventId, eventData });
-      
-      return { success: true };
-
-      // 실제 API 호출 코드 (주석 처리)
-      /*
-      const response = await calendarApi.updateEvent(eventId, eventData);
-      
-      if (response.success) {
-        // 캘린더 데이터 다시 불러오기
-        await fetchCalendarData(currentDate);
-        return { success: true };
-      } else {
-        setError(new Error(response.message || '일정 수정에 실패했습니다.'));
-        return { success: false, error: response.message };
-      }
-      */
-    } catch (err) {
-      setError(err);
-      return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // 초기 데이터 로드
   useEffect(() => {
     fetchCalendarData(currentDate);
-  }, []);
+  }, [fetchCalendarData, currentDate]);
 
   return {
     currentDate,
@@ -108,7 +60,6 @@ export const useCalendar = () => {
     loading,
     error,
     changeMonth,
-    updateEvent,
     fetchCalendarData
   };
 };
