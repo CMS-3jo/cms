@@ -14,9 +14,12 @@ const NoncurricularListPage = () => {
     const [programMileages, setProgramMileages] = useState({});
     const [showMyPageModal, setShowMyPageModal] = useState(false);
     const [programThumbnails, setProgramThumbnails] = useState({});
+
+    // ⭐ 1. 로그인 상태 저장을 위한 state 추가
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    
+    // userRole state는 원래 코드에 있었으므로 유지합니다.
     const [userRole, setUserRole] = useState(null);
-
-
 
     const [pagination, setPagination] = useState({
         totalElements: 0, totalPages: 1, currentPage: 0, size: 8,
@@ -31,7 +34,7 @@ const NoncurricularListPage = () => {
     const [debouncedKeyword, setDebouncedKeyword] = useState(searchParams.keyword);
 
     //================================================================
-    // 핸들러 및 유틸리티 함수
+    // 핸들러 및 유틸리티 함수 (사용자 코드 원본 유지)
     //================================================================
 
     const handleProgramClick = (prgId) => navigate(`/noncur/${prgId}`);
@@ -53,49 +56,40 @@ const NoncurricularListPage = () => {
     };
 
     /**
-     *  D-Day 계산 함수
+     * D-Day 계산 함수 (원본 코드 그대로 유지)
      */
     const calculateDDay = (program) => {
-    // program 객체가 통째로 들어올 때와 startDate만 들어올 때 모두 처리
-    let dDay, prgStatCd, startDate;
-    
-    if (typeof program === 'object' && program.dDay !== undefined) {
-        // 백엔드에서 dDay를 계산해서 보내는 경우
-        dDay = program.dDay;
-        prgStatCd = program.prgStatCd;
-    } else {
-        // 날짜만 전달되는 경우 (기존 로직) - 시작일 기준으로 변경
-        startDate = program;
-        if (!startDate) return { text: '', class: '' };
+        let dDay, prgStatCd, startDate;
         
-        const today = new Date(); 
-        today.setHours(0, 0, 0, 0);
-        const start = new Date(startDate); 
-        start.setHours(0, 0, 0, 0);
+        if (typeof program === 'object' && program.dDay !== undefined) {
+            dDay = program.dDay;
+            prgStatCd = program.prgStatCd;
+        } else {
+            startDate = program;
+            if (!startDate) return { text: '', class: '' };
+            
+            const today = new Date(); 
+            today.setHours(0, 0, 0, 0);
+            const start = new Date(startDate); 
+            start.setHours(0, 0, 0, 0);
+            
+            if (today >= start) return { text: '모집마감', class: 'dday-ended' };
+            
+            const diffDays = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
+            dDay = diffDays;
+        }
         
-        // 프로그램이 이미 시작했거나 지났으면 모집마감
-        if (today >= start) return { text: '모집마감', class: 'dday-ended' };
+        if (dDay === -999) return { text: '종료', class: 'dday-ended' };
+        if (dDay === -888) return { text: '운영중', class: 'dday-progress' };
+        if (dDay === -777) return { text: '모집완료', class: 'dday-closed' };
         
-        const diffDays = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
-        dDay = diffDays;
-    }
-    
-    // 백엔드에서 특수값으로 전달되는 경우 처리
-    if (dDay === -999) return { text: '종료', class: 'dday-ended' };
-    if (dDay === -888) return { text: '운영중', class: 'dday-progress' };
-    if (dDay === -777) return { text: '모집완료', class: 'dday-closed' };
-    
-    // 일반적인 D-Day 계산 (프로그램 시작일까지)
-    if (dDay < 0) return { text: '모집마감', class: 'dday-ended' };
-    if (dDay === 0) return { text: 'D-DAY', class: 'dday-today' };
-    if (dDay <= 3) return { text: `D-${dDay}`, class: 'dday-urgent' };
-    if (dDay <= 7) return { text: `D-${dDay}`, class: 'dday-soon' };
-    return { text: `D-${dDay}`, class: 'dday-normal' };
-};
+        if (dDay < 0) return { text: '모집마감', class: 'dday-ended' };
+        if (dDay === 0) return { text: 'D-DAY', class: 'dday-today' };
+        if (dDay <= 3) return { text: `D-${dDay}`, class: 'dday-urgent' };
+        if (dDay <= 7) return { text: `D-${dDay}`, class: 'dday-soon' };
+        return { text: `D-${dDay}`, class: 'dday-normal' };
+    };
 
-    /**
-     * 상태 정보 조회 (공통코드 기반)
-     */
     const getStatusInfo = (statusCode) => {
         const statusMap = {
             '01': { text: '모집중', class: 'status-recruiting' },
@@ -107,15 +101,13 @@ const NoncurricularListPage = () => {
         return statusMap[statusCode] || { text: '알수없음', class: 'status-ended' };
     };
 
-    
     const getThumbnailUrl = (prgId) => {
-    const thumbnail = programThumbnails[prgId];
-    if (thumbnail) {
-        return `/api/files/${thumbnail.fileId}/download`;
-    }
-    return "/images/noncur_default.png";
-};
-
+        const thumbnail = programThumbnails[prgId];
+        if (thumbnail) {
+            return `/api/files/${thumbnail.fileId}/download`;
+        }
+        return "/images/noncur_default.png";
+    };
 
     //================================================================
     // 데이터 로딩 (Side Effects)
@@ -126,6 +118,22 @@ const NoncurricularListPage = () => {
         return () => clearTimeout(timer);
     }, [searchParams.keyword]);
 
+    // ⭐ 2. 로그인 확인을 위한 함수 (기존 checkUserRole은 제거)
+    const checkLoginStatus = async () => {
+        try {
+            const response = await fetch('/api/auth/me');
+            setIsLoggedIn(response.ok);
+            // 로그인 상태가 OK이면 사용자 정보도 가져와서 userRole을 설정할 수 있습니다.
+            if(response.ok) {
+                const userData = await response.json();
+                setUserRole(userData.role);
+            }
+        } catch (error) {
+            console.error('로그인 상태 확인 중 오류 발생:', error);
+            setIsLoggedIn(false);
+        }
+    };
+    
     useEffect(() => {
         const fetchPrograms = async () => {
             setLoading(true);
@@ -145,12 +153,8 @@ const NoncurricularListPage = () => {
                 if (!response.ok) throw new Error('데이터를 불러오는데 실패했습니다.');
 
                 const data = await response.json();
-
-                // 프로그램 목록이 키 : programs
                 const programList = data.programs || [];
                 setPrograms(programList);
-
-                // 페이지네이션 정보 설정 (전체 data 객체를 pagination으로 사용)
                 setPagination(data);
 
                 if (programList.length > 0) {
@@ -161,28 +165,26 @@ const NoncurricularListPage = () => {
                                 const mData = await res.json();
                                 return { prgId: p.prgId, mileage: mData.mlgScore || 0 };
                             }
-                        } catch (e) { /* 마일리지 조회 실패는 무시 */ }
+                        } catch (e) { /* 무시 */ }
                         return { prgId: p.prgId, mileage: 0 };
                     });
 
-                    
-
                      const thumbnailPromises = programList.map(async (p) => {
-        try {
-            const res = await fetch(`/api/files/list?refType=NONCUR&refId=${p.prgId}&category=THUMBNAIL`);
-            if (res.ok) {
-                const thumbData = await res.json();
-                if (thumbData && thumbData.length > 0) {
-                    return { prgId: p.prgId, thumbnail: thumbData[0] };
-                }
-            }
-        } catch (e) { /* 썸네일 조회 실패는 무시 */ }
-        return { prgId: p.prgId, thumbnail: null };
-    });
+                        try {
+                            const res = await fetch(`/api/files/list?refType=NONCUR&refId=${p.prgId}&category=THUMBNAIL`);
+                            if (res.ok) {
+                                const thumbData = await res.json();
+                                if (thumbData && thumbData.length > 0) {
+                                    return { prgId: p.prgId, thumbnail: thumbData[0] };
+                                }
+                            }
+                        } catch (e) { /* 무시 */ }
+                        return { prgId: p.prgId, thumbnail: null };
+                    });
     
-    const thumbnailResults = await Promise.all(thumbnailPromises);
-    const thumbnailMap = thumbnailResults.reduce((acc, cur) => ({ ...acc, [cur.prgId]: cur.thumbnail }), {});
-    setProgramThumbnails(thumbnailMap);
+                    const thumbnailResults = await Promise.all(thumbnailPromises);
+                    const thumbnailMap = thumbnailResults.reduce((acc, cur) => ({ ...acc, [cur.prgId]: cur.thumbnail }), {});
+                    setProgramThumbnails(thumbnailMap);
 
                     const mileageResults = await Promise.all(mileagePromises);
                     setProgramMileages(mileageResults.reduce((acc, cur) => ({ ...acc, [cur.prgId]: cur.mileage }), {}));
@@ -199,35 +201,14 @@ const NoncurricularListPage = () => {
         };
 
         fetchPrograms();
-        checkUserRole();
-    }, [debouncedKeyword, searchParams]);
+        // ⭐ 3. 기존 checkUserRole 대신 checkLoginStatus 호출
+        checkLoginStatus(); 
+    }, [debouncedKeyword, searchParams]); // useEffect 의존성 배열 원본 유지
 
     //================================================================
     // 렌더링
     //================================================================
-
-    // 사용자 역할 확인 함수 추가
-const checkUserRole = async () => {
-    try {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        if (!token) return;
-        
-        const response = await fetch('/api/auth/me', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (response.ok) {
-            const userData = await response.json();
-            setUserRole(userData.role);
-        }
-    } catch (error) {
-        console.error('사용자 정보 조회 실패:', error);
-    }
-};
-
-
+    
     const renderPaginationButtons = () => {
         const buttons = [];
         const { currentPage, totalPages } = pagination;
@@ -252,15 +233,15 @@ const checkUserRole = async () => {
                 <div className="page-container container-fluid">
                     <div className="page-header">
                         <h4 className="page-title">비교과 프로그램</h4>
-                        {userRole === 'STUDENT' && (
-    <button onClick={() => setShowMyPageModal(true)} className="my-page-button">
-        <i className="bi bi-person-check-fill"></i>
-        <span>내 비교과 활동</span>
-    </button>
-)}
+                        {/* ⭐ 4. isLoggedIn state를 사용하여 버튼을 조건부 렌더링 */}
+                        {isLoggedIn && (
+                            <button onClick={() => setShowMyPageModal(true)} className="my-page-button">
+                                <i className="bi bi-person-check-fill"></i>
+                                <span>내 비교과 활동</span>
+                            </button>
+                        )}
                     </div>
                     <div className="filter-bar">
-                        {/* 1. 상태 선택창을 가장 왼쪽으로 이동 */}
                         <select
                             name="searchStatusCode"
                             className="status-filter"
@@ -274,8 +255,6 @@ const checkUserRole = async () => {
                             <option value="04">운영중</option>
                             <option value="05">종료</option>
                         </select>
-
-                        {/* 2. 검색창을 중간으로 이동 (내부 돋보기 아이콘 제거) */}
                         <input
                             type="text"
                             name="keyword"
@@ -284,14 +263,11 @@ const checkUserRole = async () => {
                             onChange={handleFilterChange}
                             className="search-input"
                         />
-
-                        {/* 3. 검색 버튼을 가장 오른쪽에 추가 */}
                         <button className="search-button">
                             <i className="bi bi-search"></i>
                         </button>
                     </div>
                     <div className="result-info">
-                        {/* totalElements가 0 이상일 때만 렌더링 */}
                         {typeof pagination.totalElements === 'number' &&
                             <span>총 <strong>{pagination.totalElements}</strong>개의 프로그램</span>
                         }
@@ -318,46 +294,46 @@ const checkUserRole = async () => {
                                 const statusInfo = getStatusInfo(program.prgStatCd);
                                 
                                 const ddayInfo = program.dDay !== undefined ? 
-            calculateDDay(program) : 
-            calculateDDay(program.prgStDt); // prgEndDt → prgStDt로 변경
+                                    calculateDDay(program) : 
+                                    calculateDDay(program.prgStDt);
         
                                 return (
                                     <div key={program.prgId} className="program-card" onClick={() => handleProgramClick(program.prgId)}>
-                <div className="card-image-container">
-                    <img 
-    src={getThumbnailUrl(program.prgId)} 
-    alt={program.prgNm} 
-    className="card-image" 
-    onError={(e) => { e.target.src = "/images/noncur_default.png"; }} 
-/>
-                    {ddayInfo.text && (
-                        <span className={`dday-badge ${ddayInfo.class}`}>
-                            {ddayInfo.text}
-                        </span>
-                    )}
-                </div>
-                <div className="card-body">
-                    <div className="card-tags">
-                        <span className={`status-badge ${statusInfo.class}`}>
-                            {statusInfo.text}
-                        </span>
-                        <span className="mileage-badge">
-                            <i className="bi bi-gem"></i> {programMileages[program.prgId] || 0}
-                        </span>
-                    </div>
-                    <h6 className="card-title">{program.prgNm}</h6>
-                    <p className="card-dept">{program.deptName || program.deptNm || '운영부서 미지정'}</p>
-                    <div className="card-footer">
-                        <span>
-                            <i className="bi bi-calendar-check"></i> 
-                            {formatDate(program.prgStDt)} ~ {formatDate(program.prgEndDt)}
-                        </span>
-                        <span>
-                            <i className="bi bi-people"></i> {program.maxCnt || 'N'}명
-                        </span>
-                    </div>
-                </div>
-            </div>
+                                        <div className="card-image-container">
+                                            <img 
+                                                src={getThumbnailUrl(program.prgId)} 
+                                                alt={program.prgNm} 
+                                                className="card-image" 
+                                                onError={(e) => { e.target.src = "/images/noncur_default.png"; }} 
+                                            />
+                                            {ddayInfo.text && (
+                                                <span className={`dday-badge ${ddayInfo.class}`}>
+                                                    {ddayInfo.text}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="card-body">
+                                            <div className="card-tags">
+                                                <span className={`status-badge ${statusInfo.class}`}>
+                                                    {statusInfo.text}
+                                                </span>
+                                                <span className="mileage-badge">
+                                                    <i className="bi bi-gem"></i> {programMileages[program.prgId] || 0}
+                                                </span>
+                                            </div>
+                                            <h6 className="card-title">{program.prgNm}</h6>
+                                            <p className="card-dept">{program.deptName || program.deptNm || '운영부서 미지정'}</p>
+                                            <div className="card-footer">
+                                                <span>
+                                                    <i className="bi bi-calendar-check"></i> 
+                                                    {formatDate(program.prgStDt)} ~ {formatDate(program.prgEndDt)}
+                                                </span>
+                                                <span>
+                                                    <i className="bi bi-people"></i> {program.maxCnt || 'N'}명
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 );
                             })}
                         </div>

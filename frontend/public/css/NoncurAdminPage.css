@@ -12,7 +12,7 @@
 
 .tab-menu {
   display: flex;
-  gap: 10px;
+
   border-bottom: 2px solid #e0e0e0;
   margin-bottom: 20px;
 }
@@ -450,4 +450,8 @@
 
 .stat-table tr:hover {
   background: #fafafa;
+}
+
+.tab-btn{
+border-radius: 0%;
 }

@@ -95,4 +95,48 @@ public interface NoncurApplicationRepository extends JpaRepository<NoncurApplica
      */
     @Query("SELECT a.aplyStatCd, COUNT(a) FROM NoncurApplication a WHERE a.prgId = :prgId GROUP BY a.aplyStatCd")
     List<Object[]> countByProgramIdGroupByStatus(@Param("prgId") String prgId);
+    
+    
+
+     // 프로그램별 신청자 목록 조회 (학생 정보 JOIN)
+    @Query("SELECT a, p.prgNm, s.stdNm, s.deptCd, s.schYr, s.phoneNumber, s.email " +
+           "FROM NoncurApplication a " +
+           "JOIN NoncurProgram p ON a.prgId = p.prgId " +
+           "LEFT JOIN StdInfo s ON a.stdNo = s.stdNo " +
+           "WHERE a.prgId = :prgId " +
+           "ORDER BY a.aplyDt DESC")
+    List<Object[]> findApplicationsWithDetailsOrderByAplyDtDesc(@Param("prgId") String prgId);
+
+    //프로그램별 + 상태별 신청자 목록 조회
+    @Query("SELECT a, p.prgNm, s.stdNm, s.deptCd, s.schYr, s.phoneNumber, s.email " +
+           "FROM NoncurApplication a " +
+           "JOIN NoncurProgram p ON a.prgId = p.prgId " +
+           "LEFT JOIN StdInfo s ON a.stdNo = s.stdNo " +
+           "WHERE a.prgId = :prgId AND a.aplyStatCd = :statusCd " +
+           "ORDER BY a.aplyDt DESC")
+    List<Object[]> findApplicationsWithDetailsByStatusOrderByAplyDtDesc(
+        @Param("prgId") String prgId, 
+        @Param("statusCd") String statusCd
+    );
+
+    //학생별 신청 목록 조회 (프로그램 + 부서 정보 JOIN)
+    @Query("SELECT a, p.prgNm, p.prgStDt, p.prgEndDt, d.deptNm " +
+           "FROM NoncurApplication a " +
+           "JOIN NoncurProgram p ON a.prgId = p.prgId " +
+           "LEFT JOIN DeptInfo d ON p.prgDeptCd = d.deptCd " +
+           "WHERE a.stdNo = :stdNo " +
+           "ORDER BY a.aplyDt DESC")
+    List<Object[]> findStudentApplicationsWithDetails(@Param("stdNo") String stdNo);
+
+
+    //학생별 이수완료 목록 조회 (프로그램 + 부서 + 이수완료 정보 JOIN)
+    @Query("SELECT a, p.prgNm, p.prgStDt, p.prgEndDt, d.deptNm, c.cmpDt " +
+           "FROM NoncurApplication a " +
+           "JOIN NoncurProgram p ON a.prgId = p.prgId " +
+           "LEFT JOIN DeptInfo d ON p.prgDeptCd = d.deptCd " +
+           "LEFT JOIN NcsCompletionInfo c ON a.aplyId = c.aplyId " +
+           "WHERE a.stdNo = :stdNo AND a.aplyStatCd = '05' " +
+           "ORDER BY a.aplyDt DESC")
+    List<Object[]> findStudentCompletedApplicationsWithDetails(@Param("stdNo") String stdNo);
+    
 }
