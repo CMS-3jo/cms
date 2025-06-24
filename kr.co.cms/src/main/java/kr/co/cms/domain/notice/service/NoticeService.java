@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,6 +66,25 @@ public class NoticeService {
         n.setRegUserId(dto.getRegUserId());
         repo.save(n);
         return n.getNoticeId();
+    }
+    /**
+     * 공지사항과 첨부파일 등록
+     */
+    @Transactional
+    public String createWithFiles(NoticeDto dto, List<MultipartFile> files) {
+        String id = create(dto);
+
+        if (files != null && !files.isEmpty()) {
+            fileService.uploadFiles(
+                files,
+                FileConstants.RefType.NOTICE,
+                id,
+                FileConstants.Category.ATTACH,
+                dto.getRegUserId()
+            );
+        }
+
+        return id;
     }
 
     @Transactional

@@ -10,7 +10,6 @@ import org.springframework.web.multipart.MultipartFile;
 import kr.co.cms.domain.notice.dto.NoticeDto;
 import kr.co.cms.domain.notice.service.NoticeService;
 import kr.co.cms.global.file.constants.FileConstants;
-import kr.co.cms.global.file.service.FileService;
 import kr.co.cms.global.util.TokenUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 public class NoticeController {
 
     private final NoticeService service;
-    private final FileService fileService;
     private final TokenUtil tokenUtil;
   
 
@@ -56,15 +54,7 @@ public class NoticeController {
         String userId = tokenUtil.getUserIdFromRequest(request);
         dto.setRegUserId(userId);
 
-        String id = service.create(dto);
-
-        if (files != null && !files.isEmpty()) {
-            fileService.uploadFiles(files,
-                    FileConstants.RefType.NOTICE,
-                    id,
-                    FileConstants.Category.ATTACH,
-                    userId);
-        }
+        String id = service.createWithFiles(dto, files);
 
         return ResponseEntity.ok(Map.of(
                 "noticeId", id,
