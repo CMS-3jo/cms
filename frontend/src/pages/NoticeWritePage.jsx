@@ -13,13 +13,41 @@ const NoticeWritePage = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
-const { user } = useAuth();
+
+  const { user } = useAuth();
   const handleSubmit = async (e) => {
     e.preventDefault();
-   const result = await createNotice({ title, content, regUserId: user?.userId });
-    if (result.success) {
+
+    const noticeData = { title, content, regUserId: user?.userId };
+
+    try {
+      if (files.length > 0) {
+        const formData = new FormData();
+        formData.append(
+          'notice',
+          new Blob([JSON.stringify(noticeData)], { type: 'application/json' })
+        );
+        files.forEach((file) => formData.append('files', file));
+
+        const response = await fetch('/api/notices/with-files', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('등록 실패');
+        }
+      } else {
+        const result = await createNotice(noticeData);
+        if (!result.success) {
+          throw new Error('등록 실패');
+        }
+      }
+
       navigate('/notices');
-    } else {
+    } catch (err) {
+      console.error('공지사항 등록 오류:', err);
       alert('등록 실패');
     }
   };
@@ -30,10 +58,10 @@ const { user } = useAuth();
       <div className="container_layout">
         <Sidebar />
         <main style={{ flex: 1, padding: '20px' }}>
-           <h3 style={{ marginBottom: '20px' }}>공지사항 등록</h3>
+          <h3 style={{ marginBottom: '20px' }}>공지사항 등록</h3>
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-               <label className="form-label">제목</label>
+              <label className="form-label">제목</label>
               <input
                 type="text"
                 className="form-control"

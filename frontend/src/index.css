@@ -91,7 +91,7 @@ button:focus-visible {
 
 .shownav {
   position: absolute;
-  top: 60px;
+  top: 82.8px;
   right: 1rem;
   display: none;
   padding: 1rem;
@@ -144,3 +144,4 @@ button:focus-visible {
   color: #ffffff;
   cursor: pointer;
 }
+.close{flex-direction: row-reverse;}

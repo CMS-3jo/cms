@@ -60,6 +60,16 @@ const PublicHeader = () => {
                 자료실
               </a>
             </li>
+                        <li className="nav-item">
+              <a className="nav-link" href="/notices">
+                공지사항
+              </a>
+            </li>
+                        <li className="nav-item">
+              <a className="nav-link" href="/cca/list">
+                핵심역량
+              </a>
+            </li>
           </ul>
         </nav>
 
@@ -107,7 +117,9 @@ const PublicHeader = () => {
           </div>
           <div className={`shownav ${showMobileNav ? "show" : ""}`}>
             <div className="menu" onClick={toggleMobileNav}>
-              <img alt="" src="./images/counselor/header-menu.svg" />
+              <span className="material-symbols-outlined header-icons close">
+                  close
+                </span>
             </div>
             <ul className="nav nav-underline" id="navmajor_menu">
               <li className="nav-item">

@@ -76,6 +76,19 @@ export const userApi = {
 		apiService.get('/mypage/profile')
 };
 
+export const calendarApi = {
+  async getCalendarEvents(counselorId, startDate, endDate) {
+    const query = new URLSearchParams({
+      counselorId,
+      startDate,
+      endDate
+    }).toString();
+
+    const res = await apiService.get(`/calendar/events?${query}`);
+    return res;
+  }
+};
+
 // 상담 관련 API
 export const counselingApi = {
 	// 상담 신청 목록 조회
@@ -218,5 +231,6 @@ export const noticeApi = {
 	deleteNotice: (id) =>
 		apiService.delete(`/notices/${id}`),
 };
+
 
 export default apiService;

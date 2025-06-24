@@ -1,11 +1,31 @@
 /* NoncurricularList.css */
 
 /* --- 기본 레이아웃 --- */
+.noncur-list-page{
+    padding-top: 82.8px;
+}
 .page-container {
     padding: 2rem;
     margin-top : 82.8px;
 }
-
+.noncur-list-page .searchWrap{
+    width: 100%;
+    display: flex;
+}
+.noncur-list-page .searchWrap select{margin-right: 10px;}
+.cca_analy {
+    
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+        margin-top: 82.8px;
+    background: var(--glass-bg);
+    border-radius: 16px;
+    border: 1px solid var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -308,5 +328,24 @@
     margin-bottom: 1rem;
     color: #adb5bd;
 }
-
+.cca-list{
+    padding: 0;
+}
+.cca-list-item{
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    overflow: hidden;
+    border: 1px solid #f0f0f0;
+    list-style: none;
+    background: #fff;
+    padding: 10px;
+    margin: 10px 0;
+}
+.cca-list-item:hover{transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);}
+.cca-list-item .cca-list-item-title{
+    font-weight: bold;
+}
 /* ... (페이지네이션 등 나머지 스타일) ... */

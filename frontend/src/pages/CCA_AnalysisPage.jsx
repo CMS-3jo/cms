@@ -64,8 +64,7 @@ const CCAAnalysisPage = () => {
         <>
             <Header />
             <div className="container_layout">
-                <Sidebar />
-                <div className="noncur-list-page">
+                <div className="cca_analy">
 
                     <h4>핵심역량 이력 및 분석 (상담사용)</h4>
 

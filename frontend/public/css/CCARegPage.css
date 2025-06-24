@@ -14,8 +14,8 @@ body, input, button, select {
 .cca-reg-content {
   flex: 1;
   padding: 24px 24px 24px 250px;
-      padding-top: 60px;
-  background: #f9f9f9;
+   padding-top: 60px;
+  background: transparent;
 }
 
 h3 {
@@ -137,4 +137,16 @@ h3 {
 .step-nav {
   margin-top: 24px;
   text-align: right;
+}
+button{
+      background: var(--glass-bg);
+    border-radius: 16px;
+    border: 1px solid var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+.survey-list table{
+  width: 100%;
+  
 }

@@ -14,20 +14,25 @@ import jakarta.transaction.Transactional;
 import kr.co.cms.domain.cnsl.dto.CounselingApplyRequest;
 import kr.co.cms.domain.cnsl.dto.CounselingDetailDto;
 import kr.co.cms.domain.cnsl.dto.CounselingListResponse;
+import kr.co.cms.domain.cnsl.dto.CounselingScheduleCreateRequest;
 import kr.co.cms.domain.cnsl.dto.CounselingSearchCondition;
 import kr.co.cms.domain.cnsl.entity.CounselingApply;
 import kr.co.cms.domain.cnsl.repository.CounselingApplyRepository;
 import kr.co.cms.domain.cnsl.repository.CounselingCustomRepository;
 import kr.co.cms.domain.cnsl.repository.CounselingRepository;
+import kr.co.cms.domain.cnsl.repository.CounselingScheduleRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class CounselingService {
 
+    private final CounselingScheduleService counselingScheduleService;
     private final CounselingRepository counselingRepository;
     private final CounselingCustomRepository customRepository;
     private final CounselingApplyRepository counselingApplyRepository;
+    private final CounselingScheduleRepository scheduleRepository;
+
 
     public String registerCounseling(CounselingApplyRequest dto) {
         CounselingApply entity = CounselingApply.builder()
@@ -61,6 +66,17 @@ public class CounselingService {
             .orElseThrow(() -> new IllegalArgumentException("상담 신청을 찾을 수 없습니다"));
         apply.setEmplNo(empNo);
         apply.setStatCd("17");
+        
+        if (!scheduleRepository.existsByCnslAplyId(cnslAplyId)) {
+            CounselingScheduleCreateRequest dto = CounselingScheduleCreateRequest.builder()
+                .cnslAplyId(apply.getCnslAplyId())
+                .stdNo(apply.getStdNo())
+                .emplNo(empNo)
+                .cnslDt(apply.getReqDttm())
+                .build();
+
+            counselingScheduleService.saveSchedule(dto);
+        }
     }
     
     public CounselingDetailDto getCounselingDetail(String id) {

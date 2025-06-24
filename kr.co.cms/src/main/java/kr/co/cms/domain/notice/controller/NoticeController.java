@@ -5,20 +5,25 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import kr.co.cms.domain.notice.dto.NoticeDto;
 import kr.co.cms.domain.notice.service.NoticeService;
+import kr.co.cms.global.file.constants.FileConstants;
+import kr.co.cms.global.util.TokenUtil;
+
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/notices")
 @CrossOrigin(origins = "http://localhost:5173")
+@RequiredArgsConstructor
 public class NoticeController {
 
     private final NoticeService service;
-
-    public NoticeController(NoticeService service) {
-        this.service = service;
-    }
+    private final TokenUtil tokenUtil;
+  
 
     @GetMapping
     public List<NoticeDto> list() {
@@ -37,7 +42,26 @@ public class NoticeController {
         String id = service.create(dto);
         return ResponseEntity.ok(Map.of("noticeId", id));
     }
+    /**
+     * 공지사항 등록 (파일 포함)
+     */
+    @PostMapping("/with-files")
+    public ResponseEntity<Map<String, String>> createWithFiles(
+            @RequestPart("notice") NoticeDto dto,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            HttpServletRequest request) {
 
+        String userId = tokenUtil.getUserIdFromRequest(request);
+        dto.setRegUserId(userId);
+
+        String id = service.createWithFiles(dto, files);
+
+        return ResponseEntity.ok(Map.of(
+                "noticeId", id,
+                "message", "공지사항과 파일이 성공적으로 등록되었습니다."));
+    }
+
+    
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, String>> update(@PathVariable("id") String id,
                                                       @RequestBody NoticeDto dto) {
