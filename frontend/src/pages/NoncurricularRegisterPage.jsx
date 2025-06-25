@@ -1,68 +1,383 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Flatpickr from "react-flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import { Korean } from "flatpickr/dist/l10n/ko.js";
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
-import styles from '/public/css/NoncurricularRegisterPage.module.css'; // CSS 모듈 임포트
+import styles from '/public/css/NoncurricularRegisterPage.module.css';
 
 const NoncurricularRegisterPage = () => {
+    const navigate = useNavigate();
+
+    // 폼 데이터 상태
     const [formData, setFormData] = useState({
-        prgNm: '', prgDesc: '', prgStDt: null, prgEndDt: null, prgDeptCd: '', maxCnt: '',
-        prgStatCd: '01', location: '', contactEmail: '', contactPhone: '', targetInfo: '',
-        departmentInfo: '', gradeInfo: '', programSchedule: '', mlgScore: '',
+        prgNm: '',
+        prgDesc: '',
+        prgStDt: null,
+        prgEndDt: null,
+        prgDeptCd: '',
+        maxCnt: '',
+        prgStatCd: '01', // 기본값: 모집중
+        location: '',
+        contactEmail: '',
+        contactPhone: '',
+        targetInfo: '',
+        departmentInfo: '',
+        gradeInfo: '',
+        programSchedule: '',
+        mlgScore: '',
         selectedCompetencies: []
     });
 
-        // const navigate = useNavigate();
-
-        
-
+    // 기타 상태
     const [allCompetencies, setAllCompetencies] = useState([]);
     const [loading, setLoading] = useState(false);
     const [departments, setDepartments] = useState([]);
     const [attachFiles, setAttachFiles] = useState([]);
     const [thumbnailFiles, setThumbnailFiles] = useState([]);
+    const [fileCategories, setFileCategories] = useState([]);
 
+    // 컴포넌트 마운트 시 데이터 조회
     useEffect(() => {
         fetchCompetencies();
         fetchDepartments();
+        fetchFileCategories();
     }, []);
 
-    // 등록 취소 핸들러 추가
-    const handleCancel = () => {
-        if (window.confirm("작성 중인 내용이 모두 사라집니다. 정말 취소하시겠습니까?")) {
-            // 폼 초기화
-            setFormData({
-                prgNm: '', prgDesc: '', prgStDt: null, prgEndDt: null, prgDeptCd: '', maxCnt: '',
-                prgStatCd: '01', location: '', contactEmail: '', contactPhone: '', targetInfo: '',
-                departmentInfo: '', gradeInfo: '', programSchedule: '', mlgScore: '',
-                selectedCompetencies: []
-            });
-            setAttachFiles([]);
-            setThumbnailFiles([]);
-            // 필요하다면 이전 페이지로 이동
-            // 예: window.history.back();
+    // --- 데이터 조회 함수들 ---
+
+    const fetchFileCategories = async () => {
+        try {
+            const response = await fetch('/api/common/codes?group=FILE_CATEGORY');
+            if (response.ok) {
+                const data = await response.json();
+                setFileCategories(data || []);
+            }
+        } catch (error) {
+            console.error('파일 카테고리 조회 실패:', error);
         }
     };
-    
-    // (기존의 모든 fetch, handle 함수들은 여기에 그대로 존재합니다. 생략)
-    const fetchCompetencies = async () => { try { const response = await fetch('/api/noncur/competencies'); if (response.ok) { const data = await response.json(); setAllCompetencies(data.competencies || []); } } catch (error) { console.error('핵심역량 조회 실패:', error); } };
-    const fetchDepartments = async () => { try { const response = await fetch('/api/noncur/departments'); if (response.ok) { const departments = await response.json(); setDepartments(departments); } else { console.error('부서 목록 조회 실패'); setDepartments([ { deptCd: 'S_BUSINESS', deptNm: '경영학과' }, { deptCd: 'S_COMPUTER', deptNm: '컴퓨터공학과' } ]); } } catch (error) { console.error('부서 목록 조회 오류:', error); setDepartments([ { deptCd: 'S_BUSINESS', deptNm: '경영학과' }, { deptCd: 'S_COMPUTER', deptNm: '컴퓨터공학과' } ]); } };
-    const handleInputChange = (e) => { const { name, value } = e.target; setFormData(prev => ({ ...prev, [name]: value })); };
-    const handleDateChange = (name, dates) => { setFormData(prev => ({ ...prev, [name]: dates[0] || null })); };
-    const handleCompetencyToggle = (competencyId) => { setFormData(prev => ({ ...prev, selectedCompetencies: prev.selectedCompetencies.includes(competencyId) ? prev.selectedCompetencies.filter(id => id !== competencyId) : [...prev.selectedCompetencies, competencyId] })); };
-    const handleAttachFileChange = (event) => { setAttachFiles(Array.from(event.target.files)); };
-    const handleThumbnailFileChange = (event) => { setThumbnailFiles(Array.from(event.target.files)); };
-    const formatFileSize = (bytes) => { if (bytes === 0) return '0 Bytes'; const k = 1024; const sizes = ['Bytes', 'KB', 'MB', 'GB']; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]; };
-    const validateForm = () => { const required = ['prgNm', 'prgDesc', 'prgStDt', 'prgEndDt', 'prgDeptCd', 'maxCnt', 'mlgScore']; for (let field of required) { if (!formData[field]) { alert(`${getFieldLabel(field)}은(는) 필수 입력 항목입니다.`); return false; } } if (formData.prgStDt >= formData.prgEndDt) { alert('종료일은 시작일보다 늦어야 합니다.'); return false; } if (formData.mlgScore <= 0) { alert('마일리지 점수는 0보다 커야 합니다.'); return false; } return true; };
-    const getFieldLabel = (field) => { const labels = { prgNm: '프로그램명', prgDesc: '프로그램 소개', prgStDt: '시작일', prgEndDt: '종료일', prgDeptCd: '운영부서', maxCnt: '정원', mlgScore: '마일리지 점수' }; return labels[field] || field; };
-    const handleSubmit = async () => { /* 기존 handleSubmit 로직과 동일 (생략) */ if (loading) return; if (!validateForm()) return; try { setLoading(true); /* ... API 호출 로직 ... */ alert('프로그램이 성공적으로 등록되었습니다.'); setFormData({ prgNm: '', prgDesc: '', prgStDt: null, prgEndDt: null, prgDeptCd: '', maxCnt: '', prgStatCd: '01', location: '', contactEmail: '', contactPhone: '', targetInfo: '', departmentInfo: '', gradeInfo: '', programSchedule: '', mlgScore: '', selectedCompetencies: [] }); setAttachFiles([]); setThumbnailFiles([]); 
-    alert('프로그램이 성공적으로 등록되었습니다.');
-            navigate('/noncur'); // 목록 페이지로 이동
-} catch (error) { console.error('등록 중 오류:', error); alert('프로그램 등록 중 오류가 발생했습니다: ' + error.message); } finally { setLoading(false); }};
 
+    const fetchCompetencies = async () => {
+        try {
+            const response = await fetch('/api/noncur/competencies');
+            if (response.ok) {
+                const data = await response.json();
+                setAllCompetencies(data.competencies || []);
+            }
+        } catch (error) {
+            console.error('핵심역량 조회 실패:', error);
+        }
+    };
+
+    const fetchDepartments = async () => {
+        try {
+            const response = await fetch('/api/noncur/departments');
+            if (response.ok) {
+                const departmentsData = await response.json();
+                setDepartments(departmentsData);
+            } else {
+                console.error('부서 목록 조회 실패, 기본값으로 설정합니다.');
+                setDepartments([
+                    { deptCd: 'S_BUSINESS', deptNm: '경영학과' },
+                    { deptCd: 'S_CHEM', deptNm: '토목공학과' },
+                    { deptCd: 'S_COMPUTER', deptNm: '컴퓨터공학과' },
+                    { deptCd: 'S_ELEC', deptNm: '전자공학과' }
+                ]);
+            }
+        } catch (error) {
+            console.error('부서 목록 조회 오류:', error);
+            setDepartments([
+                { deptCd: 'S_BUSINESS', deptNm: '경영학과' },
+                { deptCd: 'S_CHEM', deptNm: '토목공학과' },
+                { deptCd: 'S_COMPUTER', deptNm: '컴퓨터공학과' },
+                { deptCd: 'S_ELEC', deptNm: '전자공학과' }
+            ]);
+        }
+    };
+
+    // --- 이벤트 핸들러 함수들 ---
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleDateChange = (name, dates) => {
+        setFormData(prev => ({ ...prev, [name]: dates[0] || null }));
+    };
+
+    const handleCompetencyToggle = (competencyId) => {
+        setFormData(prev => ({
+            ...prev,
+            selectedCompetencies: prev.selectedCompetencies.includes(competencyId)
+                ? prev.selectedCompetencies.filter(id => id !== competencyId)
+                : [...prev.selectedCompetencies, competencyId]
+        }));
+    };
+
+    const handleAttachFileChange = (event) => {
+        setAttachFiles(Array.from(event.target.files));
+    };
+
+    const handleThumbnailFileChange = (event) => {
+        setThumbnailFiles(Array.from(event.target.files));
+    };
+
+    // 등록 취소 핸들러
+    const handleCancel = () => {
+        if (window.confirm("작성을 취소하고 목록으로 돌아가시겠습니까?")) {
+            navigate('/noncur'); // 목록 페이지로 이동
+        }
+    };
+
+    // --- 유틸리티 및 유효성 검사 함수들 ---
+
+    const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    const getFieldLabel = (field) => {
+        const labels = {
+            prgNm: '프로그램명', 
+            prgDesc: '프로그램 소개', 
+            prgStDt: '시작일', 
+            prgEndDt: '종료일', 
+            prgDeptCd: '운영부서', 
+            maxCnt: '정원', 
+            mlgScore: '마일리지 점수'
+        };
+        return labels[field] || field;
+    };
+
+    const validateForm = () => {
+        const required = ['prgNm', 'prgDesc', 'prgStDt', 'prgEndDt', 'prgDeptCd', 'maxCnt', 'mlgScore'];
+        for (let field of required) {
+            if (!formData[field]) {
+                alert(`${getFieldLabel(field)}은(는) 필수 입력 항목입니다.`);
+                return false;
+            }
+        }
+        if (formData.prgStDt >= formData.prgEndDt) {
+            alert('종료일은 시작일보다 늦어야 합니다.');
+            return false;
+        }
+        if (formData.mlgScore <= 0) {
+            alert('마일리지 점수는 0보다 커야 합니다.');
+            return false;
+        }
+        return true;
+    };
+
+    const validateFiles = (files, type) => {
+        const maxSize = type === 'thumbnail' ? 10 * 1024 * 1024 : 50 * 1024 * 1024; // 썸네일 10MB, 첨부파일 50MB
+        const allowedExtensions = type === 'thumbnail' 
+            ? ['jpg', 'jpeg', 'png', 'gif', 'bmp']
+            : ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'hwp', 'zip', 'rar'];
+
+        for (let file of files) {
+            if (file.size > maxSize) {
+                alert(`파일 크기가 제한을 초과했습니다: ${file.name} (최대: ${formatFileSize(maxSize)})`);
+                return false;
+            }
+            const extension = file.name.split('.').pop().toLowerCase();
+            if (!allowedExtensions.includes(extension)) {
+                alert(`허용되지 않은 파일 형식입니다: ${file.name} (허용: ${allowedExtensions.join(', ')})`);
+                return false;
+            }
+        }
+        return true;
+    };
+
+    const getCurrentUserId = async () => {
+        try {
+            const response = await fetch('/api/auth/me', { 
+                method: 'GET', 
+                credentials: 'include' 
+            });
+            if (response.ok) {
+                const data = await response.json();
+                return data.userId;
+            } else {
+                throw new Error('사용자 인증 실패');
+            }
+        } catch (error) {
+            console.error('사용자 ID 조회 실패:', error);
+            throw error;
+        }
+    };
+
+    // --- 폼 제출 함수 ---
+
+    const handleSubmit = async () => {
+        if (loading) return;
+        if (!validateForm()) return;
+
+        try {
+            setLoading(true);
+            console.log('=== 등록 프로세스 시작 ===');
+            
+            // 사용자 ID 조회
+            const currentUserId = await getCurrentUserId();
+            console.log('현재 사용자 ID:', currentUserId);
+
+            // 파일 유효성 검사
+            if (attachFiles.length > 0 && !validateFiles(attachFiles, 'attach')) {
+                setLoading(false);
+                return;
+            }
+            if (thumbnailFiles.length > 0 && !validateFiles(thumbnailFiles, 'thumbnail')) {
+                setLoading(false);
+                return;
+            }
+
+            const hasFiles = attachFiles.length > 0 || thumbnailFiles.length > 0;
+            console.log('파일 첨부 여부:', hasFiles);
+
+            if (hasFiles) {
+                // === 파일이 있을 경우 FormData로 전송 ===
+                console.log('파일과 함께 등록 중...');
+                
+                const formDataToSend = new FormData();
+                
+                const programData = {
+                    ...formData,
+                    prgStDt: formData.prgStDt ? formData.prgStDt.toISOString() : null,
+                    prgEndDt: formData.prgEndDt ? formData.prgEndDt.toISOString() : null,
+                    regUserId: currentUserId
+                };
+                
+                console.log('전송할 프로그램 데이터:', programData);
+                
+                // JSON 데이터를 Blob으로 추가
+                formDataToSend.append('program', new Blob([JSON.stringify(programData)], { 
+                    type: 'application/json' 
+                }));
+                
+                // 파일들 추가
+                attachFiles.forEach(file => {
+                    formDataToSend.append('attachFiles', file);
+                    console.log('첨부파일 추가:', file.name);
+                });
+                
+                thumbnailFiles.forEach(file => {
+                    formDataToSend.append('thumbnailFiles', file);
+                    console.log('썸네일 추가:', file.name);
+                });
+
+                const response = await fetch('/api/noncur/register-with-files', {
+                    method: 'POST',
+                    body: formDataToSend,
+                    credentials: 'include'
+                });
+
+                console.log('파일 등록 응답 상태:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('파일 등록 실패:', errorData);
+                    throw new Error(errorData.error || '파일과 함께 등록에 실패했습니다.');
+                }
+
+                const result = await response.json();
+                console.log('파일 등록 성공:', result);
+
+            } else {
+                // === 파일이 없을 경우 JSON으로 전송 ===
+                console.log('파일 없이 등록 중...');
+                
+                const programData = {
+                    ...formData,
+                    prgStDt: formData.prgStDt ? formData.prgStDt.toISOString() : null,
+                    prgEndDt: formData.prgEndDt ? formData.prgEndDt.toISOString() : null,
+                    regUserId: currentUserId
+                };
+
+                console.log('전송할 프로그램 데이터:', programData);
+
+                const registerResponse = await fetch('/api/noncur/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(programData),
+                    credentials: 'include'
+                });
+
+                console.log('프로그램 등록 응답 상태:', registerResponse.status);
+
+                if (!registerResponse.ok) {
+                    const errorData = await registerResponse.json();
+                    console.error('프로그램 등록 실패:', errorData);
+                    throw new Error(errorData.error || '프로그램 등록에 실패했습니다.');
+                }
+
+                const registerResult = await registerResponse.json();
+                console.log('프로그램 등록 성공:', registerResult);
+                
+                // 등록된 프로그램 ID 추출
+                const prgId = registerResult.prgId;
+                console.log('등록된 프로그램 ID:', prgId);
+
+                // === 마일리지 설정 (선택사항) ===
+                if (formData.mlgScore && parseFloat(formData.mlgScore) > 0) {
+                    try {
+                        console.log('마일리지 설정 중...');
+                        const mileageResponse = await fetch(`/api/mileage/program/${prgId}?mlgScore=${formData.mlgScore}&regUserId=${currentUserId}`, {
+                            method: 'POST',
+                            credentials: 'include'
+                        });
+                        
+                        if (mileageResponse.ok) {
+                            console.log('마일리지 설정 완료');
+                        } else {
+                            console.warn('마일리지 설정 실패 (프로그램 등록은 성공)');
+                        }
+                    } catch (mileageError) {
+                        console.warn('마일리지 설정 중 오류:', mileageError);
+                    }
+                }
+
+                // === 핵심역량 매핑 (선택사항) ===
+                if (formData.selectedCompetencies && formData.selectedCompetencies.length > 0) {
+                    try {
+                        console.log('핵심역량 매핑 중...', formData.selectedCompetencies);
+                        const competencyPromises = formData.selectedCompetencies.map(cciId =>
+                            fetch('/api/noncur/competency-mapping', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ prgId, cciId }),
+                                credentials: 'include'
+                            })
+                        );
+                        
+                        await Promise.all(competencyPromises);
+                        console.log('핵심역량 매핑 완료');
+                    } catch (competencyError) {
+                        console.warn('핵심역량 매핑 중 오류:', competencyError);
+                    }
+                }
+            }
+
+            // === 성공 처리 ===
+            console.log('=== 등록 프로세스 완료 ===');
+            alert('프로그램이 성공적으로 등록되었습니다.');
+            
+            // 목록 페이지로 이동
+            navigate('/noncur');
+
+        } catch (error) {
+            console.error('=== 등록 프로세스 실패 ===');
+            console.error('오류 상세:', error);
+            alert(`프로그램 등록 중 오류가 발생했습니다: ${error.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <>
@@ -77,12 +392,32 @@ const NoncurricularRegisterPage = () => {
                     <div className={styles['ncr-card']}>
                         <h3 className={styles['ncr-card-title']}>기본 정보</h3>
                         <div className={styles['ncr-form-group']}>
-                            <label htmlFor="prgNm" className={styles['ncr-label']}>프로그램명 *</label>
-                            <input id="prgNm" type="text" name="prgNm" value={formData.prgNm} onChange={handleInputChange} className={styles['ncr-input']} placeholder="예: 파이썬 데이터 분석 입문" />
+                            <label htmlFor="prgNm" className={styles['ncr-label']}>
+                                프로그램명<span className={styles['ncr-required-star']}>*</span>
+                            </label>
+                            <input 
+                                id="prgNm" 
+                                type="text" 
+                                name="prgNm" 
+                                value={formData.prgNm} 
+                                onChange={handleInputChange} 
+                                className={styles['ncr-input']} 
+                                placeholder="예: 파이썬 데이터 분석 입문" 
+                            />
                         </div>
                         <div className={styles['ncr-form-group']}>
-                            <label htmlFor="prgDesc" className={styles['ncr-label']}>프로그램 소개 *</label>
-                            <textarea id="prgDesc" name="prgDesc" value={formData.prgDesc} onChange={handleInputChange} rows="5" className={styles['ncr-textarea']} placeholder="학생들이 이해하기 쉽게 프로그램의 목적, 내용, 기대효과 등을 상세히 기술해주세요." />
+                            <label htmlFor="prgDesc" className={styles['ncr-label']}>
+                                프로그램 소개<span className={styles['ncr-required-star']}>*</span>
+                            </label>
+                            <textarea 
+                                id="prgDesc" 
+                                name="prgDesc" 
+                                value={formData.prgDesc} 
+                                onChange={handleInputChange} 
+                                rows="5" 
+                                className={styles['ncr-textarea']} 
+                                placeholder="학생들이 이해하기 쉽게 프로그램의 목적, 내용, 기대효과 등을 상세히 기술해주세요." 
+                            />
                         </div>
                     </div>
 
@@ -107,88 +442,211 @@ const NoncurricularRegisterPage = () => {
                     <div className={styles['ncr-card']}>
                         <h3 className={styles['ncr-card-title']}>프로그램 정보</h3>
                         <div className={styles['ncr-grid-3']}>
-                             <div className={styles['ncr-form-group']}>
-                                <label htmlFor="maxCnt" className={styles['ncr-label']}>모집인원(정원) *</label>
-                                <input id="maxCnt" type="number" name="maxCnt" value={formData.maxCnt} onChange={handleInputChange} min="1" className={styles['ncr-input']} placeholder="숫자만 입력" />
+                            <div className={styles['ncr-form-group']}>
+                                <label htmlFor="maxCnt" className={styles['ncr-label']}>
+                                    모집인원(정원)<span className={styles['ncr-required-star']}>*</span>
+                                </label>
+                                <input 
+                                    id="maxCnt" 
+                                    type="number" 
+                                    name="maxCnt" 
+                                    value={formData.maxCnt} 
+                                    onChange={handleInputChange} 
+                                    min="1" 
+                                    className={styles['ncr-input']} 
+                                    placeholder="숫자만 입력" 
+                                />
                             </div>
                             <div className={styles['ncr-form-group']}>
                                 <label htmlFor="targetInfo" className={styles['ncr-label']}>모집 대상</label>
-                                <input id="targetInfo" type="text" name="targetInfo" value={formData.targetInfo} onChange={handleInputChange} className={styles['ncr-input']} placeholder="예: 3, 4학년 재학생" />
+                                <input 
+                                    id="targetInfo" 
+                                    type="text" 
+                                    name="targetInfo" 
+                                    value={formData.targetInfo} 
+                                    onChange={handleInputChange} 
+                                    className={styles['ncr-input']} 
+                                    placeholder="예: 3, 4학년 재학생" 
+                                />
                             </div>
                             <div className={styles['ncr-form-group']}>
-                                <label htmlFor="mlgScore" className={styles['ncr-label']}>지급 마일리지 *</label>
-                                <input id="mlgScore" type="number" name="mlgScore" value={formData.mlgScore} onChange={handleInputChange} min="0" step="0.1" className={styles['ncr-input']} placeholder="예: 10.5" />
+                                <label htmlFor="mlgScore" className={styles['ncr-label']}>
+                                    지급 마일리지<span className={styles['ncr-required-star']}>*</span>
+                                </label>
+                                <input 
+                                    id="mlgScore" 
+                                    type="number" 
+                                    name="mlgScore" 
+                                    value={formData.mlgScore} 
+                                    onChange={handleInputChange} 
+                                    min="0" 
+                                    step="0.1" 
+                                    className={styles['ncr-input']} 
+                                    placeholder="예: 10.5" 
+                                />
                             </div>
                             <div className={styles['ncr-form-group']}>
-                                <label htmlFor="prgStDt" className={styles['ncr-label']}>시작일시 *</label>
-                                <Flatpickr id="prgStDt" value={formData.prgStDt} onChange={(dates) => handleDateChange('prgStDt', dates)} options={{ locale: Korean, enableTime: true, dateFormat: 'Y-m-d H:i', minDate: new Date() }} className={styles['ncr-input']} placeholder="클릭하여 날짜 선택" />
+                                <label htmlFor="prgStDt" className={styles['ncr-label']}>
+                                    시작일시<span className={styles['ncr-required-star']}>*</span>
+                                </label>
+                                <Flatpickr 
+                                    id="prgStDt" 
+                                    value={formData.prgStDt} 
+                                    onChange={(dates) => handleDateChange('prgStDt', dates)} 
+                                    options={{ 
+                                        locale: Korean, 
+                                        enableTime: true, 
+                                        dateFormat: 'Y-m-d H:i', 
+                                        minDate: new Date() 
+                                    }} 
+                                    className={styles['ncr-input']} 
+                                    placeholder="클릭하여 날짜 선택" 
+                                />
                             </div>
                             <div className={styles['ncr-form-group']}>
-                                <label htmlFor="prgEndDt" className={styles['ncr-label']}>종료일시 *</label>
-                                <Flatpickr id="prgEndDt" value={formData.prgEndDt} onChange={(dates) => handleDateChange('prgEndDt', dates)} options={{ locale: Korean, enableTime: true, dateFormat: 'Y-m-d H:i', minDate: formData.prgStDt || new Date() }} className={styles['ncr-input']} placeholder="클릭하여 날짜 선택" />
+                                <label htmlFor="prgEndDt" className={styles['ncr-label']}>
+                                    종료일시<span className={styles['ncr-required-star']}>*</span>
+                                </label>
+                                <Flatpickr 
+                                    id="prgEndDt" 
+                                    value={formData.prgEndDt} 
+                                    onChange={(dates) => handleDateChange('prgEndDt', dates)} 
+                                    options={{ 
+                                        locale: Korean, 
+                                        enableTime: true, 
+                                        dateFormat: 'Y-m-d H:i', 
+                                        minDate: formData.prgStDt || new Date() 
+                                    }} 
+                                    className={styles['ncr-input']} 
+                                    placeholder="클릭하여 날짜 선택" 
+                                />
                             </div>
                         </div>
                     </div>
 
                     {/* 운영 정보 */}
                     <div className={styles['ncr-card']}>
-                         <h3 className={styles['ncr-card-title']}>운영 정보</h3>
-                         <div className={styles['ncr-grid-3']}>
+                        <h3 className={styles['ncr-card-title']}>운영 정보</h3>
+                        <div className={styles['ncr-grid-3']}>
                             <div className={styles['ncr-form-group']}>
-                                <label htmlFor="prgDeptCd" className={styles['ncr-label']}>운영부서 *</label>
-                                <select id="prgDeptCd" name="prgDeptCd" value={formData.prgDeptCd} onChange={handleInputChange} className={styles['ncr-select']}>
+                                <label htmlFor="prgDeptCd" className={styles['ncr-label']}>
+                                    운영부서<span className={styles['ncr-required-star']}>*</span>
+                                </label>
+                                <select 
+                                    id="prgDeptCd" 
+                                    name="prgDeptCd" 
+                                    value={formData.prgDeptCd} 
+                                    onChange={handleInputChange} 
+                                    className={styles['ncr-select']}
+                                >
                                     <option value="">부서 선택</option>
-                                    {departments.map(dept => <option key={dept.deptCd} value={dept.deptCd}>{dept.deptNm}</option>)}
+                                    {departments.map(dept => 
+                                        <option key={dept.deptCd} value={dept.deptCd}>{dept.deptNm}</option>
+                                    )}
                                 </select>
                             </div>
                             <div className={styles['ncr-form-group']}>
                                 <label htmlFor="location" className={styles['ncr-label']}>교육 장소</label>
-                                <input id="location" type="text" name="location" value={formData.location} onChange={handleInputChange} className={styles['ncr-input']} placeholder="예: 공학관 101호 또는 온라인(Zoom)" />
+                                <input 
+                                    id="location" 
+                                    type="text" 
+                                    name="location" 
+                                    value={formData.location} 
+                                    onChange={handleInputChange} 
+                                    className={styles['ncr-input']} 
+                                    placeholder="예: 공학관 101호 또는 온라인(Zoom)" 
+                                />
                             </div>
-                             <div className={styles['ncr-form-group']}></div> {/* For grid alignment */}
+                            <div className={styles['ncr-form-group']}></div> {/* For grid alignment */}
                             <div className={styles['ncr-form-group']}>
                                 <label htmlFor="contactEmail" className={styles['ncr-label']}>문의 이메일</label>
-                                <input id="contactEmail" type="email" name="contactEmail" value={formData.contactEmail} onChange={handleInputChange} className={styles['ncr-input']} placeholder="contact@example.com" />
+                                <input 
+                                    id="contactEmail" 
+                                    type="email" 
+                                    name="contactEmail" 
+                                    value={formData.contactEmail} 
+                                    onChange={handleInputChange} 
+                                    className={styles['ncr-input']} 
+                                    placeholder="contact@example.com" 
+                                />
                             </div>
                             <div className={styles['ncr-form-group']}>
                                 <label htmlFor="contactPhone" className={styles['ncr-label']}>문의 연락처</label>
-                                <input id="contactPhone" type="tel" name="contactPhone" value={formData.contactPhone} onChange={handleInputChange} className={styles['ncr-input']} placeholder="02-1234-5678" />
+                                <input 
+                                    id="contactPhone" 
+                                    type="tel" 
+                                    name="contactPhone" 
+                                    value={formData.contactPhone} 
+                                    onChange={handleInputChange} 
+                                    className={styles['ncr-input']} 
+                                    placeholder="02-1234-5678" 
+                                />
                             </div>
-                         </div>
+                        </div>
                     </div>
 
                     {/* 세부 정보 및 파일 첨부 */}
                     <div className={styles['ncr-card']}>
-                         <h3 className={styles['ncr-card-title']}>세부 정보 및 파일 첨부</h3>
-                         <div className={styles['ncr-form-group']}>
+                        <h3 className={styles['ncr-card-title']}>세부 정보 및 파일 첨부</h3>
+                        <div className={styles['ncr-form-group']}>
                             <label htmlFor="programSchedule" className={styles['ncr-label']}>세부 일정</label>
-                            <textarea id="programSchedule" name="programSchedule" value={formData.programSchedule} onChange={handleInputChange} rows="4" className={styles['ncr-textarea']} placeholder="주차별 교육 내용, 특별활동 등 상세 일정을 자유롭게 기입해주세요." />
+                            <textarea 
+                                id="programSchedule" 
+                                name="programSchedule" 
+                                value={formData.programSchedule} 
+                                onChange={handleInputChange} 
+                                rows="4" 
+                                className={styles['ncr-textarea']} 
+                                placeholder="주차별 교육 내용, 특별활동 등 상세 일정을 자유롭게 기입해주세요." 
+                            />
                         </div>
                         
-                        {/* 파일 첨부 (상하 배치로 수정) */}
+                        {/* 파일 첨부 */}
                         <div className={styles['ncr-form-group']}>
                             <label className={styles['ncr-label']}>첨부파일 (선택)</label>
                             <label htmlFor="attach-files" className={styles['ncr-file-dropzone']}>
                                 <span>클릭하여 파일 선택</span>
                                 <small>각 50MB 이하, 다중 선택 가능</small>
                             </label>
-                            <input id="attach-files" type="file" multiple onChange={handleAttachFileChange} className={styles['ncr-file-input']} accept=".jpg,.jpeg,.png,.gif,.bmp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.hwp,.zip,.rar" />
+                            <input 
+                                id="attach-files" 
+                                type="file" 
+                                multiple 
+                                onChange={handleAttachFileChange} 
+                                className={styles['ncr-file-input']} 
+                                accept=".jpg,.jpeg,.png,.gif,.bmp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.hwp,.zip,.rar" 
+                            />
                             {attachFiles.length > 0 && (
                                 <div className={styles['ncr-file-list']}>
-                                    {attachFiles.map((file, index) => <div key={index} className={styles['ncr-file-item']}>📄 {file.name} ({formatFileSize(file.size)})</div>)}
+                                    {attachFiles.map((file, index) => 
+                                        <div key={index} className={styles['ncr-file-item']}>
+                                            📄 {file.name} ({formatFileSize(file.size)})
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
-                         <div className={styles['ncr-form-group']}>
+                        
+                        <div className={styles['ncr-form-group']}>
                             <label className={styles['ncr-label']}>썸네일 이미지 (선택)</label>
                             <label htmlFor="thumbnail-files" className={styles['ncr-file-dropzone']}>
                                 <span>클릭하여 이미지 선택</span>
                                 <small>10MB 이하 이미지 파일 (목록 페이지에 표시됩니다)</small>
                             </label>
-                            <input id="thumbnail-files" type="file" onChange={handleThumbnailFileChange} className={styles['ncr-file-input']} accept="image/*" />
-                             {thumbnailFiles.length > 0 && (
+                            <input 
+                                id="thumbnail-files" 
+                                type="file" 
+                                onChange={handleThumbnailFileChange} 
+                                className={styles['ncr-file-input']} 
+                                accept="image/*" 
+                            />
+                            {thumbnailFiles.length > 0 && (
                                 <div className={styles['ncr-file-list']}>
-                                    {thumbnailFiles.map((file, index) => <div key={index} className={styles['ncr-file-item']}>🖼️ {file.name} ({formatFileSize(file.size)})</div>)}
+                                    {thumbnailFiles.map((file, index) => 
+                                        <div key={index} className={styles['ncr-file-item']}>
+                                            🖼️ {file.name} ({formatFileSize(file.size)})
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -201,7 +659,7 @@ const NoncurricularRegisterPage = () => {
                             onClick={handleCancel}
                             className={`${styles['ncr-button']} ${styles['ncr-cancel-button']}`}
                         >
-                            등록 취소
+                            취소
                         </button>
                         <button
                             type="button"
@@ -209,7 +667,7 @@ const NoncurricularRegisterPage = () => {
                             disabled={loading}
                             className={`${styles['ncr-button']} ${styles['ncr-submit-button']}`}
                         >
-                            {loading ? '처리 중...' : '프로그램 등록하기'}
+                            {loading ? '처리 중...' : '등록하기'}
                         </button>
                     </div>
                 </div>
