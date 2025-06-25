@@ -46,4 +46,13 @@ public interface StdInfoRepository extends JpaRepository<StdInfo, String> {
     
     // 연락처 중복 확인 (자신 제외)
     boolean existsByPhoneNumberAndUserIdNot(String phoneNumber, String userId);
+    
+    //프로필 
+    @Modifying
+    @Query("UPDATE StdInfo s SET s.profileImageId = :profileImageId WHERE s.userId = :userId")
+    int updateStudentProfileImage(@Param("userId") String userId, @Param("profileImageId") Long profileImageId);
+
+    @Modifying
+    @Query("UPDATE StdInfo s SET s.profileImageId = NULL WHERE s.userId = :userId")
+    int removeStudentProfileImage(@Param("userId") String userId);
 }
