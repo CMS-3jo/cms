@@ -21,6 +21,11 @@ import kr.co.cms.domain.mypage.repository.MyPageRepository;
 import kr.co.cms.domain.mypage.repository.StdInfoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import kr.co.cms.global.file.service.FileService;
+import kr.co.cms.global.file.constants.FileConstants;
+import kr.co.cms.global.file.dto.FileInfoDTO;
+import kr.co.cms.global.file.dto.FileUploadResponseDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +39,9 @@ public class MyPageService {
 	private final StdInfoRepository stdInfoRepository;
 	private final EmplInfoRepository emplInfoRepository;
 	private final GuestSocialUserMyPageRepository guestSocialUserRepository;
+    private final FileService fileService; 
 
+	
 	// 마이페이지 프로필 조회
 	public MyPageProfileResponse getMyProfile(String userId) {
 		log.info("마이페이지 프로필 조회 요청: userId = {}", userId);
@@ -305,18 +312,213 @@ public class MyPageService {
 			throw new RuntimeException("사용자 삭제에 실패했습니다.");
 		}
 	}
+	
+	//프로필 사진 관련
+	/**
+     * 프로필 이미지 업로드
+     */
+    @Transactional
+    public MyPageProfileResponse uploadProfileImage(String userId, String userRole, MultipartFile file) {
+        log.info("프로필 이미지 업로드: userId = {}, userRole = {}", userId, userRole);
+        
+        try {
+            // 1. 기존 프로필 이미지들 삭제 (논리삭제)
+            deleteExistingProfileImages(userId);
+            
+            // 2. 새 프로필 이미지 업로드
+            FileUploadResponseDTO uploadResult = fileService.uploadSingleFile(
+                file,
+                FileConstants.RefType.USER,
+                userId,
+                FileConstants.Category.PROFILE,
+                userId
+            );
+            
+            if (!uploadResult.isSuccess()) {
+                throw new RuntimeException("파일 업로드 실패: " + uploadResult.getMessage());
+            }
+            
+            // 3. 사용자 테이블에 프로필 이미지 ID 업데이트
+            updateUserProfileImageId(userId, userRole, uploadResult.getFileId());
+            
+            log.info("프로필 이미지 업로드 완료: userId = {}, fileId = {}", userId, uploadResult.getFileId());
+            
+            // 4. 업데이트된 프로필 정보 반환
+            return getMyProfile(userId);
+            
+        } catch (Exception e) {
+            log.error("프로필 이미지 업로드 실패: userId = {}, error = {}", userId, e.getMessage(), e);
+            throw new RuntimeException("프로필 이미지 업로드에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 프로필 이미지 삭제
+     */
+    @Transactional
+    public MyPageProfileResponse deleteProfileImage(String userId, String userRole) {
+        log.info("프로필 이미지 삭제: userId = {}, userRole = {}", userId, userRole);
+        
+        try {
+            // 1. 기존 프로필 이미지들 삭제 (논리삭제)
+            deleteExistingProfileImages(userId);
+            
+            // 2. 사용자 테이블에서 프로필 이미지 ID 제거
+            removeUserProfileImageId(userId, userRole);
+            
+            log.info("프로필 이미지 삭제 완료: userId = {}", userId);
+            
+            // 3. 업데이트된 프로필 정보 반환
+            return getMyProfile(userId);
+            
+        } catch (Exception e) {
+            log.error("프로필 이미지 삭제 실패: userId = {}, error = {}", userId, e.getMessage(), e);
+            throw new RuntimeException("프로필 이미지 삭제에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 기존 프로필 이미지들 삭제 (논리삭제)
+     */
+    private void deleteExistingProfileImages(String userId) {
+        try {
+            List<FileInfoDTO> existingImages = fileService.getFileList(
+                FileConstants.RefType.USER,
+                userId,
+                FileConstants.Category.PROFILE
+            );
+            
+            for (FileInfoDTO imageFile : existingImages) {
+                fileService.deleteFile(imageFile.getFileId(), userId);
+            }
+            
+            if (!existingImages.isEmpty()) {
+                log.info("기존 프로필 이미지 {}개 삭제: userId = {}", existingImages.size(), userId);
+            }
+            
+        } catch (Exception e) {
+            log.warn("기존 프로필 이미지 삭제 실패: userId = {}, error = {}", userId, e.getMessage());
+            // 기존 이미지 삭제 실패해도 새 업로드는 진행
+        }
+    }
+    
+    /**
+     * 사용자 테이블에 프로필 이미지 ID 업데이트
+     */
+    @Transactional
+    protected void updateUserProfileImageId(String userId, String userRole, Long imageFileId) {
+        log.info("사용자 테이블 프로필 이미지 ID 업데이트: userId = {}, role = {}, fileId = {}", 
+                userId, userRole, imageFileId);
+        
+        switch (userRole) {
+            case "STUDENT":
+                int studentUpdateCount = stdInfoRepository.updateStudentProfileImage(userId, imageFileId);
+                if (studentUpdateCount == 0) {
+                    throw new RuntimeException("학생 프로필 이미지 업데이트 실패: " + userId);
+                }
+                break;
+                
+            case "PROFESSOR":
+            case "COUNSELOR":
+            case "ADMIN":
+                int employeeUpdateCount = emplInfoRepository.updateEmployeeProfileImage(userId, imageFileId);
+                if (employeeUpdateCount == 0) {
+                    throw new RuntimeException("교직원 프로필 이미지 업데이트 실패: " + userId);
+                }
+                break;
+                
+            default:
+                throw new RuntimeException("프로필 이미지 업데이트를 지원하지 않는 사용자 역할: " + userRole);
+        }
+    }
+    
+    /**
+     * 사용자 테이블에서 프로필 이미지 ID 제거
+     */
+    @Transactional
+    protected void removeUserProfileImageId(String userId, String userRole) {
+        log.info("사용자 테이블 프로필 이미지 ID 제거: userId = {}, role = {}", userId, userRole);
+        
+        switch (userRole) {
+            case "STUDENT":
+                stdInfoRepository.removeStudentProfileImage(userId);
+                break;
+                
+            case "PROFESSOR":
+            case "COUNSELOR":
+            case "ADMIN":
+                emplInfoRepository.removeEmployeeProfileImage(userId);
+                break;
+                
+            default:
+                throw new RuntimeException("프로필 이미지 삭제를 지원하지 않는 사용자 역할: " + userRole);
+        }
+    }
 
 	/**
-	 * UnifiedMyPageView를 MyPageProfileResponse로 변환하는 헬퍼 메서드
+	 * UnifiedMyPageView를 MyPageProfileResponse로 변환하는 헬퍼 메소드
 	 */
-	private MyPageProfileResponse convertToProfileResponse(UnifiedMyPageView view) {
-		return MyPageProfileResponse.builder().userId(view.getUserId()).userType(view.getUserType())
-				.identifierNo(view.getIdentifierNo()).userName(view.getUserName()).deptCode(view.getDeptCode())
-				.deptName(view.getDeptName()).gradeYear(view.getGradeYear()).enterDate(view.getEnterDate())
-				.statusCode(view.getStatusCode()).postalCode(view.getPostalCode()).address(view.getAddress())
-				.detailAddress(view.getDetailAddress()).phoneNumber(view.getPhoneNumber()).email(view.getEmail())
-				.accountStatus(view.getAccountStatus()).accountCreatedDate(view.getAccountCreatedDate())
-				.provider(view.getProvider()).profileImageUrl(view.getProfileImageUrl())
-				.lastLoginDate(view.getLastLoginDate()).build();
-	}
+    private MyPageProfileResponse convertToProfileResponse(UnifiedMyPageView view) {
+        // 동적으로 프로필 이미지 URL 조회
+        String profileImageUrl = getProfileImageUrl(view.getUserId());
+        
+        return MyPageProfileResponse.builder()
+                .userId(view.getUserId())
+                .userType(view.getUserType())
+                .identifierNo(view.getIdentifierNo())
+                .userName(view.getUserName())
+                .deptCode(view.getDeptCode())
+                .deptName(view.getDeptName())
+                .gradeYear(view.getGradeYear())
+                .enterDate(view.getEnterDate())
+                .statusCode(view.getStatusCode())
+                .postalCode(view.getPostalCode())
+                .address(view.getAddress())
+                .detailAddress(view.getDetailAddress())
+                .phoneNumber(view.getPhoneNumber())
+                .email(view.getEmail())
+                .accountStatus(view.getAccountStatus())
+                .accountCreatedDate(view.getAccountCreatedDate())
+                .provider(view.getProvider())
+                .profileImageUrl(profileImageUrl) 
+                .lastLoginDate(view.getLastLoginDate())
+                .build();
+    }
+    
+    /**
+     * 사용자의 프로필 이미지 URL 동적 조회
+     */
+    private String getProfileImageUrl(String userId) {
+        try {
+            log.debug("프로필 이미지 URL 조회 시작: userId = {}", userId);
+            
+            // FileService를 사용해서 사용자의 프로필 이미지 파일 목록 조회
+            List<FileInfoDTO> profileImages = fileService.getFileList(
+                FileConstants.RefType.USER, 
+                userId, 
+                FileConstants.Category.PROFILE
+            );
+            
+            log.debug("조회된 프로필 이미지 파일 수: {}", profileImages.size());
+            
+            if (profileImages != null && !profileImages.isEmpty()) {
+                // 가장 최근 업로드된 파일 또는 첫 번째 파일의 fileId로 URL 생성
+                FileInfoDTO latestImage = profileImages.get(0);
+                Long fileId = latestImage.getFileId();
+                
+                String imageUrl = "/api/files/" + fileId + "/download";
+                
+                log.debug("프로필 이미지 URL 생성 성공: userId = {}, fileId = {}, url = {}", 
+                         userId, fileId, imageUrl);
+                return imageUrl;
+            } else {
+                log.debug("프로필 이미지 없음: userId = {}", userId);
+            }
+            
+        } catch (Exception e) {
+            log.warn("프로필 이미지 URL 조회 실패: userId = {}, error = {}", userId, e.getMessage());
+        }
+        
+        return null; // 프로필 이미지가 없으면 null 반환
+    }
 }

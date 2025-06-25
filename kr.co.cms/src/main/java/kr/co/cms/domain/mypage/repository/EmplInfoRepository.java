@@ -43,4 +43,12 @@ public interface EmplInfoRepository extends JpaRepository<EmplInfo, String> {
     
     // 연락처 중복 확인 (자신 제외)
     boolean existsByPhoneNumberAndUserIdNot(String phoneNumber, String userId);
+    
+    @Modifying
+    @Query("UPDATE EmplInfo e SET e.profileImageId = :profileImageId WHERE e.userId = :userId")
+    int updateEmployeeProfileImage(@Param("userId") String userId, @Param("profileImageId") Long profileImageId);
+
+    @Modifying
+    @Query("UPDATE EmplInfo e SET e.profileImageId = NULL WHERE e.userId = :userId")
+    int removeEmployeeProfileImage(@Param("userId") String userId);
 }
