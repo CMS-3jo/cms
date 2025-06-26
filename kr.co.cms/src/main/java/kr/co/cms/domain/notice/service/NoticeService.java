@@ -159,8 +159,21 @@ public class NoticeService {
         }
         fileService.deleteFile(fileId, userId);
     }
+    /**
+     * 공지사항 파일 정보 조회
+     */
+    public FileInfoDTO getNoticeFileInfo(String noticeId, Long fileId) {
+        FileInfo info = fileService.getFileInfo(fileId);
+        if (info == null || !FileConstants.RefType.NOTICE.equals(info.getRefType()) || !noticeId.equals(info.getRefId())) {
+            return null;
+        }
+        return fileService.getFileList(FileConstants.RefType.NOTICE, noticeId, FileConstants.Category.ATTACH)
+                .stream()
+                .filter(f -> f.getFileId().equals(fileId))
+                .findFirst()
+                .orElse(null);
+    }
 
-    
     /**
      * 공지사항 삭제
      */

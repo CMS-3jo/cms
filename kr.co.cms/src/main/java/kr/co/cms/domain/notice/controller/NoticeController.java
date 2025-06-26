@@ -6,11 +6,16 @@ import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import kr.co.cms.domain.notice.dto.NoticeDto;
 import kr.co.cms.domain.notice.service.NoticeService;
 import kr.co.cms.global.file.dto.FileInfoDTO;
 import kr.co.cms.global.file.dto.FileUploadResponseDTO;
+import kr.co.cms.global.file.service.FileService;
 import kr.co.cms.global.util.TokenUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,7 +29,7 @@ public class NoticeController {
 
     private final NoticeService service;
     private final TokenUtil tokenUtil;
-  
+    private final FileService fileService;
 
     @GetMapping
     public List<NoticeDto> list() {
@@ -113,7 +118,34 @@ public class NoticeController {
         service.deleteNoticeFile(id, fileId, userId);
         return ResponseEntity.ok(Map.of("message", "파일이 삭제되었습니다."));
     }
+    /**
+     * 공지사항 첨부파일 다운로드
+     */
+    @GetMapping("/{id}/files/{fileId}/download")
+    public ResponseEntity<Resource> downloadFile(
+            @PathVariable("id") String id,
+            @PathVariable("fileId") Long fileId) {
 
+        FileInfoDTO info = service.getNoticeFileInfo(id, fileId);
+        if (info == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        byte[] data = fileService.downloadFileContent(fileId);
+        if (data == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        ByteArrayResource resource = new ByteArrayResource(data);
+        String contentType = getContentType(info.getFileExt());
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .contentLength(data.length)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + info.getFileNmOrig() + "\"")
+                .body(resource);
+    }
     /**
      * 공지사항 삭제
      */
@@ -133,5 +165,27 @@ public class NoticeController {
                                                       @RequestBody NoticeDto dto) {
         service.update(id, dto);
         return ResponseEntity.ok(Map.of("noticeId", id));
+    }
+
+    /**
+     * 파일 확장자에 따른 Content-Type 반환
+     */
+    private String getContentType(String fileExt) {
+        if (fileExt == null) return "application/octet-stream";
+
+        switch (fileExt.toLowerCase()) {
+            case "png": return "image/png";
+            case "jpg":
+            case "jpeg": return "image/jpeg";
+            case "gif": return "image/gif";
+            case "bmp": return "image/bmp";
+            case "pdf": return "application/pdf";
+            case "doc": return "application/msword";
+            case "docx": return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case "xls": return "application/vnd.ms-excel";
+            case "xlsx": return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            case "txt": return "text/plain";
+            default: return "application/octet-stream";
+        }
     }
 }
