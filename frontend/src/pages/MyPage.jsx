@@ -3,7 +3,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import PublicHeader from "../components/layout/PublicHeader";
 import Footer from "../components/layout/Footer";
-import * as XLSX from 'xlsx';
+import * as XLSX from "xlsx";
 import "../../public/css/MyPage.css";
 
 const MyPage = () => {
@@ -12,6 +12,159 @@ const MyPage = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  //프로필 이미지 관련
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [imageUploadLoading, setImageUploadLoading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState("");
+  const [imageUploadSuccess, setImageUploadSuccess] = useState("");
+
+  // 프로필 이미지 URL 생성 함수
+  const getProfileImageUrl = (profileImageUrl) => {
+    if (profileImageUrl) {
+      // 백엔드에서 이미 전체 경로를 반환하므로 그대로 사용
+      return `http://localhost:8082${profileImageUrl}`;
+    }
+    return null;
+  };
+
+  // fileId로 직접 URL 생성하는 함수 (필요시)
+  const getProfileImageUrlFromFileId = (fileId) => {
+    if (fileId) {
+      return `http://localhost:8082/api/files/${fileId}/download`;
+    }
+    return null;
+  };
+
+  // 프로필 이미지 업로드 핸들러
+  const handleProfileImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // 파일 검증
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      setImageUploadError("JPG, JPEG, PNG 파일만 업로드 가능합니다.");
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      setImageUploadError("파일 크기는 5MB 이하만 가능합니다.");
+      return;
+    }
+
+    setImageUploadLoading(true);
+    setImageUploadError("");
+    setImageUploadSuccess("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(
+        "http://localhost:8082/api/mypage/profile-image",
+        {
+          method: "POST",
+          credentials: "include", // 쿠키 포함 (인증용)
+          body: formData,
+        }
+      );
+
+      const result = await response.json();
+
+      console.log("업로드 응답:", result);
+
+      if (response.ok && result.success) {
+        setImageUploadSuccess("프로필 이미지가 성공적으로 업로드되었습니다.");
+
+        // 업로드 성공 후 프로필 새로고침
+        console.log("업로드 성공! 프로필 새로고침 중...");
+
+        // 프로필 정보 다시 조회
+        const profileResponse = await apiCall(
+          "http://localhost:8082/api/mypage/profile",
+          {
+            method: "GET",
+          }
+        );
+
+        if (profileResponse.ok) {
+          const profileResult = await profileResponse.json();
+          if (profileResult.success) {
+            console.log("새로고침된 프로필:", profileResult.data);
+            console.log(
+              "새로운 이미지 URL:",
+              profileResult.data.profileImageUrl
+            );
+            setUserProfile(profileResult.data);
+          }
+        }
+      } else {
+        setImageUploadError(
+          result.message || "프로필 이미지 업로드에 실패했습니다."
+        );
+      }
+    } catch (error) {
+      console.error("프로필 이미지 업로드 실패:", error);
+      setImageUploadError("프로필 이미지 업로드 중 오류가 발생했습니다.");
+    } finally {
+      setImageUploadLoading(false);
+      event.target.value = "";
+    }
+  };
+
+  // 프로필 이미지 삭제 핸들러
+  const handleProfileImageDelete = async () => {
+    if (!confirm("프로필 이미지를 삭제하시겠습니까?")) return;
+
+    setImageUploadLoading(true);
+    setImageUploadError("");
+    setImageUploadSuccess("");
+
+    try {
+      const response = await fetch(
+        "http://localhost:8082/api/mypage/profile-image",
+        {
+          method: "DELETE",
+          credentials: "include", // 쿠키 포함 (인증용)
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setImageUploadSuccess("프로필 이미지가 삭제되었습니다.");
+
+        // 삭제 성공 후 프로필 새로고침
+        console.log("삭제 성공! 프로필 새로고침 중...");
+
+        const profileResponse = await apiCall(
+          "http://localhost:8082/api/mypage/profile",
+          {
+            method: "GET",
+          }
+        );
+
+        if (profileResponse.ok) {
+          const profileResult = await profileResponse.json();
+          if (profileResult.success) {
+            console.log("새로고침된 프로필:", profileResult.data);
+            setUserProfile(profileResult.data);
+          }
+        }
+      } else {
+        setImageUploadError(
+          result.message || "프로필 이미지 삭제에 실패했습니다."
+        );
+      }
+    } catch (error) {
+      console.error("프로필 이미지 삭제 실패:", error);
+      setImageUploadError("프로필 이미지 삭제 중 오류가 발생했습니다.");
+    } finally {
+      setImageUploadLoading(false);
+    }
+  };
 
   // 사용자 추가 폼 상태
   const [userForm, setUserForm] = useState({
@@ -29,7 +182,7 @@ const MyPage = () => {
     gradeYear: 1,
     enterDate: "",
     employeeNo: "",
-    statusCode: "ACTIVE"
+    statusCode: "ACTIVE",
   });
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -135,18 +288,18 @@ const MyPage = () => {
   // 역할별 학과 필터링
   const getFilteredDeptList = () => {
     if (!userForm.roleType) return deptList;
-    
+
     const rolePrefix = {
-      'STUDENT': 'S_',
-      'PROFESSOR': 'P_', 
-      'COUNSELOR': 'C_',
-      'ADMIN': 'A_'
+      STUDENT: "S_",
+      PROFESSOR: "P_",
+      COUNSELOR: "C_",
+      ADMIN: "A_",
     };
-    
+
     const prefix = rolePrefix[userForm.roleType];
     if (!prefix) return deptList;
-    
-    return deptList.filter(dept => dept.deptCd.startsWith(prefix));
+
+    return deptList.filter((dept) => dept.deptCd.startsWith(prefix));
   };
 
   // 모달 관련 함수들
@@ -189,7 +342,7 @@ const MyPage = () => {
       gradeYear: 1,
       enterDate: "",
       employeeNo: "",
-      statusCode: "ACTIVE"
+      statusCode: "ACTIVE",
     });
     setSubmitError("");
     setSubmitSuccess("");
@@ -215,23 +368,23 @@ const MyPage = () => {
   // 폼 입력 핸들러
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setUserForm(prev => ({
+    setUserForm((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   // 역할 변경 시 필드 초기화
   const handleRoleChange = (e) => {
     const newRole = e.target.value;
-    setUserForm(prev => ({
+    setUserForm((prev) => ({
       ...prev,
       roleType: newRole,
       deptCode: "", // 역할 변경 시 학과도 초기화
       studentNo: "",
       gradeYear: 1,
       enterDate: "",
-      employeeNo: ""
+      employeeNo: "",
     }));
   };
 
@@ -262,7 +415,7 @@ const MyPage = () => {
         postalCode: userForm.postalCode,
         address: userForm.address,
         detailAddress: userForm.detailAddress,
-        statusCode: userForm.statusCode
+        statusCode: userForm.statusCode,
       };
 
       // 역할별 필드 추가
@@ -290,7 +443,11 @@ const MyPage = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        setSubmitSuccess(`${getUserTypeLabel(userForm.roleType)} "${result.name}" 생성이 완료되었습니다.`);
+        setSubmitSuccess(
+          `${getUserTypeLabel(userForm.roleType)} "${
+            result.name
+          }" 생성이 완료되었습니다.`
+        );
         resetUserForm();
       } else {
         setSubmitError(result.message || "사용자 생성에 실패했습니다.");
@@ -308,8 +465,8 @@ const MyPage = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      setExcelError('엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.');
+    if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {
+      setExcelError("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.");
       return;
     }
 
@@ -323,13 +480,13 @@ const MyPage = () => {
     reader.onload = (event) => {
       try {
         const data = new Uint8Array(event.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
         if (jsonData.length === 0) {
-          setExcelError('엑셀 파일에 데이터가 없습니다.');
+          setExcelError("엑셀 파일에 데이터가 없습니다.");
           return;
         }
 
@@ -337,37 +494,37 @@ const MyPage = () => {
         const processedData = jsonData.map((row, index) => {
           const processedRow = {
             rowNumber: index + 2, // 엑셀에서 헤더 제외한 실제 행 번호
-            userId: row['사용자ID'] || row['userId'] || '',
-            password: row['비밀번호'] || row['password'] || '',
-            roleType: row['역할'] || row['roleType'] || '',
-            name: row['이름'] || row['name'] || '',
-            deptCode: row['학과코드'] || row['deptCode'] || '',
-            phoneNumber: row['전화번호'] || row['phoneNumber'] || '',
-            email: row['이메일'] || row['email'] || '',
-            postalCode: row['우편번호'] || row['postalCode'] || '',
-            address: row['주소'] || row['address'] || '',
-            detailAddress: row['상세주소'] || row['detailAddress'] || '',
-            studentNo: row['학번'] || row['studentNo'] || '',
-            gradeYear: row['학년'] || row['gradeYear'] || 1,
-            enterDate: row['입학일'] || row['enterDate'] || '',
-            employeeNo: row['사번'] || row['employeeNo'] || '',
-            statusCode: row['상태코드'] || row['statusCode'] || 'ACTIVE',
-            errors: []
+            userId: row["사용자ID"] || row["userId"] || "",
+            password: row["비밀번호"] || row["password"] || "",
+            roleType: row["역할"] || row["roleType"] || "",
+            name: row["이름"] || row["name"] || "",
+            deptCode: row["학과코드"] || row["deptCode"] || "",
+            phoneNumber: row["전화번호"] || row["phoneNumber"] || "",
+            email: row["이메일"] || row["email"] || "",
+            postalCode: row["우편번호"] || row["postalCode"] || "",
+            address: row["주소"] || row["address"] || "",
+            detailAddress: row["상세주소"] || row["detailAddress"] || "",
+            studentNo: row["학번"] || row["studentNo"] || "",
+            gradeYear: row["학년"] || row["gradeYear"] || 1,
+            enterDate: row["입학일"] || row["enterDate"] || "",
+            employeeNo: row["사번"] || row["employeeNo"] || "",
+            statusCode: row["상태코드"] || row["statusCode"] || "ACTIVE",
+            errors: [],
           };
 
           // 기본 검증
-          if (!processedRow.userId) processedRow.errors.push('사용자ID 필수');
-          if (!processedRow.password) processedRow.errors.push('비밀번호 필수');
-          if (!processedRow.roleType) processedRow.errors.push('역할 필수');
-          if (!processedRow.name) processedRow.errors.push('이름 필수');
-          if (!processedRow.deptCode) processedRow.errors.push('학과코드 필수');
+          if (!processedRow.userId) processedRow.errors.push("사용자ID 필수");
+          if (!processedRow.password) processedRow.errors.push("비밀번호 필수");
+          if (!processedRow.roleType) processedRow.errors.push("역할 필수");
+          if (!processedRow.name) processedRow.errors.push("이름 필수");
+          if (!processedRow.deptCode) processedRow.errors.push("학과코드 필수");
 
           // 역할별 검증
-          if (processedRow.roleType === 'STUDENT' && !processedRow.studentNo) {
-            processedRow.errors.push('학번 필수');
+          if (processedRow.roleType === "STUDENT" && !processedRow.studentNo) {
+            processedRow.errors.push("학번 필수");
           }
-          if (processedRow.roleType !== 'STUDENT' && !processedRow.employeeNo) {
-            processedRow.errors.push('사번 필수');
+          if (processedRow.roleType !== "STUDENT" && !processedRow.employeeNo) {
+            processedRow.errors.push("사번 필수");
           }
 
           return processedRow;
@@ -375,10 +532,9 @@ const MyPage = () => {
 
         setExcelData(processedData);
         setExcelSuccess(`${processedData.length}개의 데이터를 읽었습니다.`);
-
       } catch (error) {
-        console.error('엑셀 파일 읽기 실패:', error);
-        setExcelError('엑셀 파일을 읽는데 실패했습니다.');
+        console.error("엑셀 파일 읽기 실패:", error);
+        setExcelError("엑셀 파일을 읽는데 실패했습니다.");
       }
     };
 
@@ -389,51 +545,51 @@ const MyPage = () => {
   const downloadExcelTemplate = () => {
     const templateData = [
       {
-        '사용자ID': 'student001',
-        '비밀번호': 'password123',
-        '역할': 'STUDENT',
-        '이름': '김학생',
-        '학과코드': 'COMP001',
-        '학번': '2024001',
-        '사번': '',
-        '학년': 1,
-        '입학일': '2024-03-01',
-        '전화번호': '010-1234-5678',
-        '이메일': 'student@example.com',
-        '우편번호': '12345',
-        '주소': '서울시 강남구',
-        '상세주소': '123번지',
-        '상태코드': 'ACTIVE'
+        사용자ID: "student001",
+        비밀번호: "password123",
+        역할: "STUDENT",
+        이름: "김학생",
+        학과코드: "COMP001",
+        학번: "2024001",
+        사번: "",
+        학년: 1,
+        입학일: "2024-03-01",
+        전화번호: "010-1234-5678",
+        이메일: "student@example.com",
+        우편번호: "12345",
+        주소: "서울시 강남구",
+        상세주소: "123번지",
+        상태코드: "ACTIVE",
       },
       {
-        '사용자ID': 'prof001',
-        '비밀번호': 'password123',
-        '역할': 'PROFESSOR',
-        '이름': '김교수',
-        '학과코드': 'COMP001',
-        '학번': '',
-        '사번': 'P2024001',
-        '학년': '',
-        '입학일': '',
-        '전화번호': '010-9876-5432',
-        '이메일': 'professor@example.com',
-        '우편번호': '54321',
-        '주소': '서울시 서초구',
-        '상세주소': '456번지',
-        '상태코드': 'ACTIVE'
-      }
+        사용자ID: "prof001",
+        비밀번호: "password123",
+        역할: "PROFESSOR",
+        이름: "김교수",
+        학과코드: "COMP001",
+        학번: "",
+        사번: "P2024001",
+        학년: "",
+        입학일: "",
+        전화번호: "010-9876-5432",
+        이메일: "professor@example.com",
+        우편번호: "54321",
+        주소: "서울시 서초구",
+        상세주소: "456번지",
+        상태코드: "ACTIVE",
+      },
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(templateData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, '사용자목록');
-    XLSX.writeFile(workbook, '사용자_일괄등록_템플릿.xlsx');
+    XLSX.utils.book_append_sheet(workbook, worksheet, "사용자목록");
+    XLSX.writeFile(workbook, "사용자_일괄등록_템플릿.xlsx");
   };
 
   // 엑셀 데이터 일괄 등록
   const handleBulkSubmit = async () => {
     if (!excelData.length) {
-      setExcelError('등록할 데이터가 없습니다.');
+      setExcelError("등록할 데이터가 없습니다.");
       return;
     }
 
@@ -451,7 +607,7 @@ const MyPage = () => {
           userId: rowData.userId,
           name: rowData.name,
           success: false,
-          message: `검증 실패: ${rowData.errors.join(', ')}`
+          message: `검증 실패: ${rowData.errors.join(", ")}`,
         });
         continue;
       }
@@ -468,7 +624,7 @@ const MyPage = () => {
           postalCode: rowData.postalCode,
           address: rowData.address,
           detailAddress: rowData.detailAddress,
-          statusCode: rowData.statusCode
+          statusCode: rowData.statusCode,
         };
 
         // 역할별 필드 추가
@@ -501,7 +657,7 @@ const MyPage = () => {
             userId: rowData.userId,
             name: rowData.name,
             success: true,
-            message: "등록 성공"
+            message: "등록 성공",
           });
         } else {
           results.push({
@@ -509,28 +665,27 @@ const MyPage = () => {
             userId: rowData.userId,
             name: rowData.name,
             success: false,
-            message: result.message || "등록 실패"
+            message: result.message || "등록 실패",
           });
         }
-
       } catch (error) {
         results.push({
           rowNumber: rowData.rowNumber,
           userId: rowData.userId,
           name: rowData.name,
           success: false,
-          message: `오류: ${error.message}`
+          message: `오류: ${error.message}`,
         });
       }
 
       // 요청 간 딜레이 (서버 부하 방지)
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     setBulkResults(results);
 
-    const successCount = results.filter(r => r.success).length;
-    const failCount = results.filter(r => !r.success).length;
+    const successCount = results.filter((r) => r.success).length;
+    const failCount = results.filter((r) => !r.success).length;
 
     if (failCount === 0) {
       setExcelSuccess(`모든 사용자(${successCount}명) 등록이 완료되었습니다.`);
@@ -559,7 +714,9 @@ const MyPage = () => {
         if (result.success) {
           setUserList(result.data || []);
         } else {
-          setUserListError(result.message || "사용자 목록을 불러오는데 실패했습니다.");
+          setUserListError(
+            result.message || "사용자 목록을 불러오는데 실패했습니다."
+          );
         }
       } else {
         setUserListError("사용자 목록을 불러오는데 실패했습니다.");
@@ -574,15 +731,16 @@ const MyPage = () => {
 
   // 사용자 검색 필터링
   const getFilteredUsers = () => {
-    return userList.filter(user => {
-      const matchesSearch = !searchQuery || 
+    return userList.filter((user) => {
+      const matchesSearch =
+        !searchQuery ||
         user.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.userId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.identifierNo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.deptName?.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesRole = filterRole === "ALL" || user.userType === filterRole;
-      
+
       return matchesSearch && matchesRole;
     });
   };
@@ -591,7 +749,7 @@ const MyPage = () => {
   const toggleUserStatus = async (userId, currentStatus) => {
     try {
       const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-      
+
       const response = await apiCall(
         `http://localhost:8082/api/mypage/admin/users/${userId}/status`,
         {
@@ -702,46 +860,135 @@ const MyPage = () => {
     <>
       <PublicHeader />
       <main>
-        <div className="container_layout">
-          {/* 프로필 헤더 */}
-          <div className="profile-header-new">
-            <div className="profile-avatar">
-              <div className="avatar-circle">
-                {userProfile.profileImageUrl ? (
-                  <img
-                    src={userProfile.profileImageUrl}
-                    alt="프로필 이미지"
-                    className="avatar-image"
-                  />
-                ) : (
-                  <span className="avatar-text">
-                    {userProfile.userName?.charAt(0) || "U"}
-                  </span>
-                )}
+        <div className="profile-header-new">
+          <div className="profile-avatar">
+            <div className="avatar-circle">
+  {/* 디버깅: 현재 상태 확인 */}
+  {console.log('렌더링 시점 userProfile:', userProfile)}
+  {console.log('렌더링 시점 profileImageUrl:', userProfile?.profileImageUrl)}
+  
+  {userProfile.profileImageUrl ? (
+    <img
+      src={`http://localhost:8082${userProfile.profileImageUrl}`}
+      alt="프로필 이미지"
+      className="avatar-image"
+      onLoad={() => {
+        console.log('✅ 이미지 로딩 성공:', `http://localhost:8082${userProfile.profileImageUrl}`);
+      }}
+      onError={(e) => {
+        console.error('❌ 이미지 로딩 실패:', e.target.src);
+        console.error('원본 URL:', userProfile.profileImageUrl);
+        // 에러 시 img 태그 숨기고 기본 아바타 표시
+        e.target.style.display = 'none';
+      }}
+    />
+  ) : (
+    <span className="avatar-text">
+      {userProfile.userName?.charAt(0) || "U"}
+    </span>
+  )}
+  
+  {/* 프로필 이미지 편집 버튼 (게스트 제외) */}
+  {userProfile.userType !== "GUEST" && (
+    <div className="avatar-edit-overlay">
+      {/* ✅ 사진이 있으면 삭제 버튼만, 없으면 업로드 버튼만 표시 */}
+      {userProfile.profileImageUrl ? (
+        // 사진이 있을 때: 삭제 버튼만 표시
+        <button
+          onClick={handleProfileImageDelete}
+          className="avatar-delete-btn"
+          title="프로필 이미지 삭제"
+          disabled={imageUploadLoading}
+        >
+          🗑️
+        </button>
+      ) : (
+        // 사진이 없을 때: 업로드 버튼만 표시
+        <>
+          <label htmlFor="profile-image-upload" className="avatar-edit-btn" title="프로필 이미지 변경">
+            📷
+          </label>
+          <input
+            id="profile-image-upload"
+            type="file"
+            accept="image/jpeg,image/jpg,image/png"
+            onChange={handleProfileImageUpload} 
+            style={{ display: 'none' }}
+            disabled={imageUploadLoading}
+          />
+        </>
+      )}
+    </div>
+  )}
+</div>
+
+            {/* 업로드 상태 표시 */}
+            {imageUploadLoading && (
+              <div className="image-upload-status">
+                <div
+                  className="spinner-border spinner-border-sm text-primary"
+                  role="status"
+                >
+                  <span className="visually-hidden">업로드 중...</span>
+                </div>
+                <small>업로드 중...</small>
               </div>
-            </div>
-            <div className="profile-info">
-              <h1 className="profile-name">
-                {userProfile.userName || "이름 없음"}
-                <span className="profile-badge">
-                  {getUserTypeLabel(userProfile.userType)}
+            )}
+          </div>
+
+          <div className="profile-info">
+            <h1 className="profile-name">
+              {userProfile.userName || "이름 없음"}
+              <span className="profile-badge">
+                {getUserTypeLabel(userProfile.userType)}
+              </span>
+            </h1>
+            <div className="profile-details">
+              <div className="profile-item">
+                <span className="profile-icon">🆔</span>
+                <span>{userProfile.identifierNo || userProfile.userId}</span>
+              </div>
+              <div className="profile-item">
+                <span className="profile-icon">🎓</span>
+                <span>
+                  {userProfile.deptName || "소속 없음"}
+                  {userProfile.gradeYear && ` ${userProfile.gradeYear}학년`}
                 </span>
-              </h1>
-              <div className="profile-details">
-                <div className="profile-item">
-                  <span className="profile-icon">🆔</span>
-                  <span>{userProfile.identifierNo || userProfile.userId}</span>
-                </div>
-                <div className="profile-item">
-                  <span className="profile-icon">🎓</span>
-                  <span>
-                    {userProfile.deptName || "소속 없음"}
-                    {userProfile.gradeYear && ` ${userProfile.gradeYear}학년`}
-                  </span>
-                </div>
               </div>
             </div>
           </div>
+
+          {/* 프로필 이미지 업로드 관련 알림 메시지 */}
+          {(imageUploadSuccess || imageUploadError) && (
+            <div className="image-upload-messages">
+              {imageUploadSuccess && (
+                <div
+                  className="alert alert-success alert-dismissible fade show"
+                  role="alert"
+                >
+                  {imageUploadSuccess}
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setImageUploadSuccess("")}
+                  ></button>
+                </div>
+              )}
+              {imageUploadError && (
+                <div
+                  className="alert alert-danger alert-dismissible fade show"
+                  role="alert"
+                >
+                  {imageUploadError}
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setImageUploadError("")}
+                  ></button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* 메뉴 카드들 */}
           <div className="menu-cards-grid">
@@ -841,10 +1088,7 @@ const MyPage = () => {
                   {activeModal === "user-list" && "👥 사용자 관리"}
                   {activeModal === "detail" && "📋 상담내용 상세보기"}
                 </h2>
-                <button
-                  className="close-button-new"
-                  onClick={closeModal}
-                >
+                <button className="close-button-new" onClick={closeModal}>
                   ✕
                 </button>
               </div>
@@ -870,7 +1114,9 @@ const MyPage = () => {
                         </div>
                         <div className="info-item">
                           <span className="info-label">
-                            {userProfile.userType === "STUDENT" ? "학번" : "사번"}
+                            {userProfile.userType === "STUDENT"
+                              ? "학번"
+                              : "사번"}
                           </span>
                           <span className="info-value">
                             {userProfile.identifierNo || "정보 없음"}
@@ -882,19 +1128,22 @@ const MyPage = () => {
                             {userProfile.deptName || "정보 없음"}
                           </span>
                         </div>
-                        {userProfile.userType === "STUDENT" && userProfile.gradeYear && (
-                          <div className="info-item">
-                            <span className="info-label">학년</span>
-                            <span className="info-value">
-                              {userProfile.gradeYear}학년
-                            </span>
-                          </div>
-                        )}
+                        {userProfile.userType === "STUDENT" &&
+                          userProfile.gradeYear && (
+                            <div className="info-item">
+                              <span className="info-label">학년</span>
+                              <span className="info-value">
+                                {userProfile.gradeYear}학년
+                              </span>
+                            </div>
+                          )}
                         {userProfile.enterDate && (
                           <div className="info-item">
                             <span className="info-label">입학일</span>
                             <span className="info-value">
-                              {new Date(userProfile.enterDate).toLocaleDateString("ko-KR")}
+                              {new Date(
+                                userProfile.enterDate
+                              ).toLocaleDateString("ko-KR")}
                             </span>
                           </div>
                         )}
@@ -920,7 +1169,8 @@ const MyPage = () => {
                           <div className="info-item full-width">
                             <span className="info-label">주소</span>
                             <span className="info-value">
-                              {userProfile.postalCode && `(${userProfile.postalCode}) `}
+                              {userProfile.postalCode &&
+                                `(${userProfile.postalCode}) `}
                               {userProfile.address || "정보 없음"}
                               {userProfile.detailAddress && (
                                 <>
@@ -949,7 +1199,9 @@ const MyPage = () => {
                             <div className="info-item">
                               <span className="info-label">마지막 로그인</span>
                               <span className="info-value">
-                                {new Date(userProfile.lastLoginDate).toLocaleString("ko-KR")}
+                                {new Date(
+                                  userProfile.lastLoginDate
+                                ).toLocaleString("ko-KR")}
                               </span>
                             </div>
                           )}
@@ -998,19 +1250,40 @@ const MyPage = () => {
                       {/* 통계 정보 */}
                       <div className="user-stats">
                         <div className="stat-box">
-                          <span className="stat-number">{getFilteredUsers().length}</span>
+                          <span className="stat-number">
+                            {getFilteredUsers().length}
+                          </span>
                           <span className="stat-label">검색 결과</span>
                         </div>
                         <div className="stat-box">
-                          <span className="stat-number">{userList.filter(u => u.accountStatus === 'ACTIVE').length}</span>
+                          <span className="stat-number">
+                            {
+                              userList.filter(
+                                (u) => u.accountStatus === "ACTIVE"
+                              ).length
+                            }
+                          </span>
                           <span className="stat-label">활성 사용자</span>
                         </div>
                         <div className="stat-box">
-                          <span className="stat-number">{userList.filter(u => u.userType === 'STUDENT').length}</span>
+                          <span className="stat-number">
+                            {
+                              userList.filter((u) => u.userType === "STUDENT")
+                                .length
+                            }
+                          </span>
                           <span className="stat-label">학생</span>
                         </div>
                         <div className="stat-box">
-                          <span className="stat-number">{userList.filter(u => ['PROFESSOR', 'COUNSELOR', 'ADMIN'].includes(u.userType)).length}</span>
+                          <span className="stat-number">
+                            {
+                              userList.filter((u) =>
+                                ["PROFESSOR", "COUNSELOR", "ADMIN"].includes(
+                                  u.userType
+                                )
+                              ).length
+                            }
+                          </span>
                           <span className="stat-label">교직원</span>
                         </div>
                       </div>
@@ -1019,7 +1292,10 @@ const MyPage = () => {
                     {/* 로딩 상태 */}
                     {userListLoading && (
                       <div className="loading-section">
-                        <div className="spinner-border text-primary" role="status">
+                        <div
+                          className="spinner-border text-primary"
+                          role="status"
+                        >
                           <span className="visually-hidden">Loading...</span>
                         </div>
                         <p>사용자 목록을 불러오는 중...</p>
@@ -1053,42 +1329,80 @@ const MyPage = () => {
                           </thead>
                           <tbody>
                             {getFilteredUsers().map((user, index) => (
-                              <tr key={index} className={user.accountStatus === 'ACTIVE' ? 'active-row' : 'inactive-row'}>
+                              <tr
+                                key={index}
+                                className={
+                                  user.accountStatus === "ACTIVE"
+                                    ? "active-row"
+                                    : "inactive-row"
+                                }
+                              >
                                 <td className="user-name">
                                   <div className="name-cell">
-                                    <span className="name">{user.userName || '이름 없음'}</span>
+                                    <span className="name">
+                                      {user.userName || "이름 없음"}
+                                    </span>
                                     {user.gradeYear && (
-                                      <span className="grade-badge">{user.gradeYear}학년</span>
+                                      <span className="grade-badge">
+                                        {user.gradeYear}학년
+                                      </span>
                                     )}
                                   </div>
                                 </td>
                                 <td className="user-id">{user.userId}</td>
                                 <td>
-                                  <span className={`role-badge role-${user.userType?.toLowerCase()}`}>
+                                  <span
+                                    className={`role-badge role-${user.userType?.toLowerCase()}`}
+                                  >
                                     {getUserTypeLabel(user.userType)}
                                   </span>
                                 </td>
-                                <td className="identifier">{user.identifierNo || '-'}</td>
-                                <td className="dept">{user.deptName || '-'}</td>
-                                <td className="email">{user.email || '-'}</td>
-                                <td className="phone">{user.phoneNumber || '-'}</td>
+                                <td className="identifier">
+                                  {user.identifierNo || "-"}
+                                </td>
+                                <td className="dept">{user.deptName || "-"}</td>
+                                <td className="email">{user.email || "-"}</td>
+                                <td className="phone">
+                                  {user.phoneNumber || "-"}
+                                </td>
                                 <td>
-                                  <span className={`status-badge status-${user.accountStatus?.toLowerCase()}`}>
-                                    {user.accountStatus === 'ACTIVE' ? '활성' : '비활성'}
+                                  <span
+                                    className={`status-badge status-${user.accountStatus?.toLowerCase()}`}
+                                  >
+                                    {user.accountStatus === "ACTIVE"
+                                      ? "활성"
+                                      : "비활성"}
                                   </span>
                                 </td>
                                 <td className="created-date">
-                                  {user.accountCreatedDate ? 
-                                    new Date(user.accountCreatedDate).toLocaleDateString('ko-KR') : '-'
-                                  }
+                                  {user.accountCreatedDate
+                                    ? new Date(
+                                        user.accountCreatedDate
+                                      ).toLocaleDateString("ko-KR")
+                                    : "-"}
                                 </td>
                                 <td className="actions">
                                   <button
-                                    onClick={() => toggleUserStatus(user.userId, user.accountStatus)}
-                                    className={`btn btn-sm ${user.accountStatus === 'ACTIVE' ? 'btn-warning' : 'btn-success'}`}
-                                    title={user.accountStatus === 'ACTIVE' ? '비활성화' : '활성화'}
+                                    onClick={() =>
+                                      toggleUserStatus(
+                                        user.userId,
+                                        user.accountStatus
+                                      )
+                                    }
+                                    className={`btn btn-sm ${
+                                      user.accountStatus === "ACTIVE"
+                                        ? "btn-warning"
+                                        : "btn-success"
+                                    }`}
+                                    title={
+                                      user.accountStatus === "ACTIVE"
+                                        ? "비활성화"
+                                        : "활성화"
+                                    }
                                   >
-                                    {user.accountStatus === 'ACTIVE' ? '🔒' : '🔓'}
+                                    {user.accountStatus === "ACTIVE"
+                                      ? "🔒"
+                                      : "🔓"}
                                   </button>
                                 </td>
                               </tr>
@@ -1105,11 +1419,13 @@ const MyPage = () => {
                     )}
 
                     {/* 데이터가 없는 경우 */}
-                    {!userListLoading && userList.length === 0 && !userListError && (
-                      <div className="no-data">
-                        <p>등록된 사용자가 없습니다.</p>
-                      </div>
-                    )}
+                    {!userListLoading &&
+                      userList.length === 0 &&
+                      !userListError && (
+                        <div className="no-data">
+                          <p>등록된 사용자가 없습니다.</p>
+                        </div>
+                      )}
                   </div>
                 )}
 
@@ -1121,7 +1437,7 @@ const MyPage = () => {
                         {submitSuccess}
                       </div>
                     )}
-                    
+
                     {submitError && (
                       <div className="alert alert-danger" role="alert">
                         {submitError}
@@ -1134,7 +1450,9 @@ const MyPage = () => {
                         <h4>기본 계정 정보</h4>
                         <div className="form-row">
                           <div className="form-group">
-                            <label htmlFor="userId">사용자 ID <span className="required">*</span></label>
+                            <label htmlFor="userId">
+                              사용자 ID <span className="required">*</span>
+                            </label>
                             <input
                               type="text"
                               id="userId"
@@ -1146,7 +1464,9 @@ const MyPage = () => {
                             />
                           </div>
                           <div className="form-group">
-                            <label htmlFor="password">비밀번호 <span className="required">*</span></label>
+                            <label htmlFor="password">
+                              비밀번호 <span className="required">*</span>
+                            </label>
                             <input
                               type="password"
                               id="password"
@@ -1161,7 +1481,9 @@ const MyPage = () => {
 
                         <div className="form-row">
                           <div className="form-group">
-                            <label htmlFor="roleType">역할 <span className="required">*</span></label>
+                            <label htmlFor="roleType">
+                              역할 <span className="required">*</span>
+                            </label>
                             <select
                               id="roleType"
                               name="roleType"
@@ -1177,7 +1499,9 @@ const MyPage = () => {
                             </select>
                           </div>
                           <div className="form-group">
-                            <label htmlFor="name">이름 <span className="required">*</span></label>
+                            <label htmlFor="name">
+                              이름 <span className="required">*</span>
+                            </label>
                             <input
                               type="text"
                               id="name"
@@ -1197,7 +1521,9 @@ const MyPage = () => {
                         {userForm.roleType === "STUDENT" ? (
                           <div className="form-row">
                             <div className="form-group">
-                              <label htmlFor="studentNo">학번 <span className="required">*</span></label>
+                              <label htmlFor="studentNo">
+                                학번 <span className="required">*</span>
+                              </label>
                               <input
                                 type="text"
                                 id="studentNo"
@@ -1227,7 +1553,9 @@ const MyPage = () => {
                         ) : (
                           <div className="form-row">
                             <div className="form-group">
-                              <label htmlFor="employeeNo">사번 <span className="required">*</span></label>
+                              <label htmlFor="employeeNo">
+                                사번 <span className="required">*</span>
+                              </label>
                               <input
                                 type="text"
                                 id="employeeNo"
@@ -1259,7 +1587,9 @@ const MyPage = () => {
 
                         <div className="form-row">
                           <div className="form-group">
-                            <label htmlFor="deptCode">학과 <span className="required">*</span></label>
+                            <label htmlFor="deptCode">
+                              학과 <span className="required">*</span>
+                            </label>
                             <select
                               id="deptCode"
                               name="deptCode"
@@ -1277,7 +1607,9 @@ const MyPage = () => {
                               ))}
                             </select>
                             {deptLoading && (
-                              <small className="form-text text-muted">학과 목록을 불러오는 중...</small>
+                              <small className="form-text text-muted">
+                                학과 목록을 불러오는 중...
+                              </small>
                             )}
                           </div>
                         </div>
@@ -1382,7 +1714,10 @@ const MyPage = () => {
                     {/* 템플릿 다운로드 섹션 */}
                     <div className="bulk-section">
                       <h4>1단계: 템플릿 다운로드</h4>
-                      <p>아래 버튼을 클릭하여 사용자 등록용 엑셀 템플릿을 다운로드하세요.</p>
+                      <p>
+                        아래 버튼을 클릭하여 사용자 등록용 엑셀 템플릿을
+                        다운로드하세요.
+                      </p>
                       <button
                         type="button"
                         onClick={downloadExcelTemplate}
@@ -1390,15 +1725,30 @@ const MyPage = () => {
                       >
                         📥 엑셀 템플릿 다운로드
                       </button>
-                                              <div className="bulk-info">
+                      <div className="bulk-info">
                         <h5>📋 필수 입력 항목:</h5>
                         <ul>
-                          <li><strong>사용자ID, 비밀번호, 역할, 이름, 학과코드</strong> - 모든 사용자 필수</li>
-                          <li><strong>학번</strong> - 학생(STUDENT) 역할일 때 필수</li>
-                          <li><strong>사번</strong> - 교직원(PROFESSOR, COUNSELOR, ADMIN) 역할일 때 필수</li>
+                          <li>
+                            <strong>
+                              사용자ID, 비밀번호, 역할, 이름, 학과코드
+                            </strong>{" "}
+                            - 모든 사용자 필수
+                          </li>
+                          <li>
+                            <strong>학번</strong> - 학생(STUDENT) 역할일 때 필수
+                          </li>
+                          <li>
+                            <strong>사번</strong> - 교직원(PROFESSOR, COUNSELOR,
+                            ADMIN) 역할일 때 필수
+                          </li>
                         </ul>
-                        <p><strong>역할 옵션:</strong> STUDENT, PROFESSOR, COUNSELOR, ADMIN</p>
-                        <p><strong>학과코드 규칙:</strong></p>
+                        <p>
+                          <strong>역할 옵션:</strong> STUDENT, PROFESSOR,
+                          COUNSELOR, ADMIN
+                        </p>
+                        <p>
+                          <strong>학과코드 규칙:</strong>
+                        </p>
                         <ul>
                           <li>학생: S_로 시작 (예: S_COMP001)</li>
                           <li>교수: P_로 시작 (예: P_COMP001)</li>
@@ -1419,9 +1769,16 @@ const MyPage = () => {
                           onChange={handleExcelUpload}
                           className="file-input"
                         />
-                        <label htmlFor="excelFile" className="file-upload-label">
+                        <label
+                          htmlFor="excelFile"
+                          className="file-upload-label"
+                        >
                           <span className="upload-icon">📁</span>
-                          <span>{excelFile ? excelFile.name : '엑셀 파일을 선택해주세요'}</span>
+                          <span>
+                            {excelFile
+                              ? excelFile.name
+                              : "엑셀 파일을 선택해주세요"}
+                          </span>
                         </label>
                       </div>
                     </div>
@@ -1436,13 +1793,24 @@ const MyPage = () => {
                               📊 총 {excelData.length}개 데이터
                             </span>
                             <span className="stat-item error">
-                              ❌ 오류 {excelData.filter(row => row.errors.length > 0).length}개
+                              ❌ 오류{" "}
+                              {
+                                excelData.filter((row) => row.errors.length > 0)
+                                  .length
+                              }
+                              개
                             </span>
                             <span className="stat-item success">
-                              ✅ 정상 {excelData.filter(row => row.errors.length === 0).length}개
+                              ✅ 정상{" "}
+                              {
+                                excelData.filter(
+                                  (row) => row.errors.length === 0
+                                ).length
+                              }
+                              개
                             </span>
                           </div>
-                          
+
                           <div className="preview-table-container">
                             <table className="preview-table">
                               <thead>
@@ -1458,7 +1826,14 @@ const MyPage = () => {
                               </thead>
                               <tbody>
                                 {excelData.slice(0, 10).map((row, index) => (
-                                  <tr key={index} className={row.errors.length > 0 ? 'error-row' : 'success-row'}>
+                                  <tr
+                                    key={index}
+                                    className={
+                                      row.errors.length > 0
+                                        ? "error-row"
+                                        : "success-row"
+                                    }
+                                  >
                                     <td>{row.rowNumber}</td>
                                     <td>{row.userId}</td>
                                     <td>{row.name}</td>
@@ -1467,11 +1842,16 @@ const MyPage = () => {
                                     <td>{row.studentNo || row.employeeNo}</td>
                                     <td>
                                       {row.errors.length > 0 ? (
-                                        <span className="error-text" title={row.errors.join(', ')}>
+                                        <span
+                                          className="error-text"
+                                          title={row.errors.join(", ")}
+                                        >
                                           오류 {row.errors.length}개
                                         </span>
                                       ) : (
-                                        <span className="success-text">정상</span>
+                                        <span className="success-text">
+                                          정상
+                                        </span>
                                       )}
                                     </td>
                                   </tr>
@@ -1479,7 +1859,9 @@ const MyPage = () => {
                               </tbody>
                             </table>
                             {excelData.length > 10 && (
-                              <p className="preview-more">... 외 {excelData.length - 10}개 더</p>
+                              <p className="preview-more">
+                                ... 외 {excelData.length - 10}개 더
+                              </p>
                             )}
                           </div>
                         </div>
@@ -1494,10 +1876,20 @@ const MyPage = () => {
                           <button
                             type="button"
                             onClick={handleBulkSubmit}
-                            disabled={excelLoading || excelData.filter(row => row.errors.length === 0).length === 0}
+                            disabled={
+                              excelLoading ||
+                              excelData.filter((row) => row.errors.length === 0)
+                                .length === 0
+                            }
                             className="btn btn-primary"
                           >
-                            {excelLoading ? "등록 중..." : `${excelData.filter(row => row.errors.length === 0).length}명 일괄 등록`}
+                            {excelLoading
+                              ? "등록 중..."
+                              : `${
+                                  excelData.filter(
+                                    (row) => row.errors.length === 0
+                                  ).length
+                                }명 일괄 등록`}
                           </button>
                         </div>
                       </div>
@@ -1510,13 +1902,15 @@ const MyPage = () => {
                         <div className="results-container">
                           <div className="results-summary">
                             <span className="result-stat success">
-                              성공: {bulkResults.filter(r => r.success).length}명
+                              성공:{" "}
+                              {bulkResults.filter((r) => r.success).length}명
                             </span>
                             <span className="result-stat error">
-                              실패: {bulkResults.filter(r => !r.success).length}명
+                              실패:{" "}
+                              {bulkResults.filter((r) => !r.success).length}명
                             </span>
                           </div>
-                          
+
                           <div className="results-table-container">
                             <table className="results-table">
                               <thead>
@@ -1530,13 +1924,26 @@ const MyPage = () => {
                               </thead>
                               <tbody>
                                 {bulkResults.map((result, index) => (
-                                  <tr key={index} className={result.success ? 'success-row' : 'error-row'}>
+                                  <tr
+                                    key={index}
+                                    className={
+                                      result.success
+                                        ? "success-row"
+                                        : "error-row"
+                                    }
+                                  >
                                     <td>{result.rowNumber}</td>
                                     <td>{result.userId}</td>
                                     <td>{result.name}</td>
                                     <td>
-                                      <span className={result.success ? 'success-badge' : 'error-badge'}>
-                                        {result.success ? '성공' : '실패'}
+                                      <span
+                                        className={
+                                          result.success
+                                            ? "success-badge"
+                                            : "error-badge"
+                                        }
+                                      >
+                                        {result.success ? "성공" : "실패"}
                                       </span>
                                     </td>
                                     <td>{result.message}</td>
@@ -1555,7 +1962,7 @@ const MyPage = () => {
                         {excelSuccess}
                       </div>
                     )}
-                    
+
                     {excelError && (
                       <div className="alert alert-danger" role="alert">
                         {excelError}

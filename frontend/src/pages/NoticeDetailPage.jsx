@@ -69,6 +69,28 @@ useEffect(() => {
                     <td>{formatDate(notice.createdDate)}</td>
                   </tr>
                   <tr>
+                    <th>첨부파일</th>
+                    <td colSpan="2">
+                      {notice.files && notice.files.length > 0 ? (
+                        <ul>
+                          {notice.files.map((file) => (
+                            <li key={file.fileId}>
+                              <a
+                                href={`/api/files/${file.fileId}/download`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {file.fileNmOrig}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        '없음'
+                      )}
+                    </td>
+                  </tr>
+                  <tr>
                     <td colSpan="2" dangerouslySetInnerHTML={{ __html: notice.content }} />
                   </tr>
                  
