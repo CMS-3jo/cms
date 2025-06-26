@@ -9,12 +9,20 @@ import { useUserProfile } from '../hooks/useUserProfile';
 
 const NoticeDetailPage = () => {
   const { id } = useParams();
- const { fetchNotices, getNoticeById, notices, loading } = useNotices();
+const { fetchNotices, getNoticeById, deleteNotice, notices, loading } = useNotices();
   const navigate = useNavigate();
   const [notice, setNotice] = useState(null);
   const profile = useUserProfile();
   const canEdit = profile?.deptCode && !profile.deptCode.startsWith('S_');
-
+ const handleDelete = async () => {
+    if (!window.confirm('공지사항을 삭제하시겠습니까?')) return;
+    const result = await deleteNotice(id);
+    if (result.success) {
+      navigate('/notices');
+    } else {
+      alert('삭제 실패');
+    }
+  };
 
   useEffect(() => {
     if (notices.length === 0) {
@@ -97,13 +105,23 @@ useEffect(() => {
                 </tbody>
               </table>
               {canEdit && (
-                <button
-                  className="btn btn-primary"
-                  onClick={() => navigate(`/notices/${id}/edit`)}
-                  style={{ marginRight: '10px' }}
-                >
-                  수정
-                </button>
+                    <>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => navigate(`/notices/${id}/edit`)}
+                    style={{ marginRight: '10px' }}
+                  >
+                    수정
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={handleDelete}
+                    style={{ marginRight: '10px' }}
+                  >
+                    삭제
+                  </button>
+                </>
               )}
               <button className="btn btn-secondary" onClick={() => navigate('/notices')}>
                 목록

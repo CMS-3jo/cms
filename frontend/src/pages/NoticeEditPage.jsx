@@ -10,27 +10,27 @@ import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 const NoticeEditPage = () => {
   const { id } = useParams();
-  const { notices, fetchNotices, getNoticeById, updateNotice } = useNotices();
+  const { notices, fetchNotices, getNoticeById, updateNotice, deleteNotice } = useNotices();
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
   const { user } = useAuth();
 
- const [existingFiles, setExistingFiles] = useState([]);
+  const [existingFiles, setExistingFiles] = useState([]);
   useEffect(() => {
     if (notices.length === 0) {
       fetchNotices();
     }
- }, [fetchNotices, notices.length]);
+  }, [fetchNotices, notices.length]);
 
- useEffect(() => {
+  useEffect(() => {
     const loadNotice = async () => {
       const data = await getNoticeById(id);
       if (data) {
         setTitle(data.title);
         setContent(data.content);
-          setExistingFiles(Array.isArray(data.files) ? data.files : []);
+        setExistingFiles(data.files || []);
       }
     };
 
@@ -38,10 +38,30 @@ const NoticeEditPage = () => {
       loadNotice();
     }
   }, [id, getNoticeById, notices]);
+  const handleFileDelete = async (fileId) => {
+    if (!window.confirm('파일을 삭제하시겠습니까?')) return;
+    try {
+      await fetch(`/api/files/${fileId}`, { method: 'DELETE', credentials: 'include' });
+      setExistingFiles((prev) => prev.filter((f) => f.fileId !== fileId));
+    } catch (err) {
+      console.error('파일 삭제 실패:', err);
+      alert('파일 삭제 실패');
+    }
+  };
+
+  const handleDeleteNotice = async () => {
+    if (!window.confirm('공지사항을 삭제하시겠습니까?')) return;
+    const result = await deleteNotice(id);
+    if (result.success) {
+      navigate('/notices');
+    } else {
+      alert('삭제 실패');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-      const result = await updateNotice(id, {
+    const result = await updateNotice(id, {
       title,
       content,
       files,
@@ -80,8 +100,9 @@ const NoticeEditPage = () => {
                 onChange={(event, editor) => setContent(editor.getData())}
               />
             </div>
+
             <div className="mb-3">
-             <label className="form-label">기존 첨부파일</label>
+              <label className="form-label">기존 첨부파일</label>
               {existingFiles.length > 0 ? (
                 <ul>
                   {existingFiles.map((file) => (
@@ -93,18 +114,33 @@ const NoticeEditPage = () => {
                       >
                         {file.fileNmOrig}
                       </a>
+                      <button
+                        type="button"
+                        className="btn btn-link"
+                        onClick={() => handleFileDelete(file.fileId)}
+                        style={{ marginLeft: '10px' }}
+                      >
+                        삭제
+                      </button>
                     </li>
                   ))}
                 </ul>
               ) : (
-                '없음'
+                <div>없음</div>
               )}
             </div>
+
             <div className="mb-3">
               <label className="form-label">새 첨부파일</label>
               <input type="file" multiple onChange={(e) => setFiles(Array.from(e.target.files))} />
             </div>
-            <button type="submit" className="btn btn-primary">수정</button>
+            <button type="submit" className="btn btn-primary" style={{ marginRight: '10px' }}>
+              수정
+            </button>
+            <button type="button" className="btn btn-danger" onClick={handleDeleteNotice} style={{ marginRight: '10px' }}>
+              삭제
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={() => navigate('/notices')}>목록</button>
           </form>
         </main>
       </div>

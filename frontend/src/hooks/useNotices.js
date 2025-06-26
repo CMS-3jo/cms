@@ -102,6 +102,19 @@ export const useNotices = () => {
       setLoading(false);
     }
   }, []);
+const deleteNotice = useCallback(async (id) => {
+    try {
+      setLoading(true);
+      await noticeApi.deleteNotice(id);
+      setNotices((prev) => prev.filter((n) => n.noticeId !== id && n.id !== Number(id)));
+      return { success: true };
+    } catch (err) {
+      setError(err);
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   return {
     notices,
@@ -110,6 +123,7 @@ export const useNotices = () => {
     fetchNotices,
     createNotice,
     updateNotice,
+     deleteNotice,
     getNoticeById
   };
 };

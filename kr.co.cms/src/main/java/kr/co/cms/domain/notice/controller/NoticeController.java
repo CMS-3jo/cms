@@ -80,6 +80,20 @@ public class NoticeController {
                 "noticeId", id,
                 "message", "공지사항이 수정되었습니다."));
     }
+
+    /**
+     * 공지사항 삭제
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, String>> delete(@PathVariable("id") String id,
+                                                      HttpServletRequest request) {
+        String userId = tokenUtil.getUserIdFromRequest(request);
+        service.delete(id, userId);
+        return ResponseEntity.ok(Map.of(
+                "noticeId", id,
+                "message", "공지사항이 삭제되었습니다."));
+    }
+
     
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, String>> update(@PathVariable("id") String id,

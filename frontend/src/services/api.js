@@ -224,7 +224,7 @@ export const noticeApi = {
 	getNoticeDetail: (id) =>
 		apiService.get(`/notices/${id}`),
 
-	  createNotice: (data) =>
+	    createNotice: (data) =>
                 apiService.post('/notices', data),
 
         createNoticeWithFiles: (formData) =>
@@ -243,7 +243,7 @@ export const noticeApi = {
                         body: formData,
                         credentials: 'include'
                 }),
-	deleteNotice: (id) =>
+				deleteNotice: (id) =>
 		apiService.delete(`/notices/${id}`),
 };
 

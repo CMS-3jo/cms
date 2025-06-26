@@ -18,7 +18,7 @@ const NoticeWritePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-      const noticeData = { title, content, regUserId: user?.userId, files };
+    const noticeData = { title, content, regUserId: user?.userId, files };
 
     try {
       const result = await createNotice(noticeData);
@@ -71,6 +71,13 @@ const NoticeWritePage = () => {
             <div className="mb-3">
               <label className="form-label">첨부파일</label>
               <input type="file" multiple onChange={(e) => setFiles(Array.from(e.target.files))} />
+              {files.length > 0 && (
+                <ul style={{ marginTop: '10px' }}>
+                  {files.map((f, idx) => (
+                    <li key={idx}>{f.name}</li>
+                  ))}
+                </ul>
+              )}
             </div>
             <button type="submit" className="btn btn-primary">등록</button>
           </form>

@@ -120,6 +120,26 @@ public class NoticeService {
         }
     }
 
+    /**
+     * 공지사항 삭제
+     */
+    @Transactional
+    public void delete(String noticeId, String userId) {
+        if (!repo.existsById(noticeId)) {
+            throw new IllegalArgumentException("공지사항을 찾을 수 없습니다.");
+        }
+
+        // 첨부파일 삭제
+        fileService.deleteFilesByRef(
+            FileConstants.RefType.NOTICE,
+            noticeId,
+            userId
+        );
+
+        repo.deleteById(noticeId);
+    }
+
+
     private String generateId() {
         return "NT" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
     }
