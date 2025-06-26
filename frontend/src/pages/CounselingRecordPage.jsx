@@ -8,13 +8,14 @@ import CounselingRecordForm from '../components/counseling/CounselingRecordForm'
 import ScheduleModal from '../components/counseling/ScheduleModal';
 import { useCounselingDetail } from '../hooks/useCounselingDetail';
 import { useCounselingRecord } from '../hooks/useCounselingRecord';
+import { useNavigate } from 'react-router-dom';
 import { counselingApi } from '../services/api'; 
 
 const CounselingRecordPage = () => {
   const { id } = useParams();
   const [showModal, setShowModal] = useState(false);
   const [hasSchedule, setHasSchedule] = useState(true);
-  
+  const navigate = useNavigate();
   
   const { counselingDetail, loading: detailLoading, fetchCounselingDetail } = useCounselingDetail();
   const { 
@@ -36,6 +37,7 @@ const CounselingRecordPage = () => {
     const result = await saveRecord(id, recordData);
     if (result.success) {
       alert('상담 일지가 저장되었습니다.');
+      navigate('/admin/counseling'); // ✅ 등록 후 이동
     } else {
       alert('저장 실패: ' + result.error);
     }
