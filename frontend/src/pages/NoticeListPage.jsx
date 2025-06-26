@@ -43,7 +43,7 @@ const NoticeListPage = () => {
       <Header />
       <div className="container_layout">
         <Sidebar />
-        <main style={{ flex: 1, padding: '20px' }}>
+           <main style={{ flex: 1, paddingTop: '82.8px' }}>
           <h3 style={{ marginBottom: '20px' }}>공지사항</h3>
   
           {loading ? (

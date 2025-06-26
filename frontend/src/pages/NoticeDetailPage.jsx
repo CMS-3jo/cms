@@ -74,7 +74,7 @@ const NoticeDetailPage = () => {
       <Header />
       <div className="container_layout">
         <Sidebar />
-        <main style={{ flex: 1, padding: '20px' }}>
+        <main style={{ flex: 1, paddingTop: '82.8px' }}>
           <h3 style={{ marginBottom: '20px' }}>공지사항 상세</h3>
           {loading || !notice ? (
             <p>로딩 중...</p>
