@@ -60,7 +60,26 @@ public class NoticeController {
                 "noticeId", id,
                 "message", "공지사항과 파일이 성공적으로 등록되었습니다."));
     }
+    
+    /**
+     * 공지사항 수정 (파일 포함)
+     */
+    @PutMapping("/{id}/with-files")
+    public ResponseEntity<Map<String, String>> updateWithFiles(
+            @PathVariable("id") String id,
+            @RequestPart("notice") NoticeDto dto,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            HttpServletRequest request) {
 
+        String userId = tokenUtil.getUserIdFromRequest(request);
+        dto.setRegUserId(userId);
+
+        service.updateWithFiles(id, dto, files);
+
+        return ResponseEntity.ok(Map.of(
+                "noticeId", id,
+                "message", "공지사항이 수정되었습니다."));
+    }
     
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, String>> update(@PathVariable("id") String id,

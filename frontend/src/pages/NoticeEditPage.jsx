@@ -5,6 +5,7 @@ import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import { useNotices } from '../hooks/useNotices';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
+import { useAuth } from '../hooks/useAuth';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 const NoticeEditPage = () => {
@@ -14,7 +15,9 @@ const NoticeEditPage = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
+  const { user } = useAuth();
 
+ const [existingFiles, setExistingFiles] = useState([]);
   useEffect(() => {
     if (notices.length === 0) {
       fetchNotices();
@@ -27,6 +30,7 @@ const NoticeEditPage = () => {
       if (data) {
         setTitle(data.title);
         setContent(data.content);
+          setExistingFiles(Array.isArray(data.files) ? data.files : []);
       }
     };
 
@@ -37,7 +41,12 @@ const NoticeEditPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await updateNotice(id, { title, content, files });
+      const result = await updateNotice(id, {
+      title,
+      content,
+      files,
+      regUserId: user?.userId,
+    });
     if (result.success) {
       navigate(`/notices/${id}`);
     } else {
@@ -72,7 +81,27 @@ const NoticeEditPage = () => {
               />
             </div>
             <div className="mb-3">
-              <label className="form-label">첨부파일</label>
+             <label className="form-label">기존 첨부파일</label>
+              {existingFiles.length > 0 ? (
+                <ul>
+                  {existingFiles.map((file) => (
+                    <li key={file.fileId}>
+                      <a
+                        href={`/api/files/${file.fileId}/download`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {file.fileNmOrig}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                '없음'
+              )}
+            </div>
+            <div className="mb-3">
+              <label className="form-label">새 첨부파일</label>
               <input type="file" multiple onChange={(e) => setFiles(Array.from(e.target.files))} />
             </div>
             <button type="submit" className="btn btn-primary">수정</button>

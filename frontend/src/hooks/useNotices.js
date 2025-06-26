@@ -27,13 +27,20 @@ export const useNotices = () => {
   const createNotice = useCallback(async (noticeData) => {
     try {
       setLoading(true);
-        const payload = {
+           const payload = {
         title: noticeData.title,
         content: noticeData.content,
         regUserId: noticeData.regUserId || user?.userId,
       };
 
-      await noticeApi.createNotice(payload);
+      if (noticeData.files && noticeData.files.length > 0) {
+        const formData = new FormData();
+        formData.append('notice', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+        noticeData.files.forEach((f) => formData.append('files', f));
+        await noticeApi.createNoticeWithFiles(formData);
+      } else {
+        await noticeApi.createNotice(payload);
+      }
       await fetchNotices();
       
       return { success: true };
@@ -67,12 +74,21 @@ export const useNotices = () => {
     try {
       setLoading(true);
      
-     const payload = {
+      const payload = {
         title: noticeData.title,
         content: noticeData.content,
+        regUserId: noticeData.regUserId || user?.userId,
       };
 
-      await noticeApi.updateNotice(id, payload);
+      if (noticeData.files && noticeData.files.length > 0) {
+        const formData = new FormData();
+        formData.append('notice', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+        noticeData.files.forEach((f) => formData.append('files', f));
+        await noticeApi.updateNoticeWithFiles(id, formData);
+      } else {
+        await noticeApi.updateNotice(id, payload);
+      }
+
       setNotices((prev) =>
         prev.map((n) =>
           n.noticeId === id || n.id === Number(id) ? { ...n, ...payload } : n

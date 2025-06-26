@@ -222,12 +222,25 @@ export const noticeApi = {
 	getNoticeDetail: (id) =>
 		apiService.get(`/notices/${id}`),
 
-	createNotice: (data) =>
-		apiService.post('/notices', data),
+	  createNotice: (data) =>
+                apiService.post('/notices', data),
 
-	updateNotice: (id, data) =>
-		apiService.put(`/notices/${id}`, data),
+        createNoticeWithFiles: (formData) =>
+                fetch('/api/notices/with-files', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'include'
+                }),
 
+        updateNotice: (id, data) =>
+                apiService.put(`/notices/${id}`, data),
+
+        updateNoticeWithFiles: (id, formData) =>
+                fetch(`/api/notices/${id}/with-files`, {
+                        method: 'PUT',
+                        body: formData,
+                        credentials: 'include'
+                }),
 	deleteNotice: (id) =>
 		apiService.delete(`/notices/${id}`),
 };

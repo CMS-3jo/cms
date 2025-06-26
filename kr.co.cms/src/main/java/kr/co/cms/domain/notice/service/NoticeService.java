@@ -94,6 +94,31 @@ public class NoticeService {
         n.setTitle(dto.getTitle());
         n.setContent(dto.getContent());
     }
+    /**
+     * 공지사항 수정 (파일 포함)
+     */
+    @Transactional
+    public void updateWithFiles(String noticeId, NoticeDto dto, List<MultipartFile> files) {
+        update(noticeId, dto);
+
+        // 기존 첨부파일 논리삭제
+        fileService.deleteFilesByRef(
+            FileConstants.RefType.NOTICE,
+            noticeId,
+            dto.getRegUserId()
+        );
+
+        // 새로운 파일 업로드
+        if (files != null && !files.isEmpty()) {
+            fileService.uploadFiles(
+                files,
+                FileConstants.RefType.NOTICE,
+                noticeId,
+                FileConstants.Category.ATTACH,
+                dto.getRegUserId()
+            );
+        }
+    }
 
     private String generateId() {
         return "NT" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
