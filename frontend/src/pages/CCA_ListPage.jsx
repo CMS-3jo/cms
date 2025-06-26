@@ -1,12 +1,13 @@
 // src/pages/CCAViewPage.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import '../../public/css/NoncurricularList.css';
 import PublicHeader from '../components/layout/PublicHeader';
-
+import { useAuth } from '../hooks/useAuth';
+import { useUserProfile } from '../hooks/useUserProfile';
 const CCAViewPage = () => {
   const [surveyList, setSurveyList] = useState([]);
   const [departments, setDepartments] = useState([]);    // 학과 목록
@@ -34,7 +35,15 @@ const CCAViewPage = () => {
   }, []);
 
   // 셀렉트 옵션: '전체' + departments
-  const categories = ['전체', ...departments.map(d => d.deptCd)];
+ const { user } = useAuth();
+  const profile = useUserProfile();
+
+  const categories = useMemo(() => {
+    if (user?.role === 'ROLE_STUDENT') {
+      return ['전체', profile?.deptCode].filter(Boolean);
+    }
+    return ['전체', ...departments.map(d => d.deptCd)];
+  }, [user, profile, departments]);
 
   const filteredList = surveyList.filter(item => {
     const matchCategory = filter === '전체' || item.categoryCd === filter;
@@ -61,8 +70,21 @@ const CCAViewPage = () => {
             >
               {categories.map(cat => {
                 if (cat === '전체') {
-                  return <option key="전체" value="전체">전체</option>;
+                    return (
+                    <option key="전체" value="전체">
+                      전체
+                    </option>
+                  );
                 }
+
+                if (user?.role === 'ROLE_STUDENT') {
+                  return (
+                    <option key={cat} value={cat}>
+                      동일 학과
+                    </option>
+                  );
+                }
+
                 const dept = departments.find(d => d.deptCd === cat);
                 return (
                   <option key={cat} value={cat}>

@@ -84,7 +84,7 @@ border-top : var(--bs-modal-footer-border-width) solid var(--bs-modal-footer-bor
 }
 
 .floating-btn-chatbot{
-  margin-top: 20px;
+  margin: 20px 0;
   background: #FEE500;
 }
 .floating-btn-chatbot:hover{
