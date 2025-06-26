@@ -25,11 +25,7 @@ export const useWeeklyCalendar = () => {
     return { start, end };
   }, [getWeekStart]);
 
-  const fetchWeeklyData = useCallback(async (date) => {
-    console.log('=== fetchWeeklyData 호출 ===');
-    console.log('date:', date.toLocaleDateString());
-    console.log('user?.identifierNo:', user?.identifierNo);
-    
+  const fetchWeeklyData = useCallback(async (date) => {  
     if (!user?.identifierNo) {
       console.log('사용자 정보가 없습니다.');
       return;
@@ -43,11 +39,8 @@ export const useWeeklyCalendar = () => {
       const startDate = start.toISOString().split('T')[0];
       const endDate = end.toISOString().split('T')[0];
 
-      console.log(`API 요청 - 사용자: ${user.identifierNo}, 기간: ${startDate} ~ ${endDate}`);
 
       const data = await calendarApi.getCalendarEvents(user.identifierNo, startDate, endDate);
-      
-      console.log('API 응답 데이터:', data);
 
       // 데이터를 요일/시간 단위로 가공
       const appointments = {};
@@ -68,8 +61,6 @@ export const useWeeklyCalendar = () => {
           date: dateKey
         });
       }
-
-      console.log('가공된 appointments:', appointments);
       setWeeklyData({ appointments });
     } catch (err) {
       setError(err);
@@ -80,17 +71,11 @@ export const useWeeklyCalendar = () => {
   }, [user?.identifierNo, getWeekRange]); // user를 의존성에 추가
 
   // 주간 이동 함수 - 현재 날짜 기준으로 계산
-  const moveWeek = useCallback((offset) => {
-    console.log(`=== moveWeek 호출 ===`);
-    console.log(`offset: ${offset}`);
-    
+  const moveWeek = useCallback((offset) => { 
     setCurrentDate(prevDate => {
       const currentWeekStart = getWeekStart(prevDate);
       const newWeekStart = new Date(currentWeekStart);
       newWeekStart.setDate(currentWeekStart.getDate() + (offset * 7));
-      
-      console.log(`현재 주 시작: ${currentWeekStart.toLocaleDateString()}`);
-      console.log(`새로운 주 시작: ${newWeekStart.toLocaleDateString()}`);
       
       return newWeekStart;
     });
@@ -99,7 +84,7 @@ export const useWeeklyCalendar = () => {
   // 현재 주로 돌아가기 함수
   const goToCurrentWeek = useCallback(() => {
     const today = new Date();
-    console.log(`현재 주로 이동: ${today.toLocaleDateString()}`);
+    console.log(`현재 주로 이동: ${today.toLocaleDateString()}`); 	
     setCurrentDate(today);
   }, []);
 
@@ -124,24 +109,15 @@ export const useWeeklyCalendar = () => {
 
   // currentDate가 변경될 때마다 데이터 fetch
   useEffect(() => {
-    console.log('=== useEffect 트리거 ===');
-    console.log('currentDate:', currentDate.toLocaleDateString());
-    console.log('user?.identifierNo:', user?.identifierNo);
     
     if (user?.identifierNo) {
       fetchWeeklyData(currentDate);
-    } else {
-      console.log('사용자 정보가 없어서 API 요청을 건너뜁니다.');
     }
   }, [currentDate, user?.identifierNo]); // fetchWeeklyData 의존성 제거하여 무한 루프 방지
 
   // updateEvent 함수 추가 (WeeklyCalendarPage에서 사용)
   const updateEvent = useCallback(async (eventId, eventData) => {
     try {
-      // API 호출 로직 (실제 API에 맞게 수정 필요)
-      // const result = await calendarApi.updateEvent(eventId, eventData);
-      
-      // 임시로 성공 처리
       await fetchWeeklyData(currentDate); // 데이터 새로고침
       return { success: true };
     } catch (error) {
@@ -150,14 +126,14 @@ export const useWeeklyCalendar = () => {
     }
   }, [fetchWeeklyData, currentDate]);
 
-  // 화면 표시용 주간 날짜 배열 계산
+  // 화면 표시용 주간 날짜 배열 계산 (시간대 문제 해결)
   const weekDates = (() => {
     const weekStart = getWeekStart(currentDate);
     const dates = [];
     
     for (let i = 0; i < 7; i++) {
-      const date = new Date(weekStart);
-      date.setDate(weekStart.getDate() + i);
+      // 시간대 문제를 피하기 위해 로컬 시간으로 새 Date 객체 생성
+      const date = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i);
       dates.push(date);
     }
     
@@ -173,13 +149,25 @@ export const useWeeklyCalendar = () => {
       end.setDate(end.getDate() + 6);
       return end;
     })(),
-    formattedDates: weekDates.map(date => ({
-      date: date,
-      dateString: date.toISOString().split('T')[0],
-      dayOfWeek: date.getDay(),
-      dayName: ['일', '월', '화', '수', '목', '금', '토'][date.getDay()],
-      formatted: `${date.getMonth() + 1}/${date.getDate()}(${['일', '월', '화', '수', '목', '금', '토'][date.getDay()]})`
-    }))
+    formattedDates: weekDates.map((date, index) => {
+      // 시간대 문제 방지를 위해 로컬 날짜 문자열 생성
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+      
+      const dayOfWeek = date.getDay();
+      const dayName = ['일', '월', '화', '수', '목', '금', '토'][dayOfWeek];
+      
+      
+      return {
+        date: date,
+        dateString: dateString,
+        dayOfWeek: dayOfWeek,
+        dayName: dayName,
+        formatted: `${date.getMonth() + 1}/${date.getDate()}(${dayName})`
+      };
+    })
   };
 
   return {
