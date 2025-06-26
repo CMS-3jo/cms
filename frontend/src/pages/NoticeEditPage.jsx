@@ -38,6 +38,26 @@ const NoticeEditPage = () => {
       loadNotice();
     }
   }, [id, getNoticeById, notices]);
+  
+  useEffect(() => {
+    const fetchFiles = async () => {
+      try {
+        const res = await fetch(
+          `/api/files/list?refType=NOTICE&refId=${id}&category=ATTACH`
+        );
+        if (res.ok) {
+          const list = await res.json();
+          setExistingFiles(list || []);
+        }
+      } catch (err) {
+        console.error('파일 조회 실패:', err);
+      }
+    };
+
+    if (id) {
+      fetchFiles();
+    }
+  }, [id]);
   const handleFileDelete = async (fileId) => {
     if (!window.confirm('파일을 삭제하시겠습니까?')) return;
     try {

@@ -9,7 +9,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import kr.co.cms.domain.notice.dto.NoticeDto;
 import kr.co.cms.domain.notice.service.NoticeService;
-import kr.co.cms.global.file.constants.FileConstants;
+import kr.co.cms.global.file.dto.FileInfoDTO;
+import kr.co.cms.global.file.dto.FileUploadResponseDTO;
 import kr.co.cms.global.util.TokenUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -79,6 +80,38 @@ public class NoticeController {
         return ResponseEntity.ok(Map.of(
                 "noticeId", id,
                 "message", "공지사항이 수정되었습니다."));
+    }
+    /**
+     * 공지사항 첨부파일 목록 조회
+     */
+    @GetMapping("/{id}/files")
+    public ResponseEntity<List<FileInfoDTO>> getFiles(@PathVariable("id") String id) {
+        return ResponseEntity.ok(service.getNoticeFiles(id));
+    }
+
+    /**
+     * 공지사항 첨부파일 업로드
+     */
+    @PostMapping("/{id}/files")
+    public ResponseEntity<List<FileUploadResponseDTO>> uploadFiles(
+            @PathVariable("id") String id,
+            @RequestPart("files") List<MultipartFile> files,
+            HttpServletRequest request) {
+        String userId = tokenUtil.getUserIdFromRequest(request);
+        return ResponseEntity.ok(service.uploadNoticeFiles(id, files, userId));
+    }
+
+    /**
+     * 공지사항 첨부파일 삭제
+     */
+    @DeleteMapping("/{id}/files/{fileId}")
+    public ResponseEntity<Map<String, String>> deleteFile(
+            @PathVariable("id") String id,
+            @PathVariable("fileId") Long fileId,
+            HttpServletRequest request) {
+        String userId = tokenUtil.getUserIdFromRequest(request);
+        service.deleteNoticeFile(id, fileId, userId);
+        return ResponseEntity.ok(Map.of("message", "파일이 삭제되었습니다."));
     }
 
     /**

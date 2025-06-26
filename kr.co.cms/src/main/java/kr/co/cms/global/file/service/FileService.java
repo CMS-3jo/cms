@@ -241,6 +241,21 @@ public class FileService {
             return null;
         }
     }
-    
-    
+    /**
+     * 파일 정렬 순서 업데이트
+     */
+    @Transactional
+    public void updateFileSortOrders(List<FileSortOrderUpdateDTO> sortOrderList, String userId) {
+        List<FileInfo> files = sortOrderList.stream()
+            .map(dto -> {
+                FileInfo info = fileInfoRepository.findById(dto.getFileId())
+                    .orElseThrow(() -> new IllegalArgumentException("파일을 찾을 수 없습니다."));
+                info.setSortOrder(dto.getSortOrder());
+                info.setRegUserId(userId);
+                return info;
+            })
+            .toList();
+
+        fileInfoRepository.saveAll(files);
+    }
 }

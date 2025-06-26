@@ -13,6 +13,8 @@ import kr.co.cms.domain.notice.entity.Notice;
 import kr.co.cms.domain.notice.repository.NoticeRepository;
 import kr.co.cms.global.file.constants.FileConstants;
 import kr.co.cms.global.file.dto.FileInfoDTO;
+import kr.co.cms.global.file.dto.FileUploadResponseDTO;
+import kr.co.cms.global.file.entity.FileInfo;
 import kr.co.cms.global.file.service.FileService;
 
 @Service
@@ -120,6 +122,45 @@ public class NoticeService {
         }
     }
 
+    
+    /**
+     * 공지사항의 첨부파일 목록 조회
+     */
+    public List<FileInfoDTO> getNoticeFiles(String noticeId) {
+        return fileService.getFileList(
+            FileConstants.RefType.NOTICE,
+            noticeId,
+            FileConstants.Category.ATTACH
+        );
+    }
+
+    /**
+     * 공지사항에 파일 업로드
+     */
+    @Transactional
+    public List<FileUploadResponseDTO> uploadNoticeFiles(String noticeId, List<MultipartFile> files, String userId) {
+        return fileService.uploadFiles(
+            files,
+            FileConstants.RefType.NOTICE,
+            noticeId,
+            FileConstants.Category.ATTACH,
+            userId
+        );
+    }
+
+    /**
+     * 공지사항 파일 삭제
+     */
+    @Transactional
+    public void deleteNoticeFile(String noticeId, Long fileId, String userId) {
+        FileInfo info = fileService.getFileInfo(fileId);
+        if (info == null || !FileConstants.RefType.NOTICE.equals(info.getRefType()) || !noticeId.equals(info.getRefId())) {
+            throw new IllegalArgumentException("파일을 찾을 수 없습니다.");
+        }
+        fileService.deleteFile(fileId, userId);
+    }
+
+    
     /**
      * 공지사항 삭제
      */
