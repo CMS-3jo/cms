@@ -63,7 +63,9 @@ const CounselingRecordForm = ({
 	} = counselingDetail;
 
 	// recordData가 배열인지 확인하고, 아니면 빈 배열로 처리
-	const recordList = Array.isArray(recordData) ? recordData : (recordData ? [recordData] : []);
+	const recordList = Array.isArray(recordData)
+	  ? recordData.filter(r => r && r.title && r.content) // 제목+내용 있는 것만
+	  : (recordData && recordData.title && recordData.content ? [recordData] : []);
 
 	return (
 		<>
