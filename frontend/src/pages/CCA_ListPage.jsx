@@ -34,16 +34,13 @@ const CCAViewPage = () => {
       .catch(err => console.error(err));
   }, []);
 
-  // 셀렉트 옵션: '전체' + departments
- const { user } = useAuth();
+  // 셀렉트 옵션: 현재 사용자의 학과 + '전체'
+  const { user } = useAuth();
   const profile = useUserProfile();
 
   const categories = useMemo(() => {
-    if (user?.role === 'ROLE_STUDENT') {
-      return ['전체', profile?.deptCode].filter(Boolean);
-    }
-    return ['전체', ...departments.map(d => d.deptCd)];
-  }, [user, profile, departments]);
+    return ['전체', profile?.deptCode].filter(Boolean);
+  }, [profile]);
 
   const filteredList = surveyList.filter(item => {
     const matchCategory = filter === '전체' || item.categoryCd === filter;
