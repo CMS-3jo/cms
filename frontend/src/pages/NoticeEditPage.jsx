@@ -7,7 +7,7 @@ import { useNotices } from '../hooks/useNotices';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import { useAuth } from '../hooks/useAuth';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
-
+import PublicHeader from '../components/layout/PublicHeader';
 const NoticeEditPage = () => {
   const { id } = useParams();
   const { notices, fetchNotices, getNoticeById, updateNotice, deleteNotice } = useNotices();
@@ -96,11 +96,11 @@ const NoticeEditPage = () => {
 
   return (
     <>
-      <Header />
+      <PublicHeader />
       <div className="container_layout">
         <Sidebar />
         <main style={{ flex: 1, padding: '20px' }}>
-          <h3 style={{ marginBottom: '20px' }}>공지사항 수정</h3>
+          <h3 style={{paddingTop: '82.8px'  }}>공지사항 수정</h3>
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
               <label className="form-label">제목</label>
@@ -154,6 +154,8 @@ const NoticeEditPage = () => {
               <label className="form-label">새 첨부파일</label>
               <input type="file" multiple onChange={(e) => setFiles(Array.from(e.target.files))} />
             </div>
+            <div style={{ marginBottom: '10px',position:'absolute',right:'1rem'}}>
+
             <button type="submit" className="btn btn-primary" style={{ marginRight: '10px' }}>
               수정
             </button>
@@ -161,6 +163,8 @@ const NoticeEditPage = () => {
               삭제
             </button>
             <button type="button" className="btn btn-secondary" onClick={() => navigate('/notices')}>목록</button>
+            </div>
+
           </form>
         </main>
       </div>

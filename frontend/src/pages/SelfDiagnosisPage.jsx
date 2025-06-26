@@ -114,9 +114,9 @@ const SelfDiagnosisPage = () => {
     <div>
       <PublicHeader />
       
-      <header className="hero-section">
+      <header >
         <div className="hero-content">
-          <h2>자가진단</h2>
+          {/* <h2>자가진단</h2> */}
         </div>
       </header>
 

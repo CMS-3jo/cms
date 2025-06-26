@@ -5,6 +5,7 @@ import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import '../../public/css/NoncurricularList.css';
+import PublicHeader from '../components/layout/PublicHeader';
 
 const CCAViewPage = () => {
   const [surveyList, setSurveyList] = useState([]);
@@ -45,7 +46,7 @@ const CCAViewPage = () => {
 
   return (
     <>
-      <Header />
+       <PublicHeader />
       <div className="container_layout">
         <Sidebar />
         <div className="noncur-list-page">

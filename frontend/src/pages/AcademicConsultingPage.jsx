@@ -17,9 +17,9 @@ const AcademicConsultingPage = () => {
     <>
       <PublicHeader />
       
-      <header className="hero-section">
+      <header >
         <div className="hero-content">
-          <h1>학업상담</h1>
+          {/* <h1>학업상담</h1> */}
         </div>
       </header>
       

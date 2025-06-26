@@ -7,6 +7,7 @@ import { useNotices } from '../hooks/useNotices';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import { useAuth } from '../hooks/useAuth';
+import PublicHeader from '../components/layout/PublicHeader';
 const NoticeWritePage = () => {
   const { createNotice } = useNotices();
   const navigate = useNavigate();
@@ -35,11 +36,11 @@ const NoticeWritePage = () => {
 
   return (
     <>
-      <Header />
+        <PublicHeader />
       <div className="container_layout">
         <Sidebar />
         <main style={{ flex: 1, padding: '20px' }}>
-          <h3 style={{ marginBottom: '20px' }}>공지사항 등록</h3>
+          <h3 style={{ paddingTop: '82.8px' }}>공지사항 등록</h3>
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
               <label className="form-label">제목</label>

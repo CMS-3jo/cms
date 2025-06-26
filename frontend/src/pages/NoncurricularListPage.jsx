@@ -5,6 +5,7 @@ import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import StudentNoncurMyPageModal from './StudentNoncurMyPageModal';
 import '/public/css/NoncurricularList.css';
+import PublicHeader from '../components/layout/PublicHeader';
 
 const NoncurricularListPage = () => {
     const navigate = useNavigate();
@@ -246,7 +247,7 @@ const checkUserRole = async () => {
 
     return (
         <>
-            <Header />
+            <PublicHeader />
             <div className="container_layout">
                 <Sidebar />
                 <div className="page-container container-fluid">

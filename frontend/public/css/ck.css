@@ -1,0 +1,11 @@
+.ck-editor__editable {
+  /* 에디터 영역 높이 한계 설정 */
+  height: 40vh !important;
+  max-height: 40vh !important;
+
+  /* 내용이 넘칠 때 세로 스크롤바 표시 */
+  overflow-y: auto !important;
+
+  /* 가로 스크롤은 숨기기 (필요에 따라 변경) */
+  overflow-x: hidden !important;
+}

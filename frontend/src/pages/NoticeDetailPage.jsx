@@ -5,6 +5,7 @@ import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import { useNotices } from '../hooks/useNotices';
 import { useUserProfile } from '../hooks/useUserProfile';
+import PublicHeader from '../components/layout/PublicHeader';
 
 
 const NoticeDetailPage = () => {
@@ -71,7 +72,7 @@ const NoticeDetailPage = () => {
 
   return (
     <>
-      <Header />
+        <PublicHeader />
       <div className="container_layout">
         <Sidebar />
         <main style={{ flex: 1, paddingTop: '82.8px' }}>
@@ -128,7 +129,7 @@ const NoticeDetailPage = () => {
                 </tbody>
               </table>
               {canEdit && (
-                <>
+                <div style={{ marginBottom: '10px',position:'absolute',right:'1rem'}}>
                   <button
                     className="btn btn-primary"
                     onClick={() => navigate(`/notices/${id}/edit`)}
@@ -144,7 +145,7 @@ const NoticeDetailPage = () => {
                   >
                     삭제
                   </button>
-                </>
+                </div>
               )}
               <button className="btn btn-secondary" onClick={() => navigate('/notices')}>
                 목록

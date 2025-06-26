@@ -5,6 +5,7 @@ import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import { useNotices } from '../hooks/useNotices';
 import { useUserProfile } from '../hooks/useUserProfile';
+import PublicHeader from '../components/layout/PublicHeader';
 
 const NoticeListPage = () => {
   const { notices, fetchNotices, loading } = useNotices();
@@ -40,7 +41,7 @@ const NoticeListPage = () => {
 
   return (
     <>
-      <Header />
+       <PublicHeader />
       <div className="container_layout">
         <Sidebar />
            <main style={{ flex: 1, paddingTop: '82.8px' }}>
@@ -77,7 +78,7 @@ const NoticeListPage = () => {
           <button
             className="btn btn-primary"
             onClick={handleCreate}
-            style={{ marginBottom: '10px' }}
+            style={{ marginBottom: '10px',position:'absolute',right:'1rem'}}
           >
             글쓰기
           </button>
