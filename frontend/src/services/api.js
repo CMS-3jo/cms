@@ -92,8 +92,10 @@ export const calendarApi = {
 // 상담 관련 API
 export const counselingApi = {
 	// 상담 신청 목록 조회
-	getCounselingList: (params) =>
-		apiService.get('/counseling/applications', params),
+	getCounselingList: (params) => {
+	  const queryString = new URLSearchParams(params).toString();
+	  return apiService.get(`/counseling/applications?${queryString}`);
+	},
 
 	// 상담 코드
 	getCodes: (group) =>

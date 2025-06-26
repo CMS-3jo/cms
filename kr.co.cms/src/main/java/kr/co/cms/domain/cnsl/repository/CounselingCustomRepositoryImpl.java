@@ -6,10 +6,8 @@ import kr.co.cms.domain.cnsl.dto.CounselingListResponse;
 import kr.co.cms.domain.cnsl.dto.CounselingSearchCondition;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
-import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @RequiredArgsConstructor
@@ -19,6 +17,8 @@ public class CounselingCustomRepositoryImpl implements CounselingCustomRepositor
 
     @Override
     public Page<CounselingListResponse> findCounselingList(CounselingSearchCondition condition, Pageable pageable) {
+    	String status = condition.getStatus();
+    	String emplNo = condition.getCounselorId();
     	// 데이터 조회용 쿼리
         StringBuilder queryBuilder = new StringBuilder("""
             SELECT 
@@ -43,18 +43,47 @@ public class CounselingCustomRepositoryImpl implements CounselingCustomRepositor
         """);
 
         Map<String, Object> params = new HashMap<>();
-
-        // 필터 조건 공통 처리
-        if (condition.getStatus() != null && !condition.getStatus().isBlank()) {
-            queryBuilder.append(" AND a.STAT_CD = :status");
-            countQueryBuilder.append(" AND a.STAT_CD = :status");
-            params.put("status", condition.getStatus());
+        
+        if (condition.getSearch() != null && !condition.getSearch().isBlank()) {
+            queryBuilder.append("""
+                AND (
+                    s.STD_NM LIKE :search
+                    OR s.STD_NO LIKE :search
+                    OR s.EMAIL LIKE :search
+                )
+            """);
+            countQueryBuilder.append("""
+                AND (
+                    s.STD_NM LIKE :search
+                    OR s.STD_NO LIKE :search
+                    OR s.EMAIL LIKE :search
+                )
+            """);
+            params.put("search", "%" + condition.getSearch() + "%");
         }
 
-        if (condition.getSearch() != null && !condition.getSearch().isBlank()) {
-            queryBuilder.append(" AND s.STD_NM LIKE :search");
-            countQueryBuilder.append(" AND s.STD_NM LIKE :search");
-            params.put("search", "%" + condition.getSearch() + "%");
+        // 1. 배정전 → EMPL_NO IS NULL
+        if ("배정전".equals(status)) {
+            queryBuilder.append(" AND a.EMPL_NO IS NULL");
+            countQueryBuilder.append(" AND a.EMPL_NO IS NULL");
+        }
+        // 2. 내 상담 → EMPL_NO = :emplNo
+        else if ("내 상담".equals(status)) {
+            if (emplNo != null) {
+                queryBuilder.append(" AND a.EMPL_NO = :emplNo");
+                countQueryBuilder.append(" AND a.EMPL_NO = :emplNo");
+                params.put("emplNo", emplNo);
+            } else {
+                // 사번이 null이면 일부러 빈 결과 반환 유도
+                queryBuilder.append(" AND 1=0");
+                countQueryBuilder.append(" AND 1=0");
+            }
+        }
+        // 3. 일반 상태코드 ("15", "17" 등)
+        else if (status != null && !status.isBlank()) {
+            queryBuilder.append(" AND a.STAT_CD = :status");
+            countQueryBuilder.append(" AND a.STAT_CD = :status");
+            params.put("status", status);
         }
 
         // 정렬은 조회 쿼리에서만
@@ -164,4 +193,6 @@ public class CounselingCustomRepositoryImpl implements CounselingCustomRepositor
             default -> typeCd;
         };
     }
+    
+    
 }

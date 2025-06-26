@@ -22,7 +22,7 @@ const CounselingListPage = () => {
     fetchCounselingList
   } = useCounselingList();
 
-  const categories = ['상담중', '상담완료', '상담대기'];
+  const categories = ['배정전', '내 상담'];
 
   useEffect(() => {
     fetchCounselingList({

@@ -11,6 +11,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
 import kr.co.cms.domain.cnsl.dto.CounselingApplyRequest;
 import kr.co.cms.domain.cnsl.dto.CounselingDetailDto;
 import kr.co.cms.domain.cnsl.dto.CounselingListResponse;
@@ -29,6 +32,7 @@ import kr.co.cms.domain.cnsl.service.CounselingRecordService;
 import kr.co.cms.domain.cnsl.service.CounselingScheduleService;
 import kr.co.cms.domain.cnsl.service.CounselingService;
 import kr.co.cms.domain.dept.repository.DeptInfoRepository;
+import kr.co.cms.global.util.TokenUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,6 +45,7 @@ public class CounselingController {
     private final CounselingService counselingService;
     private final CounselingRecordService counselingRecordService;
     private final CounselingScheduleService scheduleService;
+    private final TokenUtil tokenUtil;
     
     @PostMapping("/apply")
     public ResponseEntity<?> apply(@RequestBody CounselingApplyRequest request) {
@@ -53,25 +58,36 @@ public class CounselingController {
     	    @RequestParam(name = "page", defaultValue = "0") int page,
     	    @RequestParam(name = "size", defaultValue = "10") int size,
     	    @RequestParam(name = "status", required = false) String status,
-    	    @RequestParam(name = "search", required = false) String search) {
-        CounselingSearchCondition condition = new CounselingSearchCondition();
-        condition.setStatus(status);
-        condition.setSearch(search);
+    	    @RequestParam(name = "search", required = false) String search,
+    	    HttpServletRequest request
+    	) {
+    	    CounselingSearchCondition condition = new CounselingSearchCondition();
+    	    condition.setStatus(status);
+    	    condition.setSearch(search);
+    	    System.out.println("검색어: " + search);
+    	    if ("내 상담".equals(status)) {
+    	        try {
+    	            String emplNo = tokenUtil.getIdentifierNoFromRequest(request);
+    	            condition.setCounselorId(emplNo);
+    	        } catch (Exception e) {
+    	            // 토큰 없거나 유효하지 않음 → 결과 없도록 처리
+    	            return ResponseEntity.ok(Map.of("success", true, "data", Map.of(
+    	                "items", List.of(),
+    	                "totalCount", 0,
+    	                "totalPages", 0
+    	            )));
+    	        }
+    	    }
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("applyDate").descending());
-
-        Page<CounselingListResponse> result = counselingService.getCounselingList(condition, pageable);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", Map.of(
-            "items", result.getContent(),
-            "totalCount", result.getTotalElements(),
-            "totalPages", result.getTotalPages()
-        ));
-
-        return ResponseEntity.ok(response);
-    }
+    	    Pageable pageable = PageRequest.of(page, size);
+    	    Page<CounselingListResponse> result = counselingService.getCounselingList(condition, pageable);
+    	    
+    	    return ResponseEntity.ok(Map.of("success", true, "data", Map.of(
+    	        "items", result.getContent(),
+    	        "totalCount", result.getTotalElements(),
+    	        "totalPages", result.getTotalPages()
+    	    )));
+    	}
     
     @GetMapping("/reserved-times")
     public List<String> getReservedTimes(@RequestParam("date") String date) {
