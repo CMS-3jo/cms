@@ -32,7 +32,7 @@ const PublicHeader = () => {
             onClick={() => navigate("/")}
             style={{ cursor: "pointer" }}
           >
-            <img alt="" src="./images/logo-header.png" />
+            <img alt="" src="/images/logo-header.png" />
           </a>
           <ul className="nav nav-underline" id="major_menu">
             <li className="nav-item">

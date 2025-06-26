@@ -15,13 +15,13 @@ const PsychologicalCounselingPage = () => {
 
   return (
     <>
-      <PublicHeader />
-      
-      <header className="hero-section">
-        <div className="hero-content">
-          <h1>심리상담</h1>
-        </div>
-      </header>
+     <PublicHeader />
+
+        <header >
+          <div className="hero-content">
+            {/* <h1>심리 상담</h1> */}
+          </div>
+        </header>
       
       <main>
         <article className="container_layout">
