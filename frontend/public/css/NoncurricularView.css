@@ -290,7 +290,9 @@
 .ncv-mb-4 {
   margin-bottom: 1.5rem;
 }
-
+li{
+  list-style: none;
+}
 /* 이미지 */
 .ncv-image {
   width: 100%;

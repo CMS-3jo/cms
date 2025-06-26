@@ -55,4 +55,7 @@ public class StdInfo {
     
     @Column(name = "USER_ID")
     private String userId; // 사용자ID
+    
+    @Column(name = "PROFILE_IMAGE_ID")
+    private Integer profileImageId; // 이미지id
 }

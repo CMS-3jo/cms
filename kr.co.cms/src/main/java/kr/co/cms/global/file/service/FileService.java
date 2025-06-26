@@ -160,26 +160,52 @@ public class FileService {
     /**
      * 공통코드 검증
      */
+    private static final java.util.Set<String> DEFAULT_REF_TYPES = java.util.Set.of(
+        FileConstants.RefType.NONCUR,
+        FileConstants.RefType.BOARD,
+        FileConstants.RefType.NOTICE,
+        FileConstants.RefType.CONSULT,
+        FileConstants.RefType.USER
+    );
+
+    private static final java.util.Set<String> DEFAULT_CATEGORIES = java.util.Set.of(
+        FileConstants.Category.ATTACH,
+        FileConstants.Category.THUMBNAIL,
+        FileConstants.Category.APPLY,
+        FileConstants.Category.IMG,
+        FileConstants.Category.TEMP,
+        FileConstants.Category.PROFILE
+    );
+
     private void validateCommonCodes(String refType, String category) {
         // 참조 타입 검증
-        List<kr.co.cms.domain.cnsl.dto.CommonCodeDtoForCNSL> refTypes = 
+    	  List<kr.co.cms.domain.cnsl.dto.CommonCodeDtoForCNSL> refTypes =
             commonCodeService.getCodes(FileConstants.CodeGroup.FILE_REF_TYPE, null);
         
         boolean validRefType = refTypes.stream()
             .anyMatch(code -> code.getCode().equals(refType));
-        
+        if (!validRefType) {
+            // 데이터베이스에 코드가 없을 수 있으므로 기본 상수 세트로 한번 더 확인
+            validRefType = DEFAULT_REF_TYPES.contains(refType);
+        }
+
         if (!validRefType) {
             throw new IllegalArgumentException("유효하지 않은 참조 타입입니다: " + refType);
         }
         
         // 카테고리 검증
         if (category != null) {
-            List<kr.co.cms.domain.cnsl.dto.CommonCodeDtoForCNSL> categories = 
+        	 List<kr.co.cms.domain.cnsl.dto.CommonCodeDtoForCNSL> categories =
                 commonCodeService.getCodes(FileConstants.CodeGroup.FILE_CATEGORY, null);
             
             boolean validCategory = categories.stream()
                 .anyMatch(code -> code.getCode().equals(category));
-            
+
+            if (!validCategory) {
+                // 마찬가지로 기본 상수 세트 확인
+                validCategory = DEFAULT_CATEGORIES.contains(category);
+            }
+
             if (!validCategory) {
                 throw new IllegalArgumentException("유효하지 않은 파일 카테고리입니다: " + category);
             }
@@ -241,6 +267,21 @@ public class FileService {
             return null;
         }
     }
-    
-    
+    /**
+     * 파일 정렬 순서 업데이트
+     */
+    @Transactional
+    public void updateFileSortOrders(List<FileSortOrderUpdateDTO> sortOrderList, String userId) {
+        List<FileInfo> files = sortOrderList.stream()
+            .map(dto -> {
+                FileInfo info = fileInfoRepository.findById(dto.getFileId())
+                    .orElseThrow(() -> new IllegalArgumentException("파일을 찾을 수 없습니다."));
+                info.setSortOrder(dto.getSortOrder());
+                info.setRegUserId(userId);
+                return info;
+            })
+            .toList();
+
+        fileInfoRepository.saveAll(files);
+    }
 }

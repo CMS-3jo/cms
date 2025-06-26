@@ -13,6 +13,8 @@ import kr.co.cms.domain.notice.entity.Notice;
 import kr.co.cms.domain.notice.repository.NoticeRepository;
 import kr.co.cms.global.file.constants.FileConstants;
 import kr.co.cms.global.file.dto.FileInfoDTO;
+import kr.co.cms.global.file.dto.FileUploadResponseDTO;
+import kr.co.cms.global.file.entity.FileInfo;
 import kr.co.cms.global.file.service.FileService;
 
 @Service
@@ -94,6 +96,103 @@ public class NoticeService {
         n.setTitle(dto.getTitle());
         n.setContent(dto.getContent());
     }
+    /**
+     * 공지사항 수정 (파일 포함)
+     */
+    @Transactional
+    public void updateWithFiles(String noticeId, NoticeDto dto, List<MultipartFile> files) {
+        update(noticeId, dto);
+
+        // 기존 첨부파일 논리삭제
+        fileService.deleteFilesByRef(
+            FileConstants.RefType.NOTICE,
+            noticeId,
+            dto.getRegUserId()
+        );
+
+        // 새로운 파일 업로드
+        if (files != null && !files.isEmpty()) {
+            fileService.uploadFiles(
+                files,
+                FileConstants.RefType.NOTICE,
+                noticeId,
+                FileConstants.Category.ATTACH,
+                dto.getRegUserId()
+            );
+        }
+    }
+
+    
+    /**
+     * 공지사항의 첨부파일 목록 조회
+     */
+    public List<FileInfoDTO> getNoticeFiles(String noticeId) {
+        return fileService.getFileList(
+            FileConstants.RefType.NOTICE,
+            noticeId,
+            FileConstants.Category.ATTACH
+        );
+    }
+
+    /**
+     * 공지사항에 파일 업로드
+     */
+    @Transactional
+    public List<FileUploadResponseDTO> uploadNoticeFiles(String noticeId, List<MultipartFile> files, String userId) {
+        return fileService.uploadFiles(
+            files,
+            FileConstants.RefType.NOTICE,
+            noticeId,
+            FileConstants.Category.ATTACH,
+            userId
+        );
+    }
+
+    /**
+     * 공지사항 파일 삭제
+     */
+    @Transactional
+    public void deleteNoticeFile(String noticeId, Long fileId, String userId) {
+        FileInfo info = fileService.getFileInfo(fileId);
+        if (info == null || !FileConstants.RefType.NOTICE.equals(info.getRefType()) || !noticeId.equals(info.getRefId())) {
+            throw new IllegalArgumentException("파일을 찾을 수 없습니다.");
+        }
+        fileService.deleteFile(fileId, userId);
+    }
+    /**
+     * 공지사항 파일 정보 조회
+     */
+    public FileInfoDTO getNoticeFileInfo(String noticeId, Long fileId) {
+        FileInfo info = fileService.getFileInfo(fileId);
+        if (info == null || !FileConstants.RefType.NOTICE.equals(info.getRefType()) || !noticeId.equals(info.getRefId())) {
+            return null;
+        }
+        return fileService.getFileList(FileConstants.RefType.NOTICE, noticeId, FileConstants.Category.ATTACH)
+                .stream()
+                .filter(f -> f.getFileId().equals(fileId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * 공지사항 삭제
+     */
+    @Transactional
+    public void delete(String noticeId, String userId) {
+        if (!repo.existsById(noticeId)) {
+            throw new IllegalArgumentException("공지사항을 찾을 수 없습니다.");
+        }
+
+        // 첨부파일 삭제
+        fileService.deleteFilesByRef(
+            FileConstants.RefType.NOTICE,
+            noticeId,
+            userId
+        );
+
+        repo.deleteById(noticeId);
+    }
+
 
     private String generateId() {
         return "NT" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));

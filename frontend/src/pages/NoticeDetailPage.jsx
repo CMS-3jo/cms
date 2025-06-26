@@ -9,28 +9,59 @@ import { useUserProfile } from '../hooks/useUserProfile';
 
 const NoticeDetailPage = () => {
   const { id } = useParams();
- const { fetchNotices, getNoticeById, notices, loading } = useNotices();
+  const { fetchNotices, getNoticeById, deleteNotice, notices, loading } = useNotices();
   const navigate = useNavigate();
   const [notice, setNotice] = useState(null);
+  const [files, setFiles] = useState([]);
   const profile = useUserProfile();
   const canEdit = profile?.deptCode && !profile.deptCode.startsWith('S_');
-
+  const handleDelete = async () => {
+    if (!window.confirm('공지사항을 삭제하시겠습니까?')) return;
+    const result = await deleteNotice(id);
+    if (result.success) {
+      navigate('/notices');
+    } else {
+      alert('삭제 실패');
+    }
+  };
 
   useEffect(() => {
     if (notices.length === 0) {
       fetchNotices();
     }
   }, [fetchNotices, notices.length]);
-useEffect(() => {
+  useEffect(() => {
     const loadNotice = async () => {
       const data = await getNoticeById(id);
       setNotice(data || null);
+      if (data && Array.isArray(data.files)) {
+        setFiles(data.files);
+      }
     };
 
     if (id) {
       loadNotice();
     }
   }, [id, getNoticeById]);
+  useEffect(() => {
+    const fetchFiles = async () => {
+      try {
+        const res = await fetch(
+          `/api/files/list?refType=NOTICE&refId=${id}&category=ATTACH`
+        );
+        if (res.ok) {
+          const list = await res.json();
+          setFiles(list || []);
+        }
+      } catch (err) {
+        console.error('파일 조회 실패:', err);
+      }
+    };
+
+    if (id) {
+      fetchFiles();
+    }
+  }, [id]);
 
   // 날짜 포맷 함수
   const formatDate = (dateString) => {
@@ -43,8 +74,8 @@ useEffect(() => {
       <Header />
       <div className="container_layout">
         <Sidebar />
-        <main style={{ flex: 1, padding: '20px' }}>
-            <h3 style={{ marginBottom: '20px' }}>공지사항 상세</h3>
+        <main style={{ flex: 1, paddingTop: '82.8px' }}>
+          <h3 style={{ marginBottom: '20px' }}>공지사항 상세</h3>
           {loading || !notice ? (
             <p>로딩 중...</p>
           ) : (
@@ -71,9 +102,9 @@ useEffect(() => {
                   <tr>
                     <th>첨부파일</th>
                     <td colSpan="2">
-                      {notice.files && notice.files.length > 0 ? (
+                      {files && files.length > 0 ? (
                         <ul>
-                          {notice.files.map((file) => (
+                          {files.map((file) => (
                             <li key={file.fileId}>
                               <a
                                 href={`/api/files/${file.fileId}/download`}
@@ -93,17 +124,27 @@ useEffect(() => {
                   <tr>
                     <td colSpan="2" dangerouslySetInnerHTML={{ __html: notice.content }} />
                   </tr>
-                 
+
                 </tbody>
               </table>
               {canEdit && (
-                <button
-                  className="btn btn-primary"
-                  onClick={() => navigate(`/notices/${id}/edit`)}
-                  style={{ marginRight: '10px' }}
-                >
-                  수정
-                </button>
+                <>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => navigate(`/notices/${id}/edit`)}
+                    style={{ marginRight: '10px' }}
+                  >
+                    수정
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={handleDelete}
+                    style={{ marginRight: '10px' }}
+                  >
+                    삭제
+                  </button>
+                </>
               )}
               <button className="btn btn-secondary" onClick={() => navigate('/notices')}>
                 목록

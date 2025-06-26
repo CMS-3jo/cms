@@ -80,7 +80,7 @@ const WeeklyCalendarPage = () => {
           />
         </div>
       </div>
-
+	  {/*
       {showModal && selectedEvent && (
         <CalendarEventModal
           event={selectedEvent}
@@ -89,6 +89,7 @@ const WeeklyCalendarPage = () => {
           onClose={() => setShowModal(false)}
         />
       )}
+	  */}
       
       <Footer />
     </>

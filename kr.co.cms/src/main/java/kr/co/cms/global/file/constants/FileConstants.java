@@ -18,6 +18,7 @@ public class FileConstants {
         public static final String BOARD = "BOARD";        // 게시판
         public static final String NOTICE = "NOTICE";      // 공지사항
         public static final String CONSULT = "CONSULT";    // 상담
+        public static final String USER = "USER"; // 사용자
     }
     
     /**
@@ -29,6 +30,7 @@ public class FileConstants {
         public static final String APPLY = "APPLY"; // 신청서
         public static final String IMG = "IMG"; // 컨텐츠 이미지
         public static final String TEMP = "TEMP";               // 임시파일
+        public static final String PROFILE = "PROFILE"; // 프로필 사진
     }
     
     /**

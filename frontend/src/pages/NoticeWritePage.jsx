@@ -18,31 +18,12 @@ const NoticeWritePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const noticeData = { title, content, regUserId: user?.userId };
+    const noticeData = { title, content, regUserId: user?.userId, files };
 
     try {
-      if (files.length > 0) {
-        const formData = new FormData();
-        formData.append(
-          'notice',
-          new Blob([JSON.stringify(noticeData)], { type: 'application/json' })
-        );
-        files.forEach((file) => formData.append('files', file));
-
-        const response = await fetch('/api/notices/with-files', {
-          method: 'POST',
-          body: formData,
-          credentials: 'include'
-        });
-
-        if (!response.ok) {
-          throw new Error('등록 실패');
-        }
-      } else {
-        const result = await createNotice(noticeData);
-        if (!result.success) {
-          throw new Error('등록 실패');
-        }
+      const result = await createNotice(noticeData);
+      if (!result.success) {
+        throw new Error('등록 실패');
       }
 
       navigate('/notices');
@@ -90,6 +71,13 @@ const NoticeWritePage = () => {
             <div className="mb-3">
               <label className="form-label">첨부파일</label>
               <input type="file" multiple onChange={(e) => setFiles(Array.from(e.target.files))} />
+              {files.length > 0 && (
+                <ul style={{ marginTop: '10px' }}>
+                  {files.map((f, idx) => (
+                    <li key={idx}>{f.name}</li>
+                  ))}
+                </ul>
+              )}
             </div>
             <button type="submit" className="btn btn-primary">등록</button>
           </form>

@@ -77,23 +77,25 @@ export const userApi = {
 };
 
 export const calendarApi = {
-  async getCalendarEvents(counselorId, startDate, endDate) {
-    const query = new URLSearchParams({
-      counselorId,
-      startDate,
-      endDate
-    }).toString();
+	async getCalendarEvents(counselorId, startDate, endDate) {
+		const query = new URLSearchParams({
+			counselorId,
+			startDate,
+			endDate
+		}).toString();
 
-    const res = await apiService.get(`/calendar/events?${query}`);
-    return res;
-  }
+		const res = await apiService.get(`/calendar/events?${query}`);
+		return res;
+	}
 };
 
 // 상담 관련 API
 export const counselingApi = {
 	// 상담 신청 목록 조회
-	getCounselingList: (params) =>
-		apiService.get('/counseling/applications', params),
+	getCounselingList: (params) => {
+		const queryString = new URLSearchParams(params).toString();
+		return apiService.get(`/counseling/applications?${queryString}`);
+	},
 
 	// 상담 코드
 	getCodes: (group) =>
@@ -158,7 +160,7 @@ export const counselingApi = {
 				if (!res.ok) throw new Error('상담일지 조회 실패');
 				return res.json();
 			}),
-	
+
 	// 상담 일지 등록
 	saveCounselingRecord: (id, data) =>
 		fetch(`/api/counseling/records/${id}`, {
@@ -175,28 +177,28 @@ export const counselingApi = {
 	// 상담 일지 수정
 	updateCounselingRecord: (id, data) =>
 		apiService.put(`/counseling/records/${id}`, data),
-	
+
 	// 예약 시간 받아오기
 	getReservedTimes: (date) =>
-	  apiService.get('/counseling/reserved-times', { date }),
+		apiService.get('/counseling/reserved-times', { date }),
 };
 
 // --- 채팅방 관련 API ---
 export const chatApi = {
-  // 전체 채팅방 목록 (상담사용)
-  getAllRooms: () => apiService.get('/api/chat/rooms'),
+	// 전체 채팅방 목록 (상담사용)
+	getAllRooms: () => apiService.get('/api/chat/rooms'),
 
-  // 상담사 미배정 방만 조회
-  getUnassignedRooms: () => apiService.get('/api/chat/rooms/unassigned'),
+	// 상담사 미배정 방만 조회
+	getUnassignedRooms: () => apiService.get('/api/chat/rooms/unassigned'),
 
-  // 채팅방 생성 (학생용)
-  createRoom: (data) => apiService.post('/chat/rooms', data),
+	// 채팅방 생성 (학생용)
+	createRoom: (data) => apiService.post('/chat/rooms', data),
 
-  // 상담사가 특정 방에 배정
-  assignCounselor: (roomId, counselorId) =>
-    apiService.patch(`/chat/rooms/${roomId}/assign`, {
-      assignedCounselorId: counselorId,
-    }),
+	// 상담사가 특정 방에 배정
+	assignCounselor: (roomId, counselorId) =>
+		apiService.patch(`/chat/rooms/${roomId}/assign`, {
+			assignedCounselorId: counselorId,
+		}),
 };
 
 // 인증 관련 API
@@ -225,12 +227,37 @@ export const noticeApi = {
 	createNotice: (data) =>
 		apiService.post('/notices', data),
 
+	createNoticeWithFiles: (formData) =>
+		fetch('/api/notices/with-files', {
+			method: 'POST',
+			body: formData,
+			credentials: 'include'
+		}),
+
 	updateNotice: (id, data) =>
 		apiService.put(`/notices/${id}`, data),
+
+	updateNoticeWithFiles: (id, formData) =>
+		fetch(`/api/notices/${id}/with-files`, {
+			method: 'PUT',
+			body: formData,
+			credentials: 'include'
+		}),
+	getNoticeFiles: (id) =>
+		apiService.get(`/notices/${id}/files`),
+
+	uploadNoticeFiles: (id, formData) =>
+		fetch(`/api/notices/${id}/files`, {
+			method: 'POST',
+			body: formData,
+			credentials: 'include'
+		}),
+
+	deleteNoticeFile: (noticeId, fileId) =>
+		apiService.delete(`/notices/${noticeId}/files/${fileId}`),
 
 	deleteNotice: (id) =>
 		apiService.delete(`/notices/${id}`),
 };
-
 
 export default apiService;

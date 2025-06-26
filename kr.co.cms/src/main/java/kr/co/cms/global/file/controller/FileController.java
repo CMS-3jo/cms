@@ -79,6 +79,22 @@ public class FileController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    /**
+     * 파일 정렬 순서 변경
+     */
+    @PutMapping("/sort-order")
+    public ResponseEntity<Map<String, String>> updateSortOrder(
+            @RequestBody List<FileSortOrderUpdateDTO> sortOrderList,
+            HttpServletRequest request) {
+        try {
+            String userId = tokenUtil.getUserIdFromRequest(request);
+            fileService.updateFileSortOrders(sortOrderList, userId);
+            return ResponseEntity.ok(Map.of("message", "순서가 변경되었습니다."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
     
     /**
      * 파일 다운로드
