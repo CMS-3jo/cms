@@ -260,9 +260,9 @@ const CenterIntroPage = () => {
       <PublicHeader />
 
       <main>
-        <header className="hero-section">
+        <header >
           <div className="hero-content">
-            <h1>센터 소개</h1>
+            {/* <h1>센터 소개</h1> */}
           </div>
         </header>
 

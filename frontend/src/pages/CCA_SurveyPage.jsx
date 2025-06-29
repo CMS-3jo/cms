@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom';
 // 1. useAuth 훅을 import 합니다. 경로는 실제 파일 위치에 맞게 조정해주세요.
 import { useAuth } from '../hooks/useAuth';
 import '../../public/css/NoncurricularList.css';
+import PublicHeader from '../components/layout/PublicHeader';
 
 const CCASurveyPage = () => {
   const { cciId } = useParams();
@@ -67,6 +68,7 @@ const CCASurveyPage = () => {
 
       if (response.ok) {
         alert('설문이 제출되었습니다.');
+         window.history.go(-1);
       } else {
         const errText = await response.text();
         console.error('제출 실패:', errText);
@@ -80,7 +82,7 @@ const CCASurveyPage = () => {
 
   return (
     <>
-      <Header />
+      <PublicHeader />
       <div className="container_layout">
         <Sidebar />
         <div className="noncur-list-page">

@@ -9,6 +9,7 @@ import { useAuth } from '../hooks/useAuth';
 import {
     Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Tooltip
 } from 'recharts';
+import PublicHeader from '../components/layout/PublicHeader';
 
 const CCAResultPage = () => {
     const { user, apiCall } = useAuth();
@@ -47,7 +48,7 @@ const CCAResultPage = () => {
 
     return (
         <>
-            <Header />
+            <PublicHeader />
             <div className="container_layout">
                 <Sidebar />
                 <div className="noncur-list-page">

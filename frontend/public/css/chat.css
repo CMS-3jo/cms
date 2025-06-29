@@ -83,6 +83,13 @@ border-top : var(--bs-modal-footer-border-width) solid var(--bs-modal-footer-bor
     box-sizing: border-box;
 }
 
+.floating-btn-chatbot{
+  margin: 20px 0;
+  background: #FEE500;
+}
+.floating-btn-chatbot:hover{
+  background: #bba800;
+}
 .modal.chat .modal-body .chat-text #sendBtn {display : none}
 
 .modal.chat .modal-header {background-color : #004080; color : #fff;}
