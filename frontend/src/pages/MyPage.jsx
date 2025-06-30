@@ -857,78 +857,66 @@ const MyPage = () => {
   }
 
   return (
-    <>
-      <PublicHeader />
-      <main>
-        <div className="profile-header-new">
+   <>
+    <PublicHeader />
+    <main>
+      {/* 사용자 정보 섹션 */}
+      <div className="user-info-section">
+        <div className="user-info-header">
           <div className="profile-avatar">
             <div className="avatar-circle">
-  {/* 디버깅: 현재 상태 확인 */}
-  {console.log('렌더링 시점 userProfile:', userProfile)}
-  {console.log('렌더링 시점 profileImageUrl:', userProfile?.profileImageUrl)}
-  
-  {userProfile.profileImageUrl ? (
-    <img
-      src={`http://localhost:8082${userProfile.profileImageUrl}`}
-      alt="프로필 이미지"
-      className="avatar-image"
-      onLoad={() => {
-        console.log('✅ 이미지 로딩 성공:', `http://localhost:8082${userProfile.profileImageUrl}`);
-      }}
-      onError={(e) => {
-        console.error('❌ 이미지 로딩 실패:', e.target.src);
-        console.error('원본 URL:', userProfile.profileImageUrl);
-        // 에러 시 img 태그 숨기고 기본 아바타 표시
-        e.target.style.display = 'none';
-      }}
-    />
-  ) : (
-    <span className="avatar-text">
-      {userProfile.userName?.charAt(0) || "U"}
-    </span>
-  )}
-  
-  {/* 프로필 이미지 편집 버튼 (게스트 제외) */}
-  {userProfile.userType !== "GUEST" && (
-    <div className="avatar-edit-overlay">
-      {/* ✅ 사진이 있으면 삭제 버튼만, 없으면 업로드 버튼만 표시 */}
-      {userProfile.profileImageUrl ? (
-        // 사진이 있을 때: 삭제 버튼만 표시
-        <button
-          onClick={handleProfileImageDelete}
-          className="avatar-delete-btn"
-          title="프로필 이미지 삭제"
-          disabled={imageUploadLoading}
-        >
-          🗑️
-        </button>
-      ) : (
-        // 사진이 없을 때: 업로드 버튼만 표시
-        <>
-          <label htmlFor="profile-image-upload" className="avatar-edit-btn" title="프로필 이미지 변경">
-            📷
-          </label>
-          <input
-            id="profile-image-upload"
-            type="file"
-            accept="image/jpeg,image/jpg,image/png"
-            onChange={handleProfileImageUpload} 
-            style={{ display: 'none' }}
-            disabled={imageUploadLoading}
-          />
-        </>
-      )}
-    </div>
-  )}
-</div>
+              {userProfile.profileImageUrl ? (
+                <img
+                  src={`http://localhost:8082${userProfile.profileImageUrl}`}
+                  alt="프로필 이미지"
+                  className="avatar-image"
+                  onLoad={() => {
+                    console.log('✅ 이미지 로딩 성공:', `http://localhost:8082${userProfile.profileImageUrl}`);
+                  }}
+                  onError={(e) => {
+                    console.error('❌ 이미지 로딩 실패:', e.target.src);
+                    e.target.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <span className="avatar-text">
+                  {userProfile.userName?.charAt(0) || "U"}
+                </span>
+              )}
+              
+              {userProfile.userType !== "GUEST" && (
+                <div className="avatar-edit-overlay">
+                  {userProfile.profileImageUrl ? (
+                    <button
+                      onClick={handleProfileImageDelete}
+                      className="avatar-delete-btn"
+                      title="프로필 이미지 삭제"
+                      disabled={imageUploadLoading}
+                    >
+                      🗑️
+                    </button>
+                  ) : (
+                    <>
+                      <label htmlFor="profile-image-upload" className="avatar-edit-btn" title="프로필 이미지 변경">
+                        📷
+                      </label>
+                      <input
+                        id="profile-image-upload"
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png"
+                        onChange={handleProfileImageUpload} 
+                        style={{ display: 'none' }}
+                        disabled={imageUploadLoading}
+                      />
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
 
-            {/* 업로드 상태 표시 */}
             {imageUploadLoading && (
               <div className="image-upload-status">
-                <div
-                  className="spinner-border spinner-border-sm text-primary"
-                  role="status"
-                >
+                <div className="spinner-border spinner-border-sm text-primary" role="status">
                   <span className="visually-hidden">업로드 중...</span>
                 </div>
                 <small>업로드 중...</small>
@@ -957,38 +945,34 @@ const MyPage = () => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* 프로필 이미지 업로드 관련 알림 메시지 */}
-          {(imageUploadSuccess || imageUploadError) && (
-            <div className="image-upload-messages">
-              {imageUploadSuccess && (
-                <div
-                  className="alert alert-success alert-dismissible fade show"
-                  role="alert"
-                >
-                  {imageUploadSuccess}
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={() => setImageUploadSuccess("")}
-                  ></button>
-                </div>
-              )}
-              {imageUploadError && (
-                <div
-                  className="alert alert-danger alert-dismissible fade show"
-                  role="alert"
-                >
-                  {imageUploadError}
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={() => setImageUploadError("")}
-                  ></button>
-                </div>
-              )}
+      {/* 프로필 이미지 업로드 관련 알림 메시지 */}
+      {(imageUploadSuccess || imageUploadError) && (
+        <div className="image-upload-messages">
+          {imageUploadSuccess && (
+            <div className="alert alert-success alert-dismissible fade show" role="alert">
+              {imageUploadSuccess}
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setImageUploadSuccess("")}
+              ></button>
             </div>
           )}
+          {imageUploadError && (
+            <div className="alert alert-danger alert-dismissible fade show" role="alert">
+              {imageUploadError}
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setImageUploadError("")}
+              ></button>
+            </div>
+          )}
+        </div>
+      )}
 
           {/* 메뉴 카드들 */}
           <div className="menu-cards-grid">
@@ -1973,7 +1957,6 @@ const MyPage = () => {
               </div>
             </div>
           </div>
-        </div>
       </main>
       <Footer />
     </>
