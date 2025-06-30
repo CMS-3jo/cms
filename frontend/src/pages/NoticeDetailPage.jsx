@@ -81,7 +81,7 @@ const NoticeDetailPage = () => {
             <p>로딩 중...</p>
           ) : (
             <>
-              <table className="table">
+              <table className="table nd">
                 <tbody>
                   <tr>
                     <th style={{ width: '20%' }}>제목</th>
@@ -104,7 +104,7 @@ const NoticeDetailPage = () => {
                     <th>첨부파일</th>
                     <td colSpan="2">
                       {files && files.length > 0 ? (
-                        <ul>
+                        <ul style={{ listStyleType: 'none', padding: 0 }}>
                           {files.map((file) => (
                             <li key={file.fileId}>
                               <a

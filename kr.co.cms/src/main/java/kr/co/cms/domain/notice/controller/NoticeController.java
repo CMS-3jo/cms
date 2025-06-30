@@ -17,7 +17,7 @@ import kr.co.cms.global.file.dto.FileInfoDTO;
 import kr.co.cms.global.file.dto.FileUploadResponseDTO;
 import kr.co.cms.global.file.service.FileService;
 import kr.co.cms.global.util.TokenUtil;
-
+import kr.co.cms.domain.notice.dto.NoticeSearchDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
@@ -32,8 +32,11 @@ public class NoticeController {
     private final FileService fileService;
 
     @GetMapping
-    public List<NoticeDto> list() {
-        return service.getAll();
+    public ResponseEntity<?> list(@ModelAttribute NoticeSearchDTO searchDTO) {
+        if (searchDTO.getPage() == null && searchDTO.getSize() == null) {
+            return ResponseEntity.ok(service.getAll());
+        }
+        return ResponseEntity.ok(service.getNoticesWithPagination(searchDTO));
     }
 
     @GetMapping("/{id}")

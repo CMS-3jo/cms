@@ -3,13 +3,20 @@ package kr.co.cms.domain.notice.service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import kr.co.cms.domain.notice.dto.NoticeDto;
 import kr.co.cms.domain.notice.entity.Notice;
+import kr.co.cms.domain.notice.dto.NoticeSearchDTO;
 import kr.co.cms.domain.notice.repository.NoticeRepository;
 import kr.co.cms.global.file.constants.FileConstants;
 import kr.co.cms.global.file.dto.FileInfoDTO;
@@ -42,6 +49,40 @@ public class NoticeService {
                        return dto;
                    })
                    .collect(Collectors.toList());
+    }
+    
+    public Map<String, Object> getNoticesWithPagination(NoticeSearchDTO searchDTO) {
+        int page = searchDTO.getPage() != null ? searchDTO.getPage() : 0;
+        int size = searchDTO.getSize() != null ? searchDTO.getSize() : 10;
+        Sort sort = Sort.by(Sort.Direction.fromString(searchDTO.getSortDir()), searchDTO.getSortBy());
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Notice> noticePage = repo.findAll(pageable);
+
+        List<NoticeDto> list = noticePage.getContent().stream()
+            .map(n -> {
+                NoticeDto dto = NoticeDto.fromEntity(n);
+                List<FileInfoDTO> files = fileService.getFileList(
+                    FileConstants.RefType.NOTICE,
+                    n.getNoticeId(),
+                    FileConstants.Category.ATTACH);
+                dto.setFiles(files);
+                return dto;
+            })
+            .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("notices", list);
+        response.put("totalElements", noticePage.getTotalElements());
+        response.put("totalPages", noticePage.getTotalPages());
+        response.put("currentPage", noticePage.getNumber());
+        response.put("size", noticePage.getSize());
+        response.put("hasNext", noticePage.hasNext());
+        response.put("hasPrevious", noticePage.hasPrevious());
+        response.put("isFirst", noticePage.isFirst());
+        response.put("isLast", noticePage.isLast());
+
+        return response;
     }
     @Transactional
     public NoticeDto get(String noticeId) {
