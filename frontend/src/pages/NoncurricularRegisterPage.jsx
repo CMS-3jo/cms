@@ -439,90 +439,121 @@ const NoncurricularRegisterPage = () => {
                     </div>
 
                     {/* 프로그램 정보 */}
-                    <div className={styles['ncr-card']}>
-                        <h3 className={styles['ncr-card-title']}>프로그램 정보</h3>
-                        <div className={styles['ncr-grid-3']}>
-                            <div className={styles['ncr-form-group']}>
-                                <label htmlFor="maxCnt" className={styles['ncr-label']}>
-                                    모집인원(정원)<span className={styles['ncr-required-star']}>*</span>
-                                </label>
-                                <input 
-                                    id="maxCnt" 
-                                    type="number" 
-                                    name="maxCnt" 
-                                    value={formData.maxCnt} 
-                                    onChange={handleInputChange} 
-                                    min="1" 
-                                    className={styles['ncr-input']} 
-                                    placeholder="숫자만 입력" 
-                                />
-                            </div>
-                            <div className={styles['ncr-form-group']}>
-                                <label htmlFor="targetInfo" className={styles['ncr-label']}>모집 대상</label>
-                                <input 
-                                    id="targetInfo" 
-                                    type="text" 
-                                    name="targetInfo" 
-                                    value={formData.targetInfo} 
-                                    onChange={handleInputChange} 
-                                    className={styles['ncr-input']} 
-                                    placeholder="예: 3, 4학년 재학생" 
-                                />
-                            </div>
-                            <div className={styles['ncr-form-group']}>
-                                <label htmlFor="mlgScore" className={styles['ncr-label']}>
-                                    지급 마일리지<span className={styles['ncr-required-star']}>*</span>
-                                </label>
-                                <input 
-                                    id="mlgScore" 
-                                    type="number" 
-                                    name="mlgScore" 
-                                    value={formData.mlgScore} 
-                                    onChange={handleInputChange} 
-                                    min="0" 
-                                    step="0.1" 
-                                    className={styles['ncr-input']} 
-                                    placeholder="예: 10.5" 
-                                />
-                            </div>
-                            <div className={styles['ncr-form-group']}>
-                                <label htmlFor="prgStDt" className={styles['ncr-label']}>
-                                    시작일시<span className={styles['ncr-required-star']}>*</span>
-                                </label>
-                                <Flatpickr 
-                                    id="prgStDt" 
-                                    value={formData.prgStDt} 
-                                    onChange={(dates) => handleDateChange('prgStDt', dates)} 
-                                    options={{ 
-                                        locale: Korean, 
-                                        enableTime: true, 
-                                        dateFormat: 'Y-m-d H:i', 
-                                        minDate: new Date() 
-                                    }} 
-                                    className={styles['ncr-input']} 
-                                    placeholder="클릭하여 날짜 선택" 
-                                />
-                            </div>
-                            <div className={styles['ncr-form-group']}>
-                                <label htmlFor="prgEndDt" className={styles['ncr-label']}>
-                                    종료일시<span className={styles['ncr-required-star']}>*</span>
-                                </label>
-                                <Flatpickr 
-                                    id="prgEndDt" 
-                                    value={formData.prgEndDt} 
-                                    onChange={(dates) => handleDateChange('prgEndDt', dates)} 
-                                    options={{ 
-                                        locale: Korean, 
-                                        enableTime: true, 
-                                        dateFormat: 'Y-m-d H:i', 
-                                        minDate: formData.prgStDt || new Date() 
-                                    }} 
-                                    className={styles['ncr-input']} 
-                                    placeholder="클릭하여 날짜 선택" 
-                                />
-                            </div>
-                        </div>
-                    </div>
+<div className={styles['ncr-card']}>
+    <h3 className={styles['ncr-card-title']}>프로그램 정보</h3>
+    <div className={styles['ncr-grid-3']}>
+        {/* 1행: 모집인원 | 지급 마일리지 | (빈 공간) */}
+        <div className={styles['ncr-form-group']}>
+            <label htmlFor="maxCnt" className={styles['ncr-label']}>
+                모집인원(정원)<span className={styles['ncr-required-star']}>*</span>
+            </label>
+            <input 
+                id="maxCnt" 
+                type="number" 
+                name="maxCnt" 
+                value={formData.maxCnt} 
+                onChange={handleInputChange} 
+                min="1" 
+                className={styles['ncr-input']} 
+                placeholder="숫자만 입력" 
+            />
+        </div>
+        <div className={styles['ncr-form-group']}>
+            <label htmlFor="mlgScore" className={styles['ncr-label']}>
+                지급 마일리지<span className={styles['ncr-required-star']}>*</span>
+            </label>
+            <input 
+                id="mlgScore" 
+                type="number" 
+                name="mlgScore" 
+                value={formData.mlgScore} 
+                onChange={handleInputChange} 
+                min="0" 
+                step="0.1" 
+                className={styles['ncr-input']} 
+                placeholder="예: 10.5" 
+            />
+        </div>
+        <div className={styles['ncr-form-group']}></div> {/* 빈 공간 */}
+
+        {/* 2행: 학적 | 학과 | 학년 */}
+        <div className={styles['ncr-form-group']}>
+            <label htmlFor="targetInfo" className={styles['ncr-label']}>학적</label>
+            <input 
+                id="targetInfo" 
+                type="text" 
+                name="targetInfo" 
+                value={formData.targetInfo} 
+                onChange={handleInputChange} 
+                className={styles['ncr-input']} 
+                placeholder="예: 재학생,졸업생" 
+            />
+        </div>
+        <div className={styles['ncr-form-group']}>
+            <label htmlFor="departmentInfo" className={styles['ncr-label']}>학과</label>
+            <input 
+                id="departmentInfo" 
+                type="text" 
+                name="departmentInfo" 
+                value={formData.departmentInfo} 
+                onChange={handleInputChange} 
+                className={styles['ncr-input']} 
+                placeholder="예: 인문사회과학대학" 
+            />
+        </div>
+        <div className={styles['ncr-form-group']}>
+            <label htmlFor="gradeInfo" className={styles['ncr-label']}>학년</label>
+            <input 
+                id="gradeInfo" 
+                type="text" 
+                name="gradeInfo" 
+                value={formData.gradeInfo} 
+                onChange={handleInputChange} 
+                className={styles['ncr-input']} 
+                placeholder="예: 3, 4학년" 
+            />
+        </div>
+
+        {/* 3행: 시작일시 | 종료일시 | (빈 공간) */}
+        <div className={styles['ncr-form-group']}>
+            <label htmlFor="prgStDt" className={styles['ncr-label']}>
+                시작일시<span className={styles['ncr-required-star']}>*</span>
+            </label>
+            <Flatpickr 
+                id="prgStDt" 
+                value={formData.prgStDt} 
+                onChange={(dates) => handleDateChange('prgStDt', dates)} 
+                options={{ 
+                    locale: Korean, 
+                    enableTime: true, 
+                    dateFormat: 'Y-m-d H:i', 
+                    minDate: new Date() 
+                }} 
+                className={styles['ncr-input']} 
+                placeholder="클릭하여 날짜 선택" 
+            />
+        </div>
+        <div className={styles['ncr-form-group']}>
+            <label htmlFor="prgEndDt" className={styles['ncr-label']}>
+                종료일시<span className={styles['ncr-required-star']}>*</span>
+            </label>
+            <Flatpickr 
+                id="prgEndDt" 
+                value={formData.prgEndDt} 
+                onChange={(dates) => handleDateChange('prgEndDt', dates)} 
+                options={{ 
+                    locale: Korean, 
+                    enableTime: true, 
+                    dateFormat: 'Y-m-d H:i', 
+                    minDate: formData.prgStDt || new Date() 
+                }} 
+                className={styles['ncr-input']} 
+                placeholder="클릭하여 날짜 선택" 
+            />
+        </div>
+        <div className={styles['ncr-form-group']}></div> {/* 빈 공간 */}
+    </div>
+</div>
 
                     {/* 운영 정보 */}
                     <div className={styles['ncr-card']}>

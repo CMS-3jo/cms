@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
 import '/public/css/NoncurProgramList.css';
 
-const NoncurProgramList = ({ programs, onProgramSelect, onStatusChange }) => {
+const NoncurProgramList = ({ programs,
+  departments = [],
+  onProgramSelect,
+  onStatusChange,
+  onEdit,
+  onDelete, 
+  onRegister  }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterDept, setFilterDept] = useState('all');
+  
 
   const filteredPrograms = programs.filter(program => {
     const matchesSearch = program.prgNm.toLowerCase().includes(searchTerm.toLowerCase());
@@ -55,23 +62,27 @@ const NoncurProgramList = ({ programs, onProgramSelect, onStatusChange }) => {
           ))}
         </select>
         
-        <select 
-          value={filterDept} 
-          onChange={(e) => setFilterDept(e.target.value)}
-          className="filter-select"
-        >
-          <option value="all">모든 부서</option>
-          <option value="DEPT001">학생지원팀</option>
-          <option value="DEPT002">교무팀</option>
-          <option value="DEPT003">취업지원센터</option>
-          <option value="DEPT004">SW교육센터</option>
-        </select>
+          <select value={filterDept} onChange={(e) => setFilterDept(e.target.value)} className="filter-select"  >
+    <option value="all">모든 부서</option>
+    {departments.map(dept => (
+      <option key={dept.deptCd} value={dept.deptCd}>
+        {dept.deptNm}
+      </option>
+    ))}
+  </select>
       </div>
 
       <div className="program-stats">
         <span>총 {filteredPrograms.length}개 프로그램</span>
       </div>
+      
+      {/* 등록 버튼  */}
+        <div className="list-header">
+          <h3>프로그램 목록</h3>
+          <button className='my-page-button' onClick={onRegister}>새 프로그램 등록</button>
+        </div>
 
+      {/* 프로그램 목록 테이블 */}
       <table className="program-table">
         <thead>
           <tr>
@@ -82,6 +93,7 @@ const NoncurProgramList = ({ programs, onProgramSelect, onStatusChange }) => {
             <th>신청자</th>
             <th>상태</th>
             <th>액션</th>
+            <th>관리</th>
           </tr>
         </thead>
         <tbody>
@@ -119,6 +131,11 @@ const NoncurProgramList = ({ programs, onProgramSelect, onStatusChange }) => {
                   ))}
                 </select>
               </td>
+                      <td>
+              {/* 수정/삭제 버튼 */}
+              <button onClick={() => onEdit(program)}>수정</button>
+              <button onClick={() => onDelete(program.prgId)}>삭제</button>
+            </td>
             </tr>
           ))}
         </tbody>

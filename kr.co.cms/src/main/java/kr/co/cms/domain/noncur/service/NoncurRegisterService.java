@@ -11,11 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import kr.co.cms.domain.cca.dto.CoreCptInfoDto;
 import kr.co.cms.domain.cca.service.CoreCptInfoService;
+import kr.co.cms.domain.mileage.repository.ProgramMileageRepository;
 import kr.co.cms.domain.mileage.service.MileageService;
 import kr.co.cms.domain.noncur.dto.NoncurRegisterDTO;
 import kr.co.cms.domain.noncur.entity.NoncurProgram;
 import kr.co.cms.domain.noncur.entity.NoncurMap;
 import kr.co.cms.domain.noncur.repository.NoncurRepository;
+import kr.co.cms.global.file.service.FileService;
 import kr.co.cms.global.util.IdGenerator;
 import kr.co.cms.domain.noncur.repository.NoncurMapRepository;
 
@@ -26,18 +28,23 @@ public class NoncurRegisterService {
     private final NoncurRepository noncurRepository;
     private final NoncurMapRepository noncurMapRepository;
     private final CoreCptInfoService coreCptInfoService;
-    private final MileageService mileageService; // MileageService 필드 추가
+    private final MileageService mileageService; 
+    private final FileService fileService; 
+    private final ProgramMileageRepository programMileageRepository;
 
-    // 생성자에 MileageService 주입 추가
     public NoncurRegisterService(NoncurRepository noncurRepository, 
-                                NoncurMapRepository noncurMapRepository,
-                                CoreCptInfoService coreCptInfoService,
-                                MileageService mileageService) { // 파라미터 추가
-        this.noncurRepository = noncurRepository;
-        this.noncurMapRepository = noncurMapRepository;
-        this.coreCptInfoService = coreCptInfoService; 
-        this.mileageService = mileageService; // 초기화 추가
-    }
+            NoncurMapRepository noncurMapRepository,
+            CoreCptInfoService coreCptInfoService,
+            MileageService mileageService,
+            FileService fileService,
+            ProgramMileageRepository programMileageRepository) { 
+			this.noncurRepository = noncurRepository;
+			this.noncurMapRepository = noncurMapRepository;
+			this.coreCptInfoService = coreCptInfoService; 
+			this.mileageService = mileageService;
+			this.fileService = fileService;
+			this.programMileageRepository = programMileageRepository;
+}
     
     
     
@@ -176,11 +183,31 @@ public class NoncurRegisterService {
             throw new IllegalArgumentException("프로그램을 찾을 수 없습니다.");
         }
         
-        // 핵심역량 매핑 먼저 삭제 (FK 제약조건)
-        noncurMapRepository.deleteByPrgId(prgId);
-        
-        // 프로그램 삭제
-        noncurRepository.deleteById(prgId);
+        try {
+            // 1. 연관 파일들 삭제 (썸네일, 첨부파일 등)
+            fileService.deleteFilesByRef("NONCUR", prgId, "SYSTEM");
+            System.out.println("프로그램 연관 파일 삭제 완료: " + prgId);
+            
+            // 2. 프로그램에 설정된 마일리지 정보 삭제
+            try {
+                programMileageRepository.deleteByPrgId(prgId);
+                System.out.println("프로그램 마일리지 삭제 완료: " + prgId);
+            } catch (Exception e) {
+                System.out.println("마일리지 삭제 중 오류 (계속 진행): " + e.getMessage());
+            }
+            
+            // 3. 핵심역량 매핑 삭제 (FK 제약조건)
+            noncurMapRepository.deleteByPrgId(prgId);
+            System.out.println("핵심역량 매핑 삭제 완료: " + prgId);
+            
+            // 4. 프로그램 삭제
+            noncurRepository.deleteById(prgId);
+            System.out.println("프로그램 삭제 완료: " + prgId);
+            
+        } catch (Exception e) {
+            System.err.println("프로그램 삭제 중 오류 발생: " + e.getMessage());
+            throw new RuntimeException("프로그램 삭제에 실패했습니다: " + e.getMessage());
+        }
     }
     
     /**

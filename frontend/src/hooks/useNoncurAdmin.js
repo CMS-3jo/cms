@@ -240,6 +240,83 @@ export const useNoncurAdmin = () => {
     }
   }, []);
 
+
+   // 프로그램 삭제
+  const deleteProgram = useCallback(async (prgId) => {
+    if (!prgId) {
+      throw new Error('prgId는 필수 파라미터입니다.');
+    }
+
+    try {
+      const response = await fetch(`/api/noncur/${prgId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || '프로그램 삭제 실패');
+      }
+      
+      return await response.json();
+    } catch (err) {
+      setError(err);
+      throw err;
+    }
+  }, []);
+
+  // 프로그램 수정
+  const updateProgram = useCallback(async (prgId, programData) => {
+    if (!prgId) {
+      throw new Error('prgId는 필수 파라미터입니다.');
+    }
+
+    try {
+      const response = await fetch(`/api/noncur/${prgId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(programData)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || '프로그램 수정 실패');
+      }
+      
+      return await response.json();
+    } catch (err) {
+      setError(err);
+      throw err;
+    }
+  }, []);
+
+  // 프로그램 수정용 데이터 조회
+  const getProgramForEdit = useCallback(async (prgId) => {
+    if (!prgId) {
+      throw new Error('prgId는 필수 파라미터입니다.');
+    }
+
+    try {
+      const response = await fetch(`/api/noncur/${prgId}/edit`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || '프로그램 정보 조회 실패');
+      }
+      
+      return await response.json();
+    } catch (err) {
+      setError(err);
+      throw err;
+    }
+  }, []);
+
+
   return {
     programs,
     applications,
@@ -253,6 +330,9 @@ export const useNoncurAdmin = () => {
     updateProgramStatus,
     completeApplication,
     batchUpdateStatus,
-    batchCompleteApplications
+    batchCompleteApplications,
+    deleteProgram,
+    updateProgram,
+    getProgramForEdit
   };
 };

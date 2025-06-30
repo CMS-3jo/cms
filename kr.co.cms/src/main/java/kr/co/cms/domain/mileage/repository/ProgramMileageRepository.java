@@ -17,4 +17,7 @@ public interface ProgramMileageRepository extends JpaRepository<ProgramMileage, 
     // 마일리지가 설정된 모든 프로그램 조회
     @Query("SELECT pm FROM ProgramMileage pm ORDER BY pm.regDt DESC")
     List<ProgramMileage> findAllOrderByRegDtDesc();
+    
+    //프로그램에 설정된 마일리지 삭제 
+    void deleteByPrgId(String prgId);
 }

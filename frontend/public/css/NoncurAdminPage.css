@@ -126,6 +126,7 @@
   text-align: left;
   font-size: 14px;
   text-decoration: underline;
+  box-shadow: none;
 }
 
 .program-name-btn:hover {
@@ -172,7 +173,6 @@
   font-size: 12px;
 }
 
-/* NoncurApplicationList.css */
 .application-list-container {
   background: white;
   border-radius: 8px;
@@ -454,4 +454,99 @@
 
 .tab-btn{
 border-radius: 0%;
+}
+
+.tab-menu > button {
+  box-shadow: none;
+}
+
+
+/* NoncurAdminPage.css에 추가할 스타일 */
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.list-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.register-btn {
+  padding: 10px 20px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.register-btn:hover {
+  background: #1565c0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 500;
+}
+
+.action-btn.edit {
+  background: #ff9800;
+  color: white;
+}
+
+.action-btn.edit:hover {
+  background: #f57c00;
+  transform: translateY(-1px);
+}
+
+.action-btn.delete {
+  background: #f44336;
+  color: white;
+}
+
+.action-btn.delete:hover {
+  background: #d32f2f;
+  transform: translateY(-1px);
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 14px;
+}
+
+.program-name-btn {
+  background: none;
+  border: none;
+  color: #1976d2;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.program-name-btn:hover {
+  color: #0d47a1;
 }
