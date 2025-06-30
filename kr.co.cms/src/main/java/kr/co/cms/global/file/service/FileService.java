@@ -148,13 +148,30 @@ public class FileService {
      */
     @Transactional
     public void deleteFilesByRef(String refType, String refId, String userId) {
+        log.info("=== 파일 완전 삭제 시작 ===");
+        log.info("refType: {}, refId: {}", refType, refId);
+        
         List<FileInfo> files = fileInfoRepository.findByRefTypeAndRefIdAndUseYn(refType, refId, "Y");
+        log.info("삭제할 파일 개수: {}", files.size());
         
-        files.forEach(file -> {
-            file.setUseYn("N");
-        });
+        for (FileInfo file : files) {
+            log.info("파일 삭제 중: {} (경로: {})", file.getFileNmOrig(), file.getFilePath());
+            
+            try {
+                // 1. FTP에서 실제 파일 삭제
+                if (file.getFilePath() != null && !file.getFilePath().isEmpty()) {
+                    boolean ftpDeleted = ftpUtil.deleteFile(file.getFilePath());
+                    log.info("FTP 파일 삭제 결과: {} - {}", ftpDeleted, file.getFilePath());
+                }
+            } catch (Exception e) {
+                log.error("FTP 파일 삭제 중 오류: {}", e.getMessage());
+            }
+            
+            // 2. DB에서 완전 삭제
+            fileInfoRepository.delete(file); // 🔥 완전 삭제
+        }
         
-        fileInfoRepository.saveAll(files);
+        log.info("=== 파일 완전 삭제 완료 ===");
     }
     
     /**

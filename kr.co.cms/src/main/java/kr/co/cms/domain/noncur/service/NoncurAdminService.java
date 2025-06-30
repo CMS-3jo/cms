@@ -67,39 +67,82 @@ public class NoncurAdminService {
      * 프로그램별 신청자 목록 조회
      */
     public Map<String, Object> getProgramApplications(String prgId, int page, int size, String statusCd) {
-        Sort sort = Sort.by(Sort.Direction.DESC, "aplyDt");
-        Pageable pageable = PageRequest.of(page, size, sort);
+        List<Object[]> results;
         
-        List<NoncurApplication> applications;
+        // JOIN 쿼리로 한번에 모든 정보 조회
         if (statusCd != null && !statusCd.isEmpty()) {
-            applications = applicationRepository.findByPrgIdAndAplyStatCdOrderByAplyDtDesc(prgId, statusCd);
+            results = applicationRepository.findApplicationsWithDetailsByStatusOrderByAplyDtDesc(prgId, statusCd);
         } else {
-            applications = applicationRepository.findByPrgIdOrderByAplyDtDesc(prgId);
+            results = applicationRepository.findApplicationsWithDetailsOrderByAplyDtDesc(prgId);
         }
         
         // 페이징 처리 (수동)
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), applications.size());
-        List<NoncurApplication> pageContent = applications.subList(start, end);
+        int start = page * size;
+        int end = Math.min((start + size), results.size());
+        List<Object[]> pageContent = results.subList(start, end);
         
-        // DTO 변환
+        // DTO 변환 (JOIN 결과 사용)
         List<NoncurApplicationDetailDTO> applicationDTOs = pageContent.stream()
-            .map(this::convertToDetailDTO)
+            .map(this::convertJoinResultToDetailDTO)
             .collect(Collectors.toList());
         
         // 통계 정보
-        Map<String, Long> statusStats = applications.stream()
+        Map<String, Long> statusStats = results.stream()
+            .map(result -> (NoncurApplication) result[0])
             .collect(Collectors.groupingBy(NoncurApplication::getAplyStatCd, Collectors.counting()));
         
         Map<String, Object> response = new HashMap<>();
         response.put("applications", applicationDTOs);
-        response.put("totalElements", applications.size());
-        response.put("totalPages", (int) Math.ceil((double) applications.size() / size));
+        response.put("totalElements", results.size());
+        response.put("totalPages", (int) Math.ceil((double) results.size() / size));
         response.put("currentPage", page);
         response.put("size", size);
         response.put("statusStats", statusStats);
         
         return response;
+    }
+    
+    /**
+     * JOIN 결과를 DetailDTO로 변환
+     */
+    private NoncurApplicationDetailDTO convertJoinResultToDetailDTO(Object[] result) {
+        NoncurApplication application = (NoncurApplication) result[0];
+        String prgNm = (String) result[1];
+        String stdNm = (String) result[2];          // StdInfo.stdNm
+        String stdDeptCd = (String) result[3];      // StdInfo.deptCd  
+        Integer schYr = (Integer) result[4];        // StdInfo.schYr (학년)
+        String phoneNumber = (String) result[5];    // StdInfo.phoneNumber
+        String email = (String) result[6];          // StdInfo.email
+        
+        NoncurApplicationDetailDTO dto = new NoncurApplicationDetailDTO();
+        dto.setAplyId(application.getAplyId());
+        dto.setPrgId(application.getPrgId());
+        dto.setPrgNm(prgNm); // JOIN으로 가져온 프로그램명 ✅
+        dto.setStdNo(application.getStdNo());
+        dto.setStdNm(stdNm); // JOIN으로 가져온 학생명 ✅
+        dto.setStdGrade(schYr != null ? schYr.toString() : ""); // 학년 ✅
+        dto.setStdPhone(phoneNumber); // 연락처 ✅
+        dto.setStdEmail(email); // 이메일 ✅
+        dto.setAplySelCd(application.getAplySelCd());
+        dto.setAplyDt(application.getAplyDt());
+        dto.setAplyStatCd(application.getAplyStatCd());
+        dto.setAplyStatNm(NoncurApplicationConstants.getStatusName(application.getAplyStatCd()));
+        dto.setAplySelNm(NoncurApplicationConstants.getTypeName(application.getAplySelCd()));
+        
+        // 학과명은 deptCd로 조회 (기존 방식 활용)
+        try {
+            List<DeptInfoDto> allDepts = deptInfoService.getAll();
+            String deptName = allDepts.stream()
+                .filter(dept -> dept.getDeptCd().equals(stdDeptCd))
+                .map(DeptInfoDto::getDeptNm)
+                .findFirst()
+                .orElse("알 수 없는 학과");
+            dto.setStdDeptNm(deptName);
+        } catch (Exception e) {
+            dto.setStdDeptNm("알 수 없는 학과");
+        }
+        
+        return dto;
     }
     
     /**

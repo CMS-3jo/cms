@@ -2,7 +2,6 @@
 
 .ncv-container {
   width: 100%;
-  background-color: #f8f9fa;
   min-height: 100vh;
   padding: 20px;
 }
@@ -50,33 +49,152 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  gap: 20px;
 }
 
-.ncv-details {
-  flex: 1;
-  margin-bottom: 20px;
-}
-
-.ncv-details-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+/* 정보 그룹 좌우 배치 */
+.ncv-info-groups-row {
+  display: flex;
   gap: 15px;
 }
 
-/* 마일리지 값 스타일 */
+/* 정보 그룹 */
+.ncv-info-group {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.ncv-info-group-left,
+.ncv-info-group-right {
+  flex: 1;
+}
+
+.ncv-info-group-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ncv-info-group-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ncv-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ncv-detail-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  min-width: 80px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ncv-detail-value {
+  font-size: 0.9rem;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+/* 마일리지 섹션 */
+.ncv-mileage-section {
+  margin-top: 15px;
+}
+
+.ncv-mileage-info {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.ncv-mileage-label {
+  font-size: 0.9rem;
+  color: #856404;
+  font-weight: 500;
+}
+
 .ncv-mileage-value {
-  color: #0d6efd !important;
+  font-size: 1.1rem;
+  color: #856404;
+  font-weight: 700;
+}
+
+/* 신청 영역 */
+.ncv-application-area {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: auto;
+}
+
+.ncv-application-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.ncv-application-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.ncv-application-count {
+  font-size: 1rem;
+  color: #2c3e50;
+}
+
+.ncv-application-count strong {
+  color: #0d6efd;
+  font-size: 1.1rem;
+}
+
+.ncv-application-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ncv-btn-apply {
+  flex: 1;
+  padding: 10px 20px;
+  font-size: 1rem;
   font-weight: 600;
 }
 
-/* 액션 버튼 섹션 */
-.ncv-action-buttons-section {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: auto;
-  padding-top: 15px;
-  border-top: 1px solid #f1f3f4;
+.ncv-btn-share {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  color: #6c757d;
+  padding: 10px 12px;
+  font-size: 1.1rem;
+  min-width: 44px;
+  text-align: center;
+}
+
+.ncv-btn-share:hover {
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+  color: #495057;
 }
 
 .ncv-badge {
@@ -151,16 +269,16 @@
   margin-right: -15px;
 }
 
-.ncv-col-lg-4 {
-  flex: 0 0 33.333333%;
-  max-width: 33.333333%;
+.ncv-col-lg-5 {
+  flex: 0 0 41.666667%;
+  max-width: 41.666667%;
   padding-left: 15px;
   padding-right: 15px;
 }
 
-.ncv-col-lg-8 {
-  flex: 0 0 66.666667%;
-  max-width: 66.666667%;
+.ncv-col-lg-7 {
+  flex: 0 0 58.333333%;
+  max-width: 58.333333%;
   padding-left: 15px;
   padding-right: 15px;
 }
@@ -264,7 +382,6 @@ li{
   background-color: #f8f9fa;
   padding: 20px;
   border-radius: 6px;
-  border-left: 3px solid #0d6efd;
 }
 
 /* 프로그램 일정 */
@@ -480,15 +597,10 @@ li{
 
 /* 반응형 */
 @media (max-width: 992px) {
-  .ncv-col-lg-4,
-  .ncv-col-lg-8 {
+  .ncv-col-lg-5,
+  .ncv-col-lg-7 {
     flex: 0 0 100%;
     max-width: 100%;
-  }
-  
-  .ncv-details-grid {
-    grid-template-columns: 1fr;
-    gap: 15px;
   }
   
   .ncv-title-row {
@@ -501,8 +613,23 @@ li{
     align-self: flex-start;
   }
   
-  .ncv-action-buttons-section {
-    justify-content: center;
+  .ncv-details-container {
+    gap: 15px;
+  }
+  
+  .ncv-info-groups-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .ncv-detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .ncv-detail-label {
+    min-width: auto;
   }
 }
 
@@ -544,13 +671,17 @@ li{
     width: 100%;
   }
   
-  .ncv-action-buttons-section {
-    width: 100%;
+  .ncv-application-actions {
     flex-direction: column;
+    gap: 10px;
   }
   
-  .ncv-action-buttons-section .ncv-btn {
+  .ncv-btn-apply {
     width: 100%;
+  }
+  
+  .ncv-btn-share {
+    align-self: center;
   }
 }
 
@@ -581,8 +712,8 @@ li{
     margin-right: -10px;
   }
   
-  .ncv-col-lg-4,
-  .ncv-col-lg-8 {
+  .ncv-col-lg-5,
+  .ncv-col-lg-7 {
     padding-left: 10px;
     padding-right: 10px;
   }

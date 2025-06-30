@@ -19,6 +19,7 @@ import DiagnosisDataPage from "./pages/DiagnosisDataPage";
 import MyPage from "./pages/MyPage";
 import CenterIntroPage from "./pages/CenterIntroPage";
 import NoncurricularListPage from "./pages/NoncurricularListPage.jsx";
+import NoncurricularEditPage from "./pages/NoncurricularEditPage.jsx";
 
 // 새로 추가된 상담 페이지들
 import PsychologicalCounselingPage from "./pages/PsychologicalCounselingPage";
@@ -100,6 +101,8 @@ function App() {
             <Route path="/noncur" element={<NoncurricularListPage />} />
             <Route path="/noncur/:prgId" element={<NoncurricularViewPage />} />
             <Route path="/noncur/register" element={<NoncurricularRegisterPage />} />
+            <Route path="/noncur/:prgId/edit" element={<NoncurricularEditPage />} />  
+
             {/* 비교과 관리자 페이지 */}
             <Route path="/admin/noncur" element={<NoncurAdminPage />} />
             <Route path="/admin/noncur/program/:prgId" element={<NoncurAdminPage />} />

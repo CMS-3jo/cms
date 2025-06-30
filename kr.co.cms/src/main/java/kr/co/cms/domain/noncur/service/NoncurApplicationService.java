@@ -99,11 +99,10 @@ public class NoncurApplicationService {
      * 학생의 신청 목록 조회
      */
     public List<NoncurApplicationDTO> getStudentApplications(String stdNo) {
-        List<NoncurApplication> applications = 
-            applicationRepository.findByStdNoOrderByAplyDtDesc(stdNo);
+        List<Object[]> results = applicationRepository.findStudentApplicationsWithDetails(stdNo);
         
-        return applications.stream()
-            .map(this::convertToDTO)
+        return results.stream()
+            .map(this::convertJoinResultToDTO)
             .collect(Collectors.toList());
     }
     
@@ -147,17 +146,64 @@ public class NoncurApplicationService {
      * 학생의 이수완료 프로그램 목록 조회
      */
     public List<NoncurApplicationDTO> getStudentCompletedApplications(String stdNo) {
-        List<NoncurApplication> completedApplications = 
-            applicationRepository.findByStdNoAndAplyStatCdOrderByAplyDtDesc(
-                stdNo, 
-                NoncurApplicationConstants.ApplicationStatus.COMPLETED
-            );
+        List<Object[]> results = applicationRepository.findStudentCompletedApplicationsWithDetails(stdNo);
         
-        return completedApplications.stream()
-            .map(this::convertToDetailDTO)
+        return results.stream()
+            .map(this::convertCompletedJoinResultToDTO)
             .collect(Collectors.toList());
     }
 
+    
+    
+    /**
+     * JOIN 결과를 DTO로 변환 (신청 목록용)
+     */
+    private NoncurApplicationDTO convertJoinResultToDTO(Object[] result) {
+        NoncurApplication application = (NoncurApplication) result[0];
+        String prgNm = (String) result[1];          // NoncurProgram.prgNm
+        LocalDateTime prgStDt = (LocalDateTime) result[2];  // 프로그램 시작일
+        LocalDateTime prgEndDt = (LocalDateTime) result[3]; // 프로그램 종료일
+        String deptNm = (String) result[4];         // DeptInfo.deptNm (부서명)
+        
+        NoncurApplicationDTO dto = new NoncurApplicationDTO();
+        dto.setAplyId(application.getAplyId());
+        dto.setPrgId(application.getPrgId());
+        dto.setPrgNm(prgNm); // JOIN으로 가져온 프로그램명 ✅
+        dto.setStdNo(application.getStdNo());
+        dto.setAplySelCd(application.getAplySelCd());
+        dto.setAplyDt(application.getAplyDt());
+        dto.setAplyStatCd(application.getAplyStatCd());
+        dto.setAplyStatNm(NoncurApplicationConstants.getStatusName(application.getAplyStatCd()));
+        
+        
+        return dto;
+    }
+
+    /**
+     * JOIN 결과를 DTO로 변환 (이수완료 목록용)
+     */
+    private NoncurApplicationDTO convertCompletedJoinResultToDTO(Object[] result) {
+        NoncurApplication application = (NoncurApplication) result[0];
+        String prgNm = (String) result[1];          // 프로그램명
+        LocalDateTime prgStDt = (LocalDateTime) result[2];  // 프로그램 시작일
+        LocalDateTime prgEndDt = (LocalDateTime) result[3]; // 프로그램 종료일
+        String deptNm = (String) result[4];         // 부서명
+        LocalDateTime cmpDt = (LocalDateTime) result[5];    // 이수완료일
+        
+        NoncurApplicationDTO dto = new NoncurApplicationDTO();
+        dto.setAplyId(application.getAplyId());
+        dto.setPrgId(application.getPrgId());
+        dto.setPrgNm(prgNm);  //프로그램명 
+        dto.setStdNo(application.getStdNo());
+        dto.setAplySelCd(application.getAplySelCd());
+        dto.setAplyDt(application.getAplyDt());
+        dto.setAplyStatCd(application.getAplyStatCd());
+        dto.setAplyStatNm(NoncurApplicationConstants.getStatusName(application.getAplyStatCd()));
+        return dto;
+    }
+    
+    
+    
     /**
      * Entity to DetailDTO 변환 (프로그램 정보 포함)
      */

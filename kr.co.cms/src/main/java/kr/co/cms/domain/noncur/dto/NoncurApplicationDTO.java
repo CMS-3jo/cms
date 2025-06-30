@@ -18,5 +18,9 @@ public class NoncurApplicationDTO {
     // 추가 정보 (JOIN으로 조회 시)
     private String prgNm; // 프로그램명
     private String stdNm; // 학생명
+    private String deptNm; // 부서명
+    private LocalDateTime prgStDt; // 프로그램 시작일
+    private LocalDateTime prgEndDt; // 프로그램 종료일
+    private LocalDateTime completeDt; // 이수완료일
 }
 
