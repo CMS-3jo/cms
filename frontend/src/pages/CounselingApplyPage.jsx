@@ -202,8 +202,8 @@ const CounselingApplyPage = () => {
 											</td>
 										</tr>
 										<tr>
-											<td><label htmlFor="applyFile">첨부 파일</label></td>
-											<td>
+											<td style={{display : 'none' }}><label htmlFor="applyFile">첨부 파일</label></td>
+											<td style={{display : 'none' }}>
 												<input
 													type="file"
 													id="applyFile"
