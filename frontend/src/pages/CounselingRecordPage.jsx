@@ -37,7 +37,7 @@ const CounselingRecordPage = () => {
     const result = await saveRecord(id, recordData);
     if (result.success) {
       alert('상담 일지가 저장되었습니다.');
-      navigate('/admin/counseling'); // ✅ 등록 후 이동
+      navigate('/admin/counseling');
     } else {
       alert('저장 실패: ' + result.error);
     }
