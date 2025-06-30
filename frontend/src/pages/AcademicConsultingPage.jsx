@@ -10,7 +10,7 @@ const AcademicConsultingPage = () => {
   const location = useLocation();
 
   const handleApplyClick = () => {
-    navigate('/cnsl/apply/07');
+    navigate('/cnsl/apply/06');
   };
 
   return (

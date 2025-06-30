@@ -8,9 +8,11 @@ import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import { counselingApi } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { useNavigate } from 'react-router-dom';
 
 const CounselingApplyPage = () => {
 	const { user } = useAuth();
+	const navigate = useNavigate();
 	const profile = useUserProfile();
 	const { parentCd } = useParams();
 	const [subTypes, setSubTypes] = useState([]);
@@ -82,7 +84,7 @@ const CounselingApplyPage = () => {
 			const result = await counselingApi.createCounselingApplication(payload);
 			alert("상담 신청이 완료되었습니다!");
 			console.log("신청 결과:", result);
-			// 이동 또는 초기화 처리 필요 시 여기에
+			navigate('/');
 		} catch (err) {
 			console.error("상담 신청 에러:", err);
 			alert("신청 중 오류가 발생했습니다.");
@@ -202,8 +204,8 @@ const CounselingApplyPage = () => {
 											</td>
 										</tr>
 										<tr>
-											<td><label htmlFor="applyFile">첨부 파일</label></td>
-											<td>
+											<td style={{display : 'none' }}><label htmlFor="applyFile">첨부 파일</label></td>
+											<td style={{display : 'none' }}>
 												<input
 													type="file"
 													id="applyFile"
