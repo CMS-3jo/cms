@@ -1,0 +1,30 @@
+.application-files {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-download-btn {
+  background: #e3f2fd;
+  border: 1px solid #2196f3;
+  color: #1976d2;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-download-btn:hover {
+  background: #2196f3;
+  color: white;
+}
+
+.no-file {
+  color: #999;
+  font-style: italic;
+}

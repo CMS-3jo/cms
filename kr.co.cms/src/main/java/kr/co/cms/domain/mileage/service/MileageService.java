@@ -172,17 +172,23 @@ public class MileageService {
      */
     public StudentMileageDTO getStudentMileage(String stdNo) {
         StudentMileageTotal total = totalRepository.findByStudentNo(stdNo);
-        List<StudentMileageHistory> recentHistory = 
-            historyRepository.findRecentHistoryByStudentNo(stdNo, 10);
+        List<Object[]> results = historyRepository.findRecentHistoryByStudentNo(stdNo, 10);
+        
+        List<MileageHistoryDTO> historyDTOs = results.stream()
+            .map(result -> {
+                StudentMileageHistory history = (StudentMileageHistory) result[0];
+                String prgNm = (String) result[1];
+                
+                MileageHistoryDTO dto = convertToHistoryDTO(history);
+                dto.setPrgNm(prgNm != null ? prgNm : "프로그램 정보 없음");
+                return dto;
+            })
+            .collect(Collectors.toList());
         
         StudentMileageDTO dto = new StudentMileageDTO();
         dto.setStdNo(stdNo);
         dto.setTotalMileage(total != null ? total.getTotMlgScore() : BigDecimal.ZERO);
         dto.setLastUpdatedAt(total != null ? total.getLastUpdDt() : null);
-        
-        List<MileageHistoryDTO> historyDTOs = recentHistory.stream()
-            .map(this::convertToHistoryDTO)
-            .collect(Collectors.toList());
         dto.setRecentHistory(historyDTOs);
         
         return dto;

@@ -4,6 +4,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import kr.co.cms.domain.mileage.dto.MileageHistoryDTO;
 import kr.co.cms.domain.mileage.entity.StudentMileageHistory;
 
 import java.util.List;
@@ -20,8 +22,12 @@ public interface StudentMileageHistoryRepository extends JpaRepository<StudentMi
     List<StudentMileageHistory> findByProgramIdOrderByMlgDtDesc(@Param("prgId") String prgId);
     
     // 학생별 최근 N개 히스토리 조회
-    @Query("SELECT smh FROM StudentMileageHistory smh WHERE smh.stdNo = :stdNo ORDER BY smh.mlgDt DESC LIMIT :limit")
-    List<StudentMileageHistory> findRecentHistoryByStudentNo(@Param("stdNo") String stdNo, @Param("limit") int limit);
+    @Query("SELECT smh, np.prgNm " +
+    	       "FROM StudentMileageHistory smh " +
+    	       "LEFT JOIN NoncurProgram np ON smh.prgId = np.prgId " +
+    	       "WHERE smh.stdNo = :stdNo " +
+    	       "ORDER BY smh.mlgDt DESC LIMIT :limit")
+    	List<Object[]> findRecentHistoryByStudentNo(@Param("stdNo") String stdNo, @Param("limit") int limit);
     
     // 특정 학생의 특정 프로그램 마일리지 존재 여부 확인
     boolean existsByPrgIdAndStdNo(String prgId, String stdNo);

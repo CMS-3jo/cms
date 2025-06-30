@@ -45,7 +45,7 @@ const NoncurProgramList = ({ programs,
       <div className="filter-section">
         <input
           type="text"
-          placeholder="프로그램명 검색..."
+          placeholder="프로그램명 검색"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
@@ -133,8 +133,8 @@ const NoncurProgramList = ({ programs,
               </td>
                       <td>
               {/* 수정/삭제 버튼 */}
-              <button onClick={() => onEdit(program)}>수정</button>
-              <button onClick={() => onDelete(program.prgId)}>삭제</button>
+              <button className='noncuradmin edit' onClick={() => onEdit(program)}>수정</button>
+              <button className='noncuradmin delete' onClick={() => onDelete(program.prgId)}>삭제</button>
             </td>
             </tr>
           ))}

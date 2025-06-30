@@ -8,13 +8,18 @@ import NoncurStatistics from '../components/noncur/NoncurStatistics';
 import { useNoncurAdmin } from '../hooks/useNoncurAdmin.js';
 import '/public/css/NoncurAdminPage.css'; 
 import { useNavigate } from 'react-router-dom'; 
+import { useAuth } from '../hooks/useAuth';
 
 const NoncurAdminPage = () => {
   const [activeTab, setActiveTab] = useState('programs');
   const [selectedProgram, setSelectedProgram] = useState(null);
-  const navigate = useNavigate();
   const [departments, setDepartments] = useState([]);
-
+  const [authChecked, setAuthChecked] = useState(false);
+  
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  
+  // useNoncurAdmin Hook은 항상 같은 순서로 호출되어야 함
   const {
     programs,
     applications,
@@ -34,6 +39,27 @@ const NoncurAdminPage = () => {
     getProgramForEdit
   } = useNoncurAdmin();
 
+  // 접근 권한 체크
+  useEffect(() => {
+    console.log('권한 체크:', { user, authLoading, role: user?.role });
+    
+    if (!authLoading) {
+      if (user) {
+        if (user.role !== 'ADMIN' && user.role !== 'COUNSELOR') {
+          alert('관리자 권한이 필요한 페이지입니다.');
+          navigate('/');
+          return;
+        }
+        setAuthChecked(true);
+      } else {
+        alert('로그인이 필요한 페이지입니다.');
+        navigate('/login');
+        return;
+      }
+    }
+  }, [user, authLoading, navigate]);
+
+  // 부서 목록 조회
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
@@ -48,6 +74,7 @@ const NoncurAdminPage = () => {
     fetchDepartments();
   }, []);
 
+  // 탭 변경 시 데이터 조회
   useEffect(() => {
     if (activeTab === 'programs') {
       fetchPrograms();
@@ -56,12 +83,33 @@ const NoncurAdminPage = () => {
     }
   }, [activeTab]);
 
+  // 선택된 프로그램의 신청자 조회
   useEffect(() => {
     if (selectedProgram) {
       fetchApplications(selectedProgram.prgId);
     }
   }, [selectedProgram]);
 
+  // 로딩 중이거나 권한 체크가 완료되지 않았으면 로딩 표시
+  if (authLoading || !authChecked) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <div>페이지 로딩 중...</div>
+      </div>
+    );
+  }
+
+  // 사용자 정보가 없거나 권한이 없으면 null 반환
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'COUNSELOR')) {
+    return null;
+  }
+
+  // 이벤트 핸들러들
   const handleProgramSelect = (program) => {
     setSelectedProgram(program);
     setActiveTab('applications');
@@ -72,29 +120,26 @@ const NoncurAdminPage = () => {
       try {
         await deleteProgram(prgId);
         alert('프로그램이 삭제되었습니다.');
-        fetchPrograms(); // 목록 새로고침
+        fetchPrograms();
       } catch (error) {
         alert('프로그램 삭제에 실패했습니다: ' + error.message);
       }
     }
   };
 
-  // 수정된 handleProgramEdit 함수
   const handleProgramEdit = (program) => {
     console.log('프로그램 수정 페이지로 이동:', program.prgId);
-    // 수정 페이지로 직접 이동
     navigate(`/noncur/${program.prgId}/edit`);
   };
 
   const handleProgramRegister = () => {
-    navigate('/noncur/register'); // 등록 페이지로 이동
+    navigate('/noncur/register');
     console.log('새 프로그램 등록');
   };
 
   const handleApplicationStatusChange = async (aplyId, statusCd, rejectReason = null) => {
     try {
       await updateApplicationStatus(aplyId, statusCd, rejectReason);
-      // 새로고침
       if (selectedProgram) {
         fetchApplications(selectedProgram.prgId);
       }
