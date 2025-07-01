@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
@@ -8,15 +8,17 @@ import { useUserProfile } from '../hooks/useUserProfile';
 import PublicHeader from '../components/layout/PublicHeader';
 
 const NoticeListPage = () => {
-  const { notices, fetchNotices, loading } = useNotices();
+  const { notices, pagination, fetchNotices, loading } = useNotices();
   const navigate = useNavigate();
- const profile = useUserProfile();
+  const profile = useUserProfile();
 
   const canWrite = profile?.deptCode && !profile.deptCode.startsWith('S_');
+  const [page, setPage] = useState(0);
+  const size = 10;
 
   useEffect(() => {
-    fetchNotices();
-  }, []);
+    fetchNotices({ page, size });
+  }, [page]);
 
   const handleRowClick = (id) => {
     navigate(`/notices/${id}`);
@@ -24,6 +26,11 @@ const NoticeListPage = () => {
 
   const handleCreate = () => {
     navigate('/notices/new');
+  };
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < pagination.totalPages) {
+      setPage(newPage);
+    }
   };
 
   // 날짜 포맷 함수
@@ -41,16 +48,16 @@ const NoticeListPage = () => {
 
   return (
     <>
-       <PublicHeader />
+      <PublicHeader />
       <div className="container_layout">
         <Sidebar />
-           <main style={{ flex: 1, paddingTop: '82.8px' }}>
+        <main style={{ flex: 1, paddingTop: '82.8px' }}>
           <h3 style={{ marginBottom: '20px' }}>공지사항</h3>
-  
+
           {loading ? (
             <p>로딩 중...</p>
           ) : (
-            <table className="table">
+            <table className="table nl" style={{ backgroundColor: 'white' }}>
               <thead>
                 <tr>
                   <th>번호</th>
@@ -63,7 +70,7 @@ const NoticeListPage = () => {
               <tbody>
                 {notices.map((notice, index) => (
                   <tr key={notice.noticeId} style={{ cursor: 'pointer' }} onClick={() => handleRowClick(notice.noticeId)}>
-                    <td>{notices.length - index}</td>
+                         <td>{pagination.totalElements - (page * size + index)}</td>
                     <td>{notice.title}</td>
                     <td>{notice.regUserId}</td>
                     <td>{notice.viewCnt}</td>
@@ -73,12 +80,35 @@ const NoticeListPage = () => {
               </tbody>
             </table>
           )}
+          {pagination.totalPages > 1 && !loading && (
+            <div className="mt-3">
+              <div className="btn-group" role="group">
+                <button
+                  className="btn btn-outline-primary btn-sm"
+                  disabled={pagination.isFirst}
+                  onClick={() => handlePageChange(page - 1)}
+                >이전</button>
+                {Array.from({ length: pagination.totalPages }, (_, i) => i).map((i) => (
+                  <button
+                    key={i}
+                    className={`btn btn-sm ${i === page ? 'btn-primary' : 'btn-outline-primary'}`}
+                    onClick={() => handlePageChange(i)}
+                  >{i + 1}</button>
+                ))}
+                <button
+                  className="btn btn-outline-primary btn-sm"
+                  disabled={pagination.isLast}
+                  onClick={() => handlePageChange(page + 1)}
+                >다음</button>
+              </div>
+            </div>
+          )}
         </main>
         {canWrite && (
           <button
             className="btn btn-primary"
             onClick={handleCreate}
-            style={{ marginBottom: '10px',position:'absolute',right:'1rem'}}
+            style={{ marginBottom: '10px', position: 'absolute', right: '1rem', bottom: '0' }}
           >
             글쓰기
           </button>

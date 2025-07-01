@@ -7,15 +7,50 @@ export const useNotices = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { user } = useAuth();
- 
+ const [pagination, setPagination] = useState({
+    totalElements: 0,
+    totalPages: 1,
+    currentPage: 0,
+    size: 10,
+    hasNext: false,
+    hasPrevious: false,
+    isFirst: true,
+    isLast: true,
+  });
 
   const fetchNotices = useCallback(async (params = {}) => {
     try {
       setLoading(true);
       setError(null);
 
-      const items = await noticeApi.getNotices(params);
-      setNotices(Array.isArray(items) ? items : []);
+      const data = await noticeApi.getNotices(params);
+      if (Array.isArray(data)) {
+        setNotices(data);
+        setPagination((prev) => ({
+          ...prev,
+          totalElements: data.length,
+          totalPages: 1,
+          currentPage: 0,
+          size: data.length,
+          hasNext: false,
+          hasPrevious: false,
+          isFirst: true,
+          isLast: true,
+        }));
+      } else {
+        setNotices(Array.isArray(data.notices) ? data.notices : []);
+        setPagination((prev) => ({
+          ...prev,
+          totalElements: data.totalElements,
+          totalPages: data.totalPages,
+          currentPage: data.currentPage,
+          size: data.size,
+          hasNext: data.hasNext,
+          hasPrevious: data.hasPrevious,
+          isFirst: data.isFirst,
+          isLast: data.isLast,
+        }));
+      }
     } catch (err) {
       setError(err);
       console.error('Fetch notices error:', err);
@@ -123,7 +158,8 @@ const deleteNotice = useCallback(async (id) => {
     fetchNotices,
     createNotice,
     updateNotice,
-     deleteNotice,
+     deleteNotice, 
+     pagination,
     getNoticeById
   };
 };
