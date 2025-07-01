@@ -1,0 +1,45 @@
+
+.noncuradmin {
+    background: #ffffff;
+    color: #333;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border 0.2s;
+    margin-left: 4px;
+    outline: none;
+    box-shadow: none;
+}
+
+.noncuradmin.edit {
+    color: #1976d2;
+    border-color: #90caf9;
+}
+
+.noncuradmin.delete {
+    color: #d32f2f;
+    border-color: #f8bbd0;
+}
+
+.noncuradmin:hover,
+.noncuradmin:focus {
+    background: #e3e8ee;
+    color: #111;
+    border-color: #b0b8c1;
+}
+
+.noncuradmin.edit:hover,
+.noncuradmin.edit:focus {
+    background: #bbdefb;
+    color: #0d47a1;
+    border-color: #64b5f6;
+}
+
+.noncuradmin.delete:hover,
+.noncuradmin.delete:focus {
+    background: #ffcdd2;
+    color: #b71c1c;
+    border-color: #e57373;
+}

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth'; 
-import '/public/css/ProgramApplicationModal.css'; // CSS 경로도 수정
+import '/public/css/ProgramApplicationModal.css';
+
 // 비교과 프로그램 신청 모달 컴포넌트
 const ProgramApplicationModal = ({ isOpen, onClose, programData, onSubmit }) => {
-    const { user, isLoggedIn } = useAuth(); // useAuth 사용
+    const { user, isLoggedIn } = useAuth();
 
     const [formData, setFormData] = useState({
         stdNo: '',
@@ -26,7 +27,6 @@ const ProgramApplicationModal = ({ isOpen, onClose, programData, onSubmit }) => 
         if (isOpen && programData) {
             const timer = setTimeout(() => {
                 if (isLoggedIn && user) {
-                    // useAuth에서 가져온 사용자 정보로 직접 설정
                     fetchUserProfileInfo();
                 } else {
                     setError('로그인이 필요합니다.');
@@ -45,8 +45,7 @@ const ProgramApplicationModal = ({ isOpen, onClose, programData, onSubmit }) => 
         try {
             console.log('🟢 마이페이지 프로필 조회 시작');
             
-            // useAuth의 쿠키를 사용하여 8082 도메인으로 직접 호출
-        const profileResponse = await fetch('/api/mypage/profile', {
+            const profileResponse = await fetch('/api/mypage/profile', {
                 method: 'GET',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' }
@@ -74,7 +73,6 @@ const ProgramApplicationModal = ({ isOpen, onClose, programData, onSubmit }) => 
             } else {
                 console.warn('⚠️ 마이페이지 프로필 조회 실패, 기본 정보로 설정');
                 
-                // useAuth의 사용자 정보 + 기본값으로 설정
                 setFormData(prev => ({
                     ...prev,
                     stdNo: user.identifierNo || '',
@@ -89,7 +87,6 @@ const ProgramApplicationModal = ({ isOpen, onClose, programData, onSubmit }) => 
         } catch (err) {
             console.error('사용자 정보 조회 실패:', err);
             
-            // 에러 시에도 useAuth 정보로 기본 설정
             setFormData(prev => ({
                 ...prev,
                 stdNo: user.identifierNo || '',
@@ -140,33 +137,71 @@ const ProgramApplicationModal = ({ isOpen, onClose, programData, onSubmit }) => 
         setError('');
 
         try {
-            const jsonData = {
-                prgId: programData.prgId,
-                stdNo: formData.stdNo.trim(),
-                aplySelCd: '01',
-                aplyPhone: formData.phoneNumber.trim(),
-                aplyRemarks: formData.remarks.trim(),
-                privacyAgreeYn: formData.privacyAgree ? 'Y' : 'N'
-            };
+            if (formData.applicationFile) {
+                const formDataToSend = new FormData();
+                
+                const applicationData = {
+                    prgId: programData.prgId,
+                    stdNo: formData.stdNo.trim(),
+                    aplySelCd: '01',
+                    aplyPhone: formData.phoneNumber.trim(),
+                    aplyRemarks: formData.remarks.trim(),
+                    privacyAgreeYn: formData.privacyAgree ? 'Y' : 'N'
+                };
 
-            console.log('신청 데이터 전송:', jsonData);
+                formDataToSend.append('application', new Blob([JSON.stringify(applicationData)], { 
+                    type: 'application/json' 
+                }));
+                
+                formDataToSend.append('applicationFile', formData.applicationFile);
 
-        const response = await fetch(`/api/noncur/${programData.prgId}/apply`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(jsonData)
-            });
+                console.log('파일과 함께 신청 데이터 전송');
 
-            if (response.ok) {
-                setSuccess(true);
-                setTimeout(() => {
-                    onSubmit();
-                    onClose();
-                }, 2000);
+                const response = await fetch(`/api/noncur/${programData.prgId}/apply-with-file`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formDataToSend
+                });
+
+                if (response.ok) {
+                    setSuccess(true);
+                    setTimeout(() => {
+                        onSubmit();
+                        onClose();
+                    }, 2000);
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || '신청 처리 중 오류가 발생했습니다.');
+                }
             } else {
-                const errorData = await response.json();
-                throw new Error(errorData.message || '신청 처리 중 오류가 발생했습니다.');
+                const jsonData = {
+                    prgId: programData.prgId,
+                    stdNo: formData.stdNo.trim(),
+                    aplySelCd: '01',
+                    aplyPhone: formData.phoneNumber.trim(),
+                    aplyRemarks: formData.remarks.trim(),
+                    privacyAgreeYn: formData.privacyAgree ? 'Y' : 'N'
+                };
+
+                console.log('신청 데이터 전송:', jsonData);
+
+                const response = await fetch(`/api/noncur/${programData.prgId}/apply`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(jsonData)
+                });
+
+                if (response.ok) {
+                    setSuccess(true);
+                    setTimeout(() => {
+                        onSubmit();
+                        onClose();
+                    }, 2000);
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || '신청 처리 중 오류가 발생했습니다.');
+                }
             }
         } catch (err) {
             setError(err.message);
@@ -199,7 +234,7 @@ const ProgramApplicationModal = ({ isOpen, onClose, programData, onSubmit }) => 
         <div className="application-modal-overlay" onClick={handleClose}>
             <div className="application-modal-container" onClick={(e) => e.stopPropagation()}>
                 <div className="application-modal-header">
-                    <h3 className="application-modal-title">📝 프로그램 신청서</h3>
+                    <h3 className="application-modal-title">프로그램 신청서</h3>
                     <button className="application-modal-close" onClick={handleClose}>×</button>
                 </div>
 
@@ -211,7 +246,6 @@ const ProgramApplicationModal = ({ isOpen, onClose, programData, onSubmit }) => 
                             <p className="success-message">곧 목록으로 돌아갑니다.</p>
                         </div>
                     ) : !isLoggedIn ? (
-                        // 로그인 필요 화면
                         <div className="auth-error-container">
                             <div className="auth-error-icon">🔐</div>
                             <h3 className="auth-error-title">로그인이 필요합니다</h3>
@@ -233,7 +267,7 @@ const ProgramApplicationModal = ({ isOpen, onClose, programData, onSubmit }) => 
                         <>
                             {/* 프로그램 정보 */}
                             <div className="application-form-info">
-                                <h4 className="program-info-title">📋 신청 프로그램</h4>
+                                <h4 className="program-info-title">신청 프로그램</h4>
                                 <div className="program-info-content">
                                     <div className="program-name">{programData?.prgNm}</div>
                                     <div className="program-details">
@@ -251,8 +285,8 @@ const ProgramApplicationModal = ({ isOpen, onClose, programData, onSubmit }) => 
 
                             <form onSubmit={handleSubmit}>
                                 {/* 개인정보 섹션 */}
-                                <div className="form-section">
-                                    <h4 className="section-header">👤 개인정보</h4>
+                                <div className="form-section noncur-application-section">
+                                    <h4 className="section-header">신청자 정보</h4>
                                     
                                     <div className="input-grid">
                                         <div className="input-group">
@@ -326,33 +360,54 @@ const ProgramApplicationModal = ({ isOpen, onClose, programData, onSubmit }) => 
                                 </div>
 
                                 {/* 신청서 및 비고 섹션 */}
-                                <div className="form-section">
-                                    <h4 className="section-header additional">📄 신청서 및 추가정보</h4>
+                                <div className="form-section noncur-application-section">
+                                    <h4 className="section-header additional">신청서 및 추가정보</h4>
                                     
                                     <div className="input-group">
                                         <label className="input-label">
-                                            📎 신청서 파일 업로드
+                                            신청서 파일 업로드
                                         </label>
-                                        <input
-                                            type="file"
-                                            name="applicationFile"
-                                            onChange={handleInputChange}
-                                            accept=".pdf,.doc,.docx,.hwp"
-                                            className="file-input"
-                                        />
-                                        <small className="input-help">
-                                            * PDF, DOC, DOCX, HWP 파일만 업로드 가능 (파일 업로드 시스템 구현 예정)
-                                        </small>
-                                        {formData.applicationFile && (
-                                            <div className="file-selected">
-                                                📎 선택된 파일: {formData.applicationFile.name}
-                                            </div>
-                                        )}
+                                        
+                                        <div className="file-upload-wrapper">
+                                            <input
+                                                type="file"
+                                                name="applicationFile"
+                                                onChange={handleInputChange}
+                                                accept=".pdf,.doc,.docx,.hwp"
+                                                className="file-upload-input"
+                                            />
+                                            
+                                            <small className="input-help">
+                                                * PDF, DOC, DOCX, HWP 파일만 업로드 가능
+                                            </small>
+                                            
+                                            {formData.applicationFile && (
+                                                <div className="file-selected-info">
+                                                    <div className="file-selected-header">
+                                                        <div className="file-selected-content">
+                                                            <div className="file-selected-title">
+                                                                선택된 파일
+                                                            </div>
+                                                            <div className="file-selected-name">
+                                                                {formData.applicationFile.name}
+                                                            </div>
+                                                        </div>
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => setFormData(prev => ({ ...prev, applicationFile: null }))}
+                                                            className="file-remove-button"
+                                                        >
+                                                            제거
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     
                                     <div className="input-group">
                                         <label className="input-label">
-                                            💬 비고사항
+                                            비고사항
                                         </label>
                                         <textarea
                                             name="remarks"
@@ -367,7 +422,7 @@ const ProgramApplicationModal = ({ isOpen, onClose, programData, onSubmit }) => 
 
                                 {/* 개인정보 수집 동의 */}
                                 <div className="privacy-container">
-                                    <h4 className="privacy-title">🔒 개인정보 수집 및 이용 동의</h4>
+                                    <h4 className="privacy-title">개인정보 수집 및 이용 동의</h4>
                                     <div className="privacy-content">
                                         <strong>[개인정보 수집 및 이용 동의]</strong><br/>
                                         1. 수집목적: 비교과 프로그램 신청 및 운영<br/>

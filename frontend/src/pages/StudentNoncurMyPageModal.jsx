@@ -212,12 +212,12 @@ const StudentNoncurMyPageModal = ({ isOpen, onClose }) => {
                     )}
 
                     {!loading && !error && (
-                        <>
+                        <> 
                             {/* 신청 내역 */}
                             {activeTab === 'applications' && (
                                 <div>
                                     {studentData.applications.length === 0 ? (
-                                        <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                                        <div style={{ textAlign: 'center', padding: '40px', color: '#666'}}>
                                             신청한 프로그램이 없습니다.
                                         </div>
                                     ) : (
@@ -235,9 +235,9 @@ const StudentNoncurMyPageModal = ({ isOpen, onClose }) => {
                                                         alignItems: 'center',
                                                         marginBottom: '8px'
                                                     }}>
-                                                        <h4 style={{ margin: 0 }}>
+                                                        <div style={{ margin: 0 ,  fontWeight: 'bold' }}>
                                                             {app.prgNm || `프로그램 ${app.prgId}`}
-                                                        </h4>
+                                                        </div>
                                                         {getStatusBadge(app.aplyStatCd, app.aplyStatNm)}
                                                     </div>
                                                     <div style={{ fontSize: '14px', color: '#666' }}>
@@ -272,9 +272,9 @@ const StudentNoncurMyPageModal = ({ isOpen, onClose }) => {
                                                         alignItems: 'center',
                                                         marginBottom: '8px'
                                                     }}>
-                                                        <h4 style={{ margin: 0, color: '#28a745' }}>
-                                                            ✅ {program.prgNm || `프로그램 ${program.prgId}`}
-                                                        </h4>
+                                                        <div style={{ margin: 0, color: '#28a745',  fontWeight: 'bold'  }}>
+                                                             {program.prgNm || `프로그램 ${program.prgId}`}
+                                                        </div>
                                                         <span style={{ 
                                                             color: '#28a745', 
                                                             fontWeight: 'bold',

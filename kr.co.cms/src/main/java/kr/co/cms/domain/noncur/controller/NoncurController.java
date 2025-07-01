@@ -34,6 +34,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -354,8 +355,6 @@ public class NoncurController {
         }
     }
 
- // NoncurController에 추가할 메서드들 (마일리지 API 제거)
-
     /**
      * 내 신청 내역 조회 (토큰에서 자동으로 학번 추출)
      */
@@ -397,4 +396,51 @@ public class NoncurController {
                 .body(Map.of("error", "이수완료 내역 조회 중 오류가 발생했습니다."));
         }
     } 
+    
+    /**
+     * 학생이 비교과 프로그램에 신청 (파일 포함)
+     */
+    @PostMapping("/{prgId}/apply-with-file")
+    @ResponseBody
+    public ResponseEntity<?> applyProgramWithFile(
+            @PathVariable("prgId") String prgId,
+            @RequestPart("application") NoncurApplicationRequestDTO requestDTO,
+            @RequestPart(value = "applicationFile", required = false) MultipartFile applicationFile,
+            HttpServletRequest request) {
+        try {
+            // 토큰에서 학번 추출
+            String stdNo = tokenUtil.getIdentifierNoFromRequest(request);
+            String userId = tokenUtil.getUserIdFromRequest(request);
+            
+            // 1. 프로그램 신청 처리
+            NoncurApplicationDTO result = applicationService.applyProgram(prgId, stdNo, requestDTO);
+            
+            // 2. 신청서 파일이 있으면 업로드
+            if (applicationFile != null && !applicationFile.isEmpty()) {
+                try {
+                    // 신청 ID를 참조 ID로 사용하여 파일 업로드
+                    fileService.uploadFiles(
+                        Arrays.asList(applicationFile), 
+                        "NONCUR", 
+                        result.getAplyId(), // 신청 ID를 참조 ID로 사용
+                        "APPLY", 
+                        userId
+                    );
+                    
+                    System.out.println("신청서 파일 업로드 완료: " + applicationFile.getOriginalFilename());
+                } catch (Exception fileError) {
+                    System.err.println("신청서 파일 업로드 실패: " + fileError.getMessage());
+                    // 파일 업로드 실패해도 신청은 완료된 것으로 처리
+                }
+            }
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(Map.of("error", "신청 처리 중 오류가 발생했습니다."));
+        }
+    }
+    
+    
+    
 }

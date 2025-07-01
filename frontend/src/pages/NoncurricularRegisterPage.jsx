@@ -9,6 +9,9 @@ import Footer from '../components/layout/Footer';
 import styles from '/public/css/NoncurricularRegisterPage.module.css';
 
 const NoncurricularRegisterPage = () => {
+
+
+    
     const navigate = useNavigate();
 
     // 폼 데이터 상태

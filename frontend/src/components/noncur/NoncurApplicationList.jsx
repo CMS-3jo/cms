@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '/public/css/NoncurApplicationList.css';
 
 const NoncurApplicationList = ({ 
@@ -13,6 +13,64 @@ const NoncurApplicationList = ({
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectTarget, setRejectTarget] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [applicationFiles, setApplicationFiles] = useState({}); // 신청서 파일 정보
+
+  // 신청서 파일 정보 조회
+  useEffect(() => {
+    const fetchApplicationFiles = async () => {
+      const fileInfos = {};
+      
+      for (const app of applications) {
+        try {
+          const response = await fetch(`/api/files/list?refType=NONCUR&refId=${app.aplyId}&category=APPLY`, {
+            credentials: 'include'
+          });
+          
+          if (response.ok) {
+            const files = await response.json();
+            if (files && files.length > 0) {
+              fileInfos[app.aplyId] = files;
+            }
+          } else {
+            console.warn(`파일 조회 응답 오류 (${app.aplyId}): ${response.status} ${response.statusText}`);
+          }
+        } catch (error) {
+          console.error(`신청서 파일 조회 실패 (${app.aplyId}):`, error);
+        }
+      }
+      
+      setApplicationFiles(fileInfos);
+    };
+
+    if (applications && applications.length > 0) {
+      fetchApplicationFiles();
+    }
+  }, [applications]);
+
+  const handleFileDownload = async (fileId, fileName) => {
+    try {
+      const response = await fetch(`/api/files/${fileId}/download`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        alert('파일 다운로드에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('파일 다운로드 오류:', error);
+      alert('파일 다운로드 중 오류가 발생했습니다.');
+    }
+  };
 
   const filteredApplications = applications.filter(app => {
     return filterStatus === 'all' || app.aplyStatCd === filterStatus;
@@ -160,6 +218,7 @@ const NoncurApplicationList = ({
             <th>이름</th>
             <th>신청일시</th>
             <th>신청구분</th>
+            <th>신청서</th>
             <th>상태</th>
             <th>액션</th>
           </tr>
@@ -179,6 +238,52 @@ const NoncurApplicationList = ({
               <td>{app.stdNm || '-'}</td>
               <td>{new Date(app.aplyDt).toLocaleString()}</td>
               <td>{app.aplySelNm || '일반신청'}</td>
+              <td>
+                {(() => {
+                  const files = applicationFiles[app.aplyId];
+                  
+                  // 파일이 존재하고 배열인지 안전하게 확인
+                  if (!files || !Array.isArray(files) || files.length === 0) {
+                    return <span className="text-muted">-</span>;
+                  }
+                  
+                  return (
+                    <div className="application-files">
+                      {files.map((file, index) => {
+                        const fileName = file?.fileNmOrig || `파일${index + 1}`;
+                        const fileId = file?.fileId;
+                        
+                        // fileId가 없으면 버튼을 렌더링하지 않음
+                        if (!fileId) {
+                          return (
+                            <span key={index} className="text-danger small">
+                              오류
+                            </span>
+                          );
+                        }
+                        
+                        return (
+                          <button
+                            key={fileId}
+                            className="btn btn-link btn-sm p-0 text-dark"
+                            onClick={() => handleFileDownload(fileId, fileName)}
+                            title={`신청서 다운로드: ${fileName}`}
+                            style={{
+                              textDecoration: 'none',
+                              transition: 'color 0.2s ease',
+                              boxShadow: 'none',
+                            }}
+                            onMouseEnter={(e) => e.target.style.color = '#0d6efd'}
+                            onMouseLeave={(e) => e.target.style.color = '#212529'}
+                          >
+                            <i className="bi bi-download"></i>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </td>
               <td>
                 <span className={`status-badge ${getStatusBadgeClass(app.aplyStatCd)}`}>
                   {app.aplyStatNm}

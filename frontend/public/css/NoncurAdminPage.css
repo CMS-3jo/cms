@@ -206,7 +206,7 @@
 
 .batch-actions {
   display: flex;
-  gap: 10px;
+  gap: 5px;
 }
 
 .batch-btn {
@@ -224,17 +224,17 @@
 }
 
 .batch-btn.approve {
-  background: #4caf50;
+  background: #0d6efd;
   color: white;
 }
 
 .batch-btn.reject {
-  background: #f44336;
+  background: #464646;
   color: white;
 }
 
 .batch-btn.complete {
-  background: #2196f3;
+  background: #000000;
   color: white;
 }
 
@@ -278,8 +278,8 @@
 }
 
 .badge-completed {
-  background: #f3e5f5;
-  color: #7b1fa2;
+  background: #424242;
+  color: #ffffff;
 }
 
 .action-buttons {
@@ -288,23 +288,47 @@
 }
 
 .action-btn {
-  padding: 4px 12px;
-  border: none;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.3s;
+    background: #ffffff;
+    color: #333;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border 0.2s;
+    margin-left: 4px;
+    outline: none;
+    box-shadow: none;
 }
 
 .action-btn.approve {
-  background: #4caf50;
-  color: white;
+   color: #1976d2;
+   padding: 6px 16px;
+   border: 1px solid #d1d5db;
+   border-color: #90caf9;
+}
+
+.action-btn.approve:hover,
+.action-btn.approve:focus {
+    background: #bbdefb;
+    color: #0d47a1;
+    border-color: #64b5f6;
 }
 
 .action-btn.reject {
-  background: #f44336;
-  color: white;
+    color: #d32f2f;
+   padding: 6px 16px;
+   border: 1px solid #d1d5db;
+    border-color: #f8bbd0;
 }
+
+.action-btn.reject:hover,
+.action-btn.reject:focus {
+      background: #ffcdd2;
+    color: #b71c1c;
+    border-color: #e57373;
+}
+
 
 .action-btn.complete {
   background: #2196f3;

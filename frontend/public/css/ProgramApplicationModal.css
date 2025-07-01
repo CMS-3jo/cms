@@ -1,4 +1,7 @@
 /* ProgramApplicationModal.css */
+.noncur-application-section {
+    border-left: none;
+}
 
 .application-modal-overlay {
     position: fixed;
@@ -14,7 +17,7 @@
 }
 
 .application-modal-container {
-    max-width: 600px;
+    max-width: 1000px;
     max-height: 90vh;
     overflow-y: auto;
     background: white;
@@ -173,38 +176,6 @@
     color: white;
 }
 
-/* 임시 입력 모드 */
-.temp-input-container {
-    padding: 20px;
-    background-color: #fff3cd;
-    border: 1px solid #ffeaa7;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.temp-input-title {
-    color: #856404;
-    margin-bottom: 10px;
-}
-
-.temp-input-message {
-    font-size: 14px;
-    color: #856404;
-    margin-bottom: 15px;
-}
-
-.temp-input-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-.temp-input {
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
 /* 폼 섹션 */
 .form-section {
     margin-bottom: 30px;
@@ -218,7 +189,7 @@
 }
 
 .section-header.additional {
-    border-bottom-color: #28a745;
+    border-bottom-color: #007bff;
 }
 
 .input-grid {
@@ -264,25 +235,73 @@
     resize: vertical;
 }
 
-.file-input {
-    width: 100%;
-    padding: 12px;
-    border: 2px dashed #ddd;
-    border-radius: 8px;
-    background-color: #fafafa;
-}
-
 .input-help {
+    display: block;
     color: #6c757d;
     font-size: 12px;
+    margin-top: 4px;
 }
 
-.file-selected {
-    margin-top: 10px;
-    padding: 10px;
-    background-color: #e7f3ff;
+/* 파일 업로드 개선된 스타일 */
+.file-upload-wrapper {
+    width: 100%;
+}
+
+.file-upload-input {
+    padding: 8px;
+    border: 1px solid #ddd;
     border-radius: 4px;
+    width: 100%;
     font-size: 14px;
+}
+
+.file-selected-info {
+    margin-top: 12px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #495057;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.file-selected-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.file-selected-content {
+    flex: 1;
+    margin-right: 12px;
+}
+
+.file-selected-title {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.file-selected-name {
+    color: #6c757d;
+    word-break: break-all;
+}
+
+.file-remove-button {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.file-remove-button:hover {
+    background-color: #545b62;
 }
 
 /* 개인정보 동의 */
@@ -380,20 +399,6 @@
     cursor: not-allowed;
 }
 
-.btn-retry {
-    padding: 10px 20px;
-    border: 1px solid #007bff;
-    background-color: #fff;
-    color: #007bff;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.btn-retry:hover {
-    background-color: #007bff;
-    color: white;
-}
-
 .btn-login {
     padding: 10px 20px;
     border: none;
@@ -415,10 +420,6 @@
     }
     
     .input-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .temp-input-grid {
         grid-template-columns: 1fr;
     }
     
